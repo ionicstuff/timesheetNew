@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Search
@@ -9,6 +9,48 @@ import TaskList from "@/components/tasks/TaskList";
 import CreateTaskButton from "@/components/tasks/CreateTaskButton";
 import TaskFilter from "@/components/tasks/TaskFilter";
 import TaskPriorityChart from "@/components/tasks/TaskPriorityChart";
+import axios from "axios";
+import { useToast } from "@/components/ui/use-toast";
+
+// Define the Task interface based on our backend model
+interface Task {
+  id: number;
+  name: string;
+  description?: string;
+  projectId: number;
+  project?: {
+    id: number;
+    projectName: string;
+    projectCode: string;
+  };
+  assignedTo?: number;
+  assignee?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  estimatedTime: number;
+  status: 'pending' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
+  acceptanceStatus: 'pending' | 'accepted' | 'rejected';
+  sprintStartDate?: string;
+  sprintEndDate?: string;
+  // Add priority field (we'll need to add this to the backend later)
+  priority?: 'High' | 'Medium' | 'Low';
+}
+
+// Map our backend task to the format expected by our components
+const mapTaskForUI = (task: Task) => {
+  return {
+    id: task.id,
+    title: task.name,
+    project: task.project?.projectName || `Project ${task.projectId}`,
+    dueDate: task.sprintEndDate ? new Date(task.sprintEndDate).toLocaleDateString() : 'No due date',
+    priority: task.priority || 'Medium', // Default to 'Medium' if not provided by backend
+    completed: task.status === 'completed',
+    assignedTo: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : undefined
+  };
+};
 
 const Tasks = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,84 +60,105 @@ const Tasks = () => {
     assignee: [] as string[],
     dueDate: "all" as "all" | "today" | "week" | "month"
   });
+  const [tasks, setTasks] = useState<ReturnType<typeof mapTaskForUI>[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const tasks = [
-    { id: 1, title: "Design homepage", project: "Website Redesign", dueDate: "Today", priority: "High" as const, completed: false, assignedTo: "Alex Johnson" },
-    { id: 2, title: "Meeting with client", project: "Product Launch", dueDate: "Tomorrow", priority: "Medium" as const, completed: false },
-    { id: 3, title: "Update documentation", project: "Marketing Campaign", dueDate: "In 2 days", priority: "Low" as const, completed: true },
-    { id: 4, title: "Research competitors", project: "Product Launch", dueDate: "Next week", priority: "Medium" as const, completed: false, assignedTo: "Sam Smith" },
-    { id: 5, title: "Create wireframes", project: "Website Redesign", dueDate: "In 3 days", priority: "High" as const, completed: false },
-    { id: 6, title: "Write blog post", project: "Marketing Campaign", dueDate: "Today", priority: "Low" as const, completed: false },
-    { id: 7, title: "Fix login bug", project: "Product Launch", dueDate: "Tomorrow", priority: "High" as const, completed: true },
-    { id: 8, title: "Prepare presentation", project: "Website Redesign", dueDate: "In 2 days", priority: "Medium" as const, completed: false },
-  ];
+  // Fetch tasks from the API
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Authentication token not found.");
+        }
+
+        const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
+        const apiUrl = baseUrl.includes('localhost') ? 'http://localhost:3000' : '';
+
+        const queryParams = new URLSearchParams();
+        if (searchTerm) {
+          queryParams.append('searchTerm', searchTerm);
+        }
+        if (filters.priority.length > 0) {
+          queryParams.append('priority', filters.priority.join(','));
+        }
+        if (filters.status.length > 0) {
+          queryParams.append('status', filters.status.join(','));
+        }
+        // Map frontend dueDate filter to backend upcomingWithinDays
+        if (filters.dueDate === 'today') {
+          queryParams.append('upcomingWithinDays', '1');
+        } else if (filters.dueDate === 'week') {
+          queryParams.append('upcomingWithinDays', '7');
+        } else if (filters.dueDate === 'month') {
+          queryParams.append('upcomingWithinDays', '30');
+        }
+
+        const queryString = queryParams.toString();
+        const url = `${apiUrl}/api/tasks/my-tasks${queryString ? `?${queryString}` : ''}`;
+
+        const response = await axios.get(url, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+          withCredentials: true
+        });
+        
+        // Map the tasks to our UI format
+        const mappedTasks = response.data.map(mapTaskForUI);
+        setTasks(mappedTasks);
+      } catch (error: any) {
+        console.error('Error fetching tasks:', error);
+        toast({
+          title: "Error",
+          description: `Failed to fetch tasks: ${error.message || error}. Please try again later.`, 
+          variant: "destructive"
+        });
+        setTasks([]); // Clear tasks on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [searchTerm, filters, toast]); // Add searchTerm and filters to dependencies
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
   };
 
-  const filteredTasks = tasks.filter(task => {
-    // Search term filter
-    const matchesSearch = 
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.project.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Priority filter
-    const matchesPriority = filters.priority.length === 0 || 
-      filters.priority.includes(task.priority.toLowerCase());
-    
-    // Status filter (simplified for demo)
-    const matchesStatus = filters.status.length === 0 || 
-      filters.status.includes(task.completed ? "done" : "todo");
-    
-    // Assignee filter
-    const matchesAssignee = filters.assignee.length === 0 || 
-      (task.assignedTo && filters.assignee.some(a => task.assignedTo?.includes(a)));
-    
-    // Due date filter (simplified for demo)
-    const matchesDueDate = filters.dueDate === "all" || 
-      (filters.dueDate === "today" && task.dueDate === "Today") ||
-      (filters.dueDate === "week" && (task.dueDate === "Today" || task.dueDate === "Tomorrow" || task.dueDate.includes("day")));
-    
-    return matchesSearch && matchesPriority && matchesStatus && matchesAssignee && matchesDueDate;
-  });
+  const filteredTasks = tasks; // Temporarily show all fetched tasks
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Tasks</h1>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Tasks</h1>
         <CreateTaskButton />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row gap-4 mb-6"> {/* Container for search and filter */}
+        <div className="relative flex-1 flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-md shadow flex-nowrap">
+          <Search className="h-5 w-5 text-gray-500" />
           <input
             type="text"
             placeholder="Search tasks..."
-            className="w-full rounded-md border pl-8 pr-4 py-2"
+            className="flex-1 bg-transparent border-none focus:outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <Button variant="outline" size="sm">Search</Button>
         </div>
-        <TaskFilter onFilterChange={handleFilterChange} />
+        {/* TaskFilter will now be alongside the search bar */}
+        <TaskFilter filters={filters} onFilterChange={handleFilterChange} />
       </div>
 
-      <TaskPriorityChart tasks={tasks} />
-
-      <div className="border rounded-lg">
-        <div className="border-b p-4 font-medium">
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-1"></div>
-            <div className="col-span-5">Task</div>
-            <div className="col-span-2">Project</div>
-            <div className="col-span-2">Due Date</div>
-            <div className="col-span-1">Priority</div>
-            <div className="col-span-1"></div>
-          </div>
-        </div>
-        <div className="divide-y">
-          <TaskList tasks={filteredTasks} />
+      {/* The rest of the content, now without the extra grid wrapper for TaskFilter */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> {/* Adjusted grid for remaining content */}
+        <div className="lg:col-span-3 space-y-6"> {/* Main content area */}
+          <TaskPriorityChart tasks={filteredTasks} />
+          <TaskList tasks={filteredTasks} loading={loading} />
         </div>
       </div>
     </div>

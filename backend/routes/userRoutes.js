@@ -1,4 +1,5 @@
 const express = require('express');
+const router = express = require('express');
 const router = express.Router();
 
 const {
@@ -81,6 +82,7 @@ router.get('/profile',
 // @desc    Get team members for current user (manager/account manager)
 // @access  Private (Manager, Account Manager, Admin)
 router.get('/team', 
+  authorizeRoles(['Admin', 'Account Manager', 'Project Manager']),
   getTeamMembers
 );
 

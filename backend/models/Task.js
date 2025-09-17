@@ -93,6 +93,17 @@ const Task = sequelize.define('Task', {
     allowNull: true,
     field: 'rejection_reason'
   },
+  priority: {
+    type: DataTypes.ENUM('High', 'Medium', 'Low'),
+    defaultValue: 'Medium',
+    allowNull: false,
+    validate: {
+      isIn: {
+        args: [['High', 'Medium', 'Low']],
+        msg: 'Priority must be one of: High, Medium, Low'
+      }
+    }
+  },
   createdBy: {
     type: DataTypes.INTEGER,
     allowNull: true,
