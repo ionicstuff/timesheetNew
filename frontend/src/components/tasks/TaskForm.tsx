@@ -19,14 +19,32 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import TaskSprintSelector from "./TaskSprintSelector";
 
+interface TeamMember {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
 interface TaskFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   initialData?: any;
   projects?: any[];
+  currentUserId?: number;
+  canAssignOthers?: boolean;
+  teamMembers?: TeamMember[];
 }
 
-const TaskForm = ({ onSubmit, onCancel, initialData, projects = [] }: TaskFormProps) => {
+const TaskForm = ({ 
+  onSubmit, 
+  onCancel, 
+  initialData, 
+  projects = [],
+  currentUserId,
+  canAssignOthers,
+  teamMembers = []
+}: TaskFormProps) => {
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(initialData?.description || "");
   const [project, setProject] = useState(initialData?.project || "");
@@ -38,6 +56,8 @@ const TaskForm = ({ onSubmit, onCancel, initialData, projects = [] }: TaskFormPr
     startDate: new Date(),
     endDate: undefined as Date | undefined
   });
+  const defaultAssigneeId = initialData?.assigneeId ?? (currentUserId ? String(currentUserId) : null);
+  const [assigneeId, setAssigneeId] = useState<string | null>(defaultAssigneeId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +68,8 @@ const TaskForm = ({ onSubmit, onCancel, initialData, projects = [] }: TaskFormPr
       priority,
       dueDate,
       estimatedTime,
-      sprintData
+      sprintData,
+      assigneeId: assigneeId ?? (currentUserId ? String(currentUserId) : null)
     });
   };
 
@@ -58,6 +79,11 @@ const TaskForm = ({ onSubmit, onCancel, initialData, projects = [] }: TaskFormPr
     endDate: Date | undefined 
   }) => {
     setSprintData(data);
+  };
+
+  const renderFullName = (m: TeamMember) => {
+    const name = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
+    return name || m.email || `User ${m.id}`;
   };
 
   return (
@@ -99,6 +125,33 @@ const TaskForm = ({ onSubmit, onCancel, initialData, projects = [] }: TaskFormPr
           </SelectContent>
         </Select>
       </div>
+
+      {/* Assignee selection - only if user can assign others and has team members */}
+      {canAssignOthers && teamMembers.length > 0 ? (
+        <div>
+          <Label htmlFor="assignee">Assign to</Label>
+          <Select 
+            value={assigneeId ?? (currentUserId ? String(currentUserId) : undefined)} 
+            onValueChange={setAssigneeId}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select assignee" />
+            </SelectTrigger>
+            <SelectContent>
+              {currentUserId && (
+                <SelectItem value={String(currentUserId)}>Myself</SelectItem>
+              )}
+              {teamMembers.map((m) => (
+                <SelectItem key={m.id} value={String(m.id)}>
+                  {renderFullName(m)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">This task will be assigned to you.</p>
+      )}
       
       <div className="grid grid-cols-3 gap-4">
         <div>

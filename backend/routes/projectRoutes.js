@@ -1,29 +1,33 @@
+// backend/routes/projectRoutes.js
 const express = require('express');
-const projectController = require('../controllers/projectController');
-const authorizeRoles = require('../middleware/authorizeRoles');
-const { authMiddleware } = require('../middleware/auth');
-
 const router = express.Router();
 
-// Route for any authenticated user to fetch their accessible projects
-router.get('/my', authMiddleware, projectController.getMyProjects);
+// Make sure this path is correct relative to THIS file
+const ctrl = require('../controllers/projectController');
 
-// Protect all remaining project routes
-router.use(authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'));
+// ---- Projects ----
+router.get('/', ctrl.getProjects);
+router.get('/my', ctrl.getMyProjects);
+router.get('/:id', ctrl.getProject);
+router.post('/', ctrl.createProject);
+router.put('/:id', ctrl.updateProject);
+router.delete('/:id', ctrl.deleteProject);
+router.patch('/:id/details', ctrl.updateProjectDetails);
 
-// Project routes
-router.get('/', projectController.getProjects);
-router.get('/managers', projectController.getManagers);
-router.get('/users', projectController.getUsers);
-router.post('/', projectController.createProject);
-router.get('/:id', projectController.getProject);
-router.get('/:id/performance', projectController.getProjectPerformance);
-router.put('/:id', projectController.updateProject);
-router.put('/:id/details', projectController.updateProjectDetails);
-router.post('/:id/upload', projectController.uploadProjectFiles);
-router.get('/:id/files', projectController.getProjectFiles);
-// Only allow Account Manager or Project Manager to close a project
-router.post('/:id/close', authorizeRoles('Account Manager', 'Project Manager'), projectController.closeProject);
-router.delete('/:id', projectController.deleteProject);
+// ---- Files ----
+router.post('/:id/files', ctrl.uploadProjectFiles);
+router.get('/:id/files', ctrl.getProjectFiles);
+
+// ---- Performance & State ----
+router.post('/:id/close', ctrl.closeProject);
+router.get('/:id/performance', ctrl.getProjectPerformance);
+
+// ---- Directory Helpers ----
+router.get('/managers', ctrl.getManagers);
+router.get('/users', ctrl.getUsers);
+
+// ---- NEW: Clients & SPOCs ----
+router.get('/clients', ctrl.getClients);
+router.get('/clients/:id/spocs', ctrl.getClientSpocs);
 
 module.exports = router;

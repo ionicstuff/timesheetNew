@@ -16,40 +16,79 @@ import { useToast } from "@/hooks/use-toast";
 const QuickCreate = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [canAssignOthers, setCanAssignOthers] = useState<boolean>(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isModalOpen) {
-      const fetchProjects = async () => {
+    if (!isModalOpen) return;
+
+    const loadContext = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // Projects
+        const response = await fetch(`/api/projects/my`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch projects");
+        const data = await response.json();
+        setProjects(data);
+
+        // Current user via /api/auth/me (robust across backends)
+        const profRes = await fetch(`/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (!meRes.ok) throw new Error("Failed to fetch current user");
+        const meJson = await meRes.json();
+        const me = meJson?.user;
+        const currentId = me?.id ?? null;
+        setCurrentUserId(currentId);
+
+        // Decide preliminary permission via basic role
+        const basicRole: string | undefined = me?.role; // 'admin','manager','hr','employee'
+        const allowedBasic = new Set(["admin", "manager"]);
+        let canAssign = !!basicRole && allowedBasic.has(String(basicRole).toLowerCase());
+
+        // Team fetch and confirmation
         try {
-          const token = localStorage.getItem("token");
-          const response = await fetch("/api/projects/my", {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
+          const teamRes = await fetch(`/api/users/team?limit=100&includeSubordinates=true`, {
+            headers: { "Authorization": `Bearer ${token}` },
           });
-          if (!response.ok) {
-            throw new Error("Failed to fetch projects");
+          if (teamRes.ok) {
+            const teamJson = await teamRes.json();
+            const members = teamJson?.data?.teamMembers || [];
+            setTeamMembers(members);
+            if (!canAssign && members.length > 0) canAssign = true;
+          } else {
+            setTeamMembers([]);
           }
-          const data = await response.json();
-          setProjects(data);
-        } catch (error) {
-          console.error("Error fetching projects:", error);
-          toast({
-            title: "Error",
-            description: "Could not fetch projects.",
-            variant: "destructive",
-          });
+        } catch {
+          setTeamMembers([]);
         }
-      };
-      fetchProjects();
-    }
+
+        setCanAssignOthers(canAssign);
+      } catch (error) {
+        console.error("Error fetching projects/profile:", error);
+        toast({
+          title: "Error",
+          description: "Could not load task creation context.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadContext();
   }, [isModalOpen, toast]);
 
   const handleSubmit = async (data: any) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/tasks", {
+
+      const response = await fetch(`/api/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,9 +100,10 @@ const QuickCreate = () => {
           projectId: data.project,
           priority: data.priority,
           dueDate: data.dueDate,
-          estimatedTime: data.estimatedTime,
+          estimatedTime: data.estimatedTime ? Number(data.estimatedTime) : undefined,
           sprintStartDate: data.sprintData?.startDate,
           sprintEndDate: data.sprintData?.endDate,
+          assignedTo: data.assigneeId ? Number(data.assigneeId) : undefined,
         }),
       });
 
@@ -126,6 +166,9 @@ const QuickCreate = () => {
           onSubmit={handleSubmit} 
           onCancel={() => setIsModalOpen(false)} 
           projects={projects}
+          currentUserId={currentUserId ?? undefined}
+          canAssignOthers={canAssignOthers}
+          teamMembers={teamMembers}
         />
       </Modal>
     </>

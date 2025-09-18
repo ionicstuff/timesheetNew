@@ -158,7 +158,14 @@ const Tasks = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> {/* Adjusted grid for remaining content */}
         <div className="lg:col-span-3 space-y-6"> {/* Main content area */}
           <TaskPriorityChart tasks={filteredTasks} />
-          <TaskList tasks={filteredTasks} loading={loading} />
+          {/* Empty state */}
+{!loading && filteredTasks.length === 0 && (
+  <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
+    No tasks found. Try clearing filters or creating a new task.
+  </div>
+)}
+<TaskList tasks={filteredTasks} />
+
         </div>
       </div>
     </div>

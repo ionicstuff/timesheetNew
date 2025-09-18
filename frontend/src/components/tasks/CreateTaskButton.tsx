@@ -7,43 +7,89 @@ import Modal from "@/components/ui/Modal";
 import TaskForm from "@/components/tasks/TaskForm";
 import { useToast } from "@/hooks/use-toast";
 
-const CreateTaskButton = () => {
+interface CreateTaskButtonProps {
+  defaultProjectId?: number; // preselect project when provided (e.g., on Project Detail)
+  overrideProjects?: any[];  // when provided, use this list instead of fetching
+}
+
+const CreateTaskButton = ({ defaultProjectId, overrideProjects }: CreateTaskButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [canAssignOthers, setCanAssignOthers] = useState<boolean>(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen) {
-      const fetchProjects = async () => {
-        try {
-          const token = localStorage.getItem("token");
-          const response = await fetch("/api/projects/my", {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
+    if (!isOpen) return;
+
+    const fetchContext = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Authentication token not found.");
+
+        // Projects
+        if (overrideProjects && overrideProjects.length > 0) {
+          setProjects(overrideProjects);
+        } else {
+          const projRes = await fetch(`/api/projects/my`, {
+            headers: { "Authorization": `Bearer ${token}` },
           });
-          if (!response.ok) {
-            throw new Error("Failed to fetch projects");
-          }
-          const data = await response.json();
-          setProjects(data);
-        } catch (error) {
-          console.error("Error fetching projects:", error);
-          toast({
-            title: "Error",
-            description: "Could not fetch projects.",
-            variant: "destructive",
-          });
+          if (!projRes.ok) throw new Error("Failed to fetch projects");
+          const projData = await projRes.json();
+          setProjects(projData);
         }
-      };
-      fetchProjects();
-    }
+
+        // Current user via /api/auth/me (robust across backends)
+        const profRes = await fetch(`/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (!meRes.ok) throw new Error("Failed to fetch current user");
+        const meJson = await meRes.json();
+        const me = meJson?.user;
+        const currentId = me?.id ?? null;
+        setCurrentUserId(currentId);
+
+        // Decide preliminary permission via basic role
+        const basicRole: string | undefined = me?.role; // e.g., 'admin','manager','hr','employee'
+        const allowedBasic = new Set(["admin", "manager"]);
+        let canAssign = !!basicRole && allowedBasic.has(String(basicRole).toLowerCase());
+
+        // Team members (attempt fetch; if non-empty, that confirms permission by team presence)
+        try {
+          const teamRes = await fetch(`/api/users/team?limit=100&includeSubordinates=true`, {
+            headers: { "Authorization": `Bearer ${token}` },
+          });
+          if (teamRes.ok) {
+            const teamJson = await teamRes.json();
+            const members = teamJson?.data?.teamMembers || [];
+            setTeamMembers(members);
+            if (!canAssign && members.length > 0) canAssign = true;
+          } else {
+            setTeamMembers([]);
+          }
+        } catch {
+          setTeamMembers([]);
+        }
+        setCanAssignOthers(canAssign);
+      } catch (error: any) {
+        console.error("Error loading task creation context:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Could not load task creation context.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchContext();
   }, [isOpen, toast]);
 
   const handleSubmit = async (data: any) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/tasks", {
+
+      const response = await fetch(`/api/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,9 +101,10 @@ const CreateTaskButton = () => {
           projectId: data.project,
           priority: data.priority,
           dueDate: data.dueDate,
-          estimatedTime: data.estimatedTime,
+          estimatedTime: data.estimatedTime ? Number(data.estimatedTime) : undefined,
           sprintStartDate: data.sprintData?.startDate,
           sprintEndDate: data.sprintData?.endDate,
+          assignedTo: data.assigneeId ? Number(data.assigneeId) : undefined,
         }),
       });
 
@@ -98,6 +145,10 @@ const CreateTaskButton = () => {
           onSubmit={handleSubmit} 
           onCancel={() => setIsOpen(false)} 
           projects={projects}
+          initialData={defaultProjectId ? { project: String(defaultProjectId) } : undefined}
+          currentUserId={currentUserId ?? undefined}
+          canAssignOthers={canAssignOthers}
+          teamMembers={teamMembers}
         />
       </Modal>
     </>

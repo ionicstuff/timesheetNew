@@ -35,13 +35,10 @@ const Dashboard = () => {
           throw new Error("Authentication token not found.");
         }
         // Use absolute backend URL in dev to avoid proxy mismatch
-        const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
-        const apiUrl = baseUrl.includes('localhost') ? 'http://localhost:3000' : '';
-
         const headers = { "Authorization": `Bearer ${token}` } as Record<string,string>;
         const [statsRes, tasksRes] = await Promise.all([
-          fetch(`${apiUrl}/api/tasks/stats`, { headers }),
-          fetch(`${apiUrl}/api/tasks/my-tasks?upcomingWithinDays=3&limit=5`, { headers })
+          fetch(`/api/tasks/stats`, { headers }),
+          fetch(`/api/tasks/my-tasks?upcomingWithinDays=3&limit=5`, { headers })
         ]);
 
         if (!statsRes.ok) {

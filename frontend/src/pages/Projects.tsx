@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -34,73 +34,95 @@ import CreateProjectButton from "@/components/projects/CreateProjectButton";
 import ProjectFilter from "@/components/projects/ProjectFilter";
 import ProjectCard from "@/components/projects/ProjectCard";
 
+import axios from "axios";
 const Projects = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
 
-  const projects = [
-    { 
-      id: 1, 
-      name: "Website Redesign", 
-      description: "Complete overhaul of company website", 
-      progress: 65, 
-      tasks: 12,
-      members: 5,
-      color: "bg-blue-500",
-      status: "active",
-      dueDate: "Dec 15, 2023",
-      membersList: ["Alex Johnson", "Sam Smith", "Taylor Brown"]
-    },
-    { 
-      id: 2, 
-      name: "Product Launch", 
-      description: "Launch of new SaaS product", 
-      progress: 30, 
-      tasks: 8,
-      members: 3,
-      color: "bg-green-500",
-      status: "active",
-      dueDate: "Jan 30, 2024",
-      membersList: ["Jordan Lee", "Taylor Brown"]
-    },
-    { 
-      id: 3, 
-      name: "Marketing Campaign", 
-      description: "Q3 marketing initiatives", 
-      progress: 90, 
-      tasks: 5,
-      members: 7,
-      color: "bg-purple-500",
-      status: "completed",
-      dueDate: "Nov 30, 2023",
-      membersList: ["Alex Johnson", "Sam Smith", "Jordan Lee", "Taylor Brown"]
-    },
-    { 
-      id: 4, 
-      name: "Mobile App Development", 
-      description: "Native mobile application for iOS and Android", 
-      progress: 15, 
-      tasks: 22,
-      members: 6,
-      color: "bg-orange-500",
-      status: "on-hold",
-      dueDate: "Mar 15, 2024",
-      membersList: ["Casey Davis", "Morgan Reed", "Jordan Lee"]
-    },
-    { 
-      id: 5, 
-      name: "Customer Portal", 
-      description: "Self-service portal for customers", 
-      progress: 45, 
-      tasks: 15,
-      members: 4,
-      color: "bg-red-500",
-      status: "active",
-      dueDate: "Feb 28, 2024",
-      membersList: ["Alex Johnson", "Casey Davis", "Morgan Reed"]
-    },
-  ];
+  // API & UI types
+type ApiProject = {
+  id: number;
+  name: string;
+  description?: string;
+  endDate?: string;
+  status?: string;
+  tasksCount: number;
+  openTasksCount: number;
+  membersCount: number;
+  statusColor?: "green" | "red" | "orange" | null;
+};
+
+type UiProject = {
+  id: number;
+  name: string;
+  description: string;
+  progress: number;
+  tasks: number;
+  members: number;
+  color: string;  // tailwind class
+  status: string;
+  dueDate: string;
+  membersList?: string[];
+};
+
+const mapProjectForUI = (p: ApiProject): UiProject => {
+  const progress = p.tasksCount > 0
+    ? Math.round(((p.tasksCount - p.openTasksCount) / p.tasksCount) * 100)
+    : 0;
+
+  const colorClass =
+    p.statusColor === "green"  ? "bg-green-500"  :
+    p.statusColor === "red"    ? "bg-red-500"    :
+    p.statusColor === "orange" ? "bg-orange-500" :
+                                 "bg-gray-400";
+
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description ?? "",
+    progress,
+    tasks: p.tasksCount,
+    members: p.membersCount,
+    color: colorClass,
+    status: p.status ?? "active",
+    dueDate: p.endDate ? new Date(p.endDate).toLocaleDateString() : "—",
+  };
+};
+
+const [projects, setProjects] = useState<UiProject[]>([]);
+const [loading, setLoading] = useState<boolean>(true);
+const [statusFilter, setStatusFilter] = useState<string>('all');
+
+useEffect(() => {
+  const run = async () => {
+    try {
+      setLoading(true);
+      const base = '';
+
+      const params = new URLSearchParams();
+      if (searchTerm) params.set('q', searchTerm);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      params.set('limit', '30');
+      params.set('offset', '0');
+      params.set('sortBy', 'name');
+      params.set('sortDir', 'ASC');
+
+      const res = await axios.get<ApiProject[] | { projects: ApiProject[] }>(`${base}/api/projects?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
+      });
+
+      const list = Array.isArray(res.data) ? res.data : (res.data && 'projects' in res.data ? res.data.projects : []);
+      setProjects(list.map(mapProjectForUI)); 
+    } catch (e) {
+      console.error('Failed to load projects', e);
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  run();
+}, [searchTerm, statusFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -157,7 +179,7 @@ const Projects = () => {
         </div>
         <div className="flex gap-2">
           <ProjectFilter />
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Status" />
             </SelectTrigger>

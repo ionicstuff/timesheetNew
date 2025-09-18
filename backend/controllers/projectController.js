@@ -40,8 +40,64 @@ const upload = multer({
 });
 
 // Get all projects
+// Get all projects (with filtering + pagination)
 const getProjects = async (req, res) => {
   try {
+    // ----- query params -----
+    const {
+      q,
+      status,          // "active" | "completed" | "on-hold" | comma list
+      clientId,        // numeric
+      managerId,       // numeric
+      limit = 20,
+      offset = 0,
+      sortBy = 'name', // one of: name | endDate | status | createdAt | tasksCount | membersCount | progress
+      sortDir = 'ASC', // ASC | DESC
+    } = req.query;
+
+    // ----- guards to prevent SQL injection via ORDER BY -----
+    const sortKeyMap = {
+      name: 'p.project_name',
+      endDate: 'p.end_date',
+      status: 'p.status',
+      createdAt: 'p.created_at',
+      tasksCount: 'tasks_count',
+      membersCount: 'members_count',
+      // pseudo "progress": completed/total based on your aliases -> order by (tasks_count - open_tasks_count) / NULLIF(tasks_count,0)
+      progress: '(COALESCE(tasks_count,0) - COALESCE(open_tasks_count,0))::float / NULLIF(COALESCE(tasks_count,0),0)',
+    };
+    const orderCol = sortKeyMap[sortBy] || 'p.project_name';
+    const orderDir = String(sortDir).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+    // ----- dynamic where -----
+    const whereParts = [];
+    const binds = [];
+    let i = 1;
+
+    if (q) {
+      whereParts.push(`(p.project_name ILIKE $${i} OR p.description ILIKE $${i})`);
+      binds.push(`%${q}%`); i++;
+    }
+
+    if (status) {
+      const list = status.split(',').map(s => s.trim()).filter(Boolean);
+      if (list.length) {
+        whereParts.push(`p.status = ANY($${i}::text[])`);
+        binds.push(list); i++;
+      }
+    }
+
+    if (clientId) {
+      whereParts.push(`p.client_id = $${i}`); binds.push(Number(clientId)); i++;
+    }
+
+    if (managerId) {
+      whereParts.push(`p.project_manager_id = $${i}`); binds.push(Number(managerId)); i++;
+    }
+
+    const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+    // ----- SELECT with aggregates -----
     const [projects] = await sequelize.query(`
       SELECT 
         p.*,
@@ -71,82 +127,46 @@ const getProjects = async (req, res) => {
             AND COALESCE(
                   p.estimated_time, p.estimated_hours,
                   (SELECT COALESCE(SUM(t3.estimated_time), 0) FROM tasks t3 WHERE t3.project_id = p.id)
-                ) IS NOT NULL
-            AND GREATEST(
-                  COALESCE((SELECT SUM(te3.minutes) FROM timesheet_entries te3 WHERE te3.project_id = p.id), 0) / 60.0,
-                  COALESCE((SELECT SUM(ts3.total_tracked_seconds) FROM tasks ts3 WHERE ts3.project_id = p.id), 0) / 3600.0
-                ) <= COALESCE(
-                  p.estimated_time, p.estimated_hours,
-                  (SELECT COALESCE(SUM(t4.estimated_time), 0) FROM tasks t4 WHERE t4.project_id = p.id)
-                )
+                ) >= GREATEST(
+                      COALESCE((SELECT SUM(te3.minutes) FROM timesheet_entries te3 WHERE te3.project_id = p.id), 0) / 60.0,
+                      COALESCE((SELECT SUM(ts3.total_tracked_seconds) FROM tasks ts3 WHERE ts3.project_id = p.id), 0) / 3600.0
+                    )
           THEN TRUE ELSE FALSE END AS completed_on_time,
         CASE 
-          WHEN p.status <> 'completed' AND p.end_date IS NOT NULL AND CURRENT_DATE > p.end_date
-          THEN TRUE ELSE FALSE END AS is_delayed,
+          WHEN p.status != 'completed' AND p.end_date IS NOT NULL AND p.end_date < NOW() THEN TRUE
+          ELSE FALSE
+        END AS is_delayed,
         CASE 
-          WHEN p.status <> 'completed' AND p.start_date IS NOT NULL AND p.end_date IS NOT NULL 
-               AND CURRENT_DATE >= (p.end_date - CEIL(((p.end_date - p.start_date)::numeric * 0.1))::int)
-               AND CURRENT_DATE <= p.end_date
-          THEN TRUE ELSE FALSE END AS approaching_deadline,
-        -- Final color for status badge
+          WHEN p.status != 'completed' AND p.end_date IS NOT NULL AND p.end_date BETWEEN NOW() AND NOW() + INTERVAL '7 days' THEN TRUE
+          ELSE FALSE
+        END AS approaching_deadline,
         CASE 
-          WHEN p.status = 'completed' 
-            AND COALESCE(
-                  p.estimated_time, p.estimated_hours,
-                  (SELECT COALESCE(SUM(t5.estimated_time), 0) FROM tasks t5 WHERE t5.project_id = p.id)
-                ) IS NOT NULL
-            AND GREATEST(
-                  COALESCE((SELECT SUM(te5.minutes) FROM timesheet_entries te5 WHERE te5.project_id = p.id), 0) / 60.0,
-                  COALESCE((SELECT SUM(ts5.total_tracked_seconds) FROM tasks ts5 WHERE ts5.project_id = p.id), 0) / 3600.0
-                ) <= COALESCE(
-                  p.estimated_time, p.estimated_hours,
-                  (SELECT COALESCE(SUM(t6.estimated_time), 0) FROM tasks t6 WHERE t6.project_id = p.id)
-                )
-          THEN 'green'
-          WHEN (
-            p.status = 'completed' 
-            AND COALESCE(
-                  p.estimated_time, p.estimated_hours,
-                  (SELECT COALESCE(SUM(t7.estimated_time), 0) FROM tasks t7 WHERE t7.project_id = p.id)
-                ) IS NOT NULL
-            AND GREATEST(
-                  COALESCE((SELECT SUM(te7.minutes) FROM timesheet_entries te7 WHERE te7.project_id = p.id), 0) / 60.0,
-                  COALESCE((SELECT SUM(ts7.total_tracked_seconds) FROM tasks ts7 WHERE ts7.project_id = p.id), 0) / 3600.0
-                ) > COALESCE(
-                  p.estimated_time, p.estimated_hours,
-                  (SELECT COALESCE(SUM(t8.estimated_time), 0) FROM tasks t8 WHERE t8.project_id = p.id)
-                )
-          ) OR (p.status <> 'completed' AND p.end_date IS NOT NULL AND CURRENT_DATE > p.end_date)
-          THEN 'red'
-          WHEN p.status <> 'completed' AND p.start_date IS NOT NULL AND p.end_date IS NOT NULL 
-               AND CURRENT_DATE >= (p.end_date - CEIL(((p.end_date - p.start_date)::numeric * 0.1))::int)
-               AND CURRENT_DATE <= p.end_date
-          THEN 'orange'
+          WHEN p.status = 'completed' THEN 'green'
+          WHEN p.end_date IS NOT NULL AND p.end_date < NOW() THEN 'red'
+          WHEN p.end_date IS NOT NULL AND p.end_date BETWEEN NOW() AND NOW() + INTERVAL '7 days' THEN 'orange'
           ELSE NULL
         END AS status_color
       FROM projects p
       LEFT JOIN clients c ON p.client_id = c.id
       LEFT JOIN users u ON p.project_manager_id = u.id
       LEFT JOIN (
-        SELECT 
-          t.project_id,
-          COUNT(*) AS total_tasks,
-          SUM(CASE WHEN t.status <> 'completed' THEN 1 ELSE 0 END) AS open_tasks
-        FROM tasks t
-        GROUP BY t.project_id
+        SELECT project_id, COUNT(*) AS total_tasks,
+               COUNT(*) FILTER (WHERE status != 'completed') AS open_tasks
+        FROM tasks
+        GROUP BY project_id
       ) tc ON tc.project_id = p.id
       LEFT JOIN (
-        SELECT 
-          t.project_id,
-          COUNT(DISTINCT t.assigned_to) AS members
-        FROM tasks t
-        WHERE t.assigned_to IS NOT NULL
-        GROUP BY t.project_id
+        SELECT project_id, COUNT(DISTINCT assigned_to) AS members
+        FROM tasks
+        WHERE assigned_to IS NOT NULL
+        GROUP BY project_id
       ) mc ON mc.project_id = p.id
-      ORDER BY p.project_name ASC
-    `);
+      ${whereSQL}
+      ORDER BY ${orderCol} ${orderDir}
+      LIMIT $${i} OFFSET $${i+1}
+    `, { bind: [...binds, Number(limit), Number(offset)] });
 
-    // Transform data to match expected format
+    // ----- transform to API response -----
     const transformedProjects = projects.map(project => ({
       id: project.id,
       name: project.project_name,
@@ -154,38 +174,34 @@ const getProjects = async (req, res) => {
       startDate: project.start_date,
       endDate: project.end_date,
       isActive: project.is_active,
-      status: project.status, // include current status so UI can show Completed
-      closedAt: project.closed_at,
-      client: {
-        id: project.client_id,
-        name: project.client_name
-      },
+      client: { id: project.client_id, name: project.client_name },
       manager: {
         id: project.project_manager_id,
         firstName: project.manager_first_name,
-        lastName: project.manager_last_name
+        lastName: project.manager_last_name,
+        fullName: project.manager_first_name && project.manager_last_name
+          ? `${project.manager_first_name} ${project.manager_last_name}`
+          : null
       },
       createdAt: project.created_at,
-      // Aggregate stats
       tasksCount: Number(project.tasks_count) || 0,
       openTasksCount: Number(project.open_tasks_count) || 0,
       membersCount: Number(project.members_count) || 0,
-      // Performance and timeline indicators for UI badges
       allocatedHours: project.allocated_hours != null ? Number(project.allocated_hours) : null,
       actualHours: project.actual_hours_calc != null ? Number(project.actual_hours_calc) : null,
       completedOnTime: !!project.completed_on_time,
       isDelayed: !!project.is_delayed,
       approachingDeadline: !!project.approaching_deadline,
-      statusColor: project.status_color || null
+      statusColor: project.status_color || null,
+      status: project.status || null,
     }));
 
-    res.json(transformedProjects);
+    return res.json(transformedProjects);
   } catch (error) {
-
     console.error('Error fetching projects from the database:', error);
-    res.status(500).json({ message: 'Error fetching projects', error: error.message });
+    return res.status(500).json({ message: 'Error fetching projects', error: error.message });
   }
-};
+};;
 
 // Get a single project
 const getProject = async (req, res) => {
@@ -839,9 +855,58 @@ const getMyProjects = async (req, res) => {
   }
 };
 
+
+
+// List all clients for dropdowns
+const getClients = async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(`
+      SELECT id, client_name
+      FROM clients
+      ORDER BY client_name ASC
+    `);
+    const clients = rows.map(r => ({ id: r.id, name: r.client_name
+  , getClients,
+  getClientSpocs
+}));
+    return res.json(clients);
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    return res.status(500).json({ message: 'Error fetching clients', error: error.message });
+  }
+};
+
+// List SPOCs for a given client
+const getClientSpocs = async (req, res) => {
+  try {
+    const { id } = req.params; // client id
+    const [rows] = await sequelize.query(`
+      SELECT id, name, email, phone, designation, department
+      FROM spocs
+      WHERE client_id = $1
+      ORDER BY name ASC
+    `, { bind: [id] });
+
+    const spocs = rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      designation: r.designation,
+      department: r.department
+    }));
+
+    return res.json(spocs);
+  } catch (error) {
+    console.error('Error fetching client SPOCs:', error);
+    return res.status(500).json({ message: 'Error fetching SPOCs', error: error.message });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
+
   createProject,
   updateProject,
   deleteProject,
@@ -852,5 +917,7 @@ module.exports = {
   getUsers,
   closeProject,
   getProjectPerformance,
-  getMyProjects
+  getMyProjects,
+  getClients,
+  getClientSpocs
 };

@@ -77,21 +77,60 @@ const getTask = async (req, res) => {
 // Create a new task
 const createTask = async (req, res) => {
   try {
-    const { projectId, name, description, assignedTo, estimatedTime, sprintStartDate, sprintEndDate, priority } = req.body; // Added priority
+    const { projectId, name, description, assignedTo: requestedAssignedTo, estimatedTime, sprintStartDate, sprintEndDate, priority } = req.body;
+
+    // Determine final assignee (default to current user)
+    let finalAssignedTo = requestedAssignedTo || req.user?.id || null;
+
+    // If assigning to someone else, enforce permission
+    if (finalAssignedTo && req.user?.id && finalAssignedTo !== req.user.id) {
+      const targetUser = await User.findByPk(finalAssignedTo);
+      if (!targetUser || !targetUser.isActive) {
+        return res.status(400).json({ message: 'Target user is not active or does not exist' });
+      }
+
+      // 1) Hierarchy containment
+      const [rows] = await sequelize.query(`
+        WITH RECURSIVE team(user_id) AS (
+          SELECT user_id FROM user_hierarchies WHERE parent_user_id = $1 AND is_active
+          UNION
+          SELECT uh.user_id FROM user_hierarchies uh JOIN team t ON uh.parent_user_id = t.user_id WHERE uh.is_active
+        ) SELECT 1 FROM team WHERE user_id = $2 LIMIT 1
+      `, { bind: [req.user.id, finalAssignedTo] });
+
+      let hasPermission = rows && rows.length > 0;
+
+      // 2) PM or 3) Account Manager
+      if (!hasPermission && projectId) {
+        const project = await Project.findByPk(projectId);
+        if (project && project.projectManagerId === req.user.id) hasPermission = true;
+        if (!hasPermission && project && project.clientId) {
+          const [clients] = await sequelize.query(
+            'SELECT 1 FROM clients WHERE id = $1 AND account_manager_id = $2 LIMIT 1',
+            { bind: [project.clientId, req.user.id] }
+          );
+          if (clients && clients.length > 0) hasPermission = true;
+        }
+      }
+
+      if (!hasPermission) {
+        return res.status(403).json({ message: 'You are not authorized to assign this task to that user' });
+      }
+    }
+
     const task = await Task.create({
       projectId,
       name,
       description,
-      assignedTo,
+      assignedTo: finalAssignedTo,
       estimatedTime,
       sprintStartDate,
       sprintEndDate,
-      priority, // Added priority
+      priority: priority || 'Medium',
       createdBy: req.user?.id || null
     });
 
-    // Notify assignee (if any)
-    if (assignedTo) {
+    if (task.assignedTo) {
       try { await notificationSvc.notifyTaskAssigned(task, req.user?.id || null); } catch (e) { console.error('notifyTaskAssigned failed', e); }
     }
 
@@ -207,261 +246,61 @@ const rejectTask = async (req, res) => {
 const getMyTasks = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      console.error('req.user or req.user.id is missing in getMyTasks:', req.user);
       return res.status(401).json({ message: 'Unauthorized: User information not available.' });
     }
-    console.log('req.user in getMyTasks:', req.user); // Debugging line
 
     const { status, acceptanceStatus, upcomingWithinDays, limit: limitParam, projectId, searchTerm, priority } = req.query;
-    const { Op } = require('sequelize'); // Ensure Op is available
+    const { Op } = require('sequelize');
 
     const whereClause = { assignedTo: req.user.id };
-    let projectInclude = {
-      model: Project,
-      as: 'project',
-      attributes: ['id', 'projectName', 'projectCode']
-    };
 
     if (status) whereClause.status = status;
     if (acceptanceStatus) whereClause.acceptanceStatus = acceptanceStatus;
     if (projectId) whereClause.projectId = projectId;
-    if (priority) whereClause.priority = priority; // Add priority filter
+    if (priority) whereClause.priority = priority;
 
-    if (searchTerm) {
-      const searchCondition = {
-        [Op.or]: [
-          { name: { [Op.iLike]: `%${searchTerm}%` } },
-          { '$project.projectName
-
-// Get time logs for a task
-const getTaskTimeLogs = async (req, res) => {
-  try {
-    const TaskTimeLog = require('../models/TaskTimeLog');
-    const { id } = req.params;
-    const logs = await TaskTimeLog.findAll({
-      where: { taskId: id },
-      order: [['created_at', 'ASC']]
-    });
-    res.json(logs);
-  } catch (error) {
-    console.error('Error fetching task time logs:', error);
-    res.status(500).json({ message: 'Error fetching task time logs', error: error.message });
-  }
-};
-
-// Assign a task to a user (single)
-const assignTask = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { assignedTo, confirmOverwrite } = req.body;
-    const task = await Task.findByPk(id, { include: [{ model: Project, as: 'project' }] });
-    if (!task) return res.status(404).json({ message: 'Task not found' });
-
-    const targetUser = await User.findByPk(assignedTo);
-    if (!targetUser || !targetUser.is_active) return res.status(400).json({ message: 'Target user is not active or does not exist' });
-
-    // Permission checks: requester must manage targetUser via user_hierarchies or be project manager or account manager
-    const sequelize = require('../config/database');
-    // Check user_hierarchies - direct or recursive
-    const [rows] = await sequelize.query(`
-      WITH RECURSIVE team(user_id) AS (
-        SELECT user_id FROM user_hierarchies WHERE parent_user_id = $1 AND is_active
-        UNION
-        SELECT uh.user_id FROM user_hierarchies uh JOIN team t ON uh.parent_user_id = t.user_id WHERE uh.is_active
-      ) SELECT 1 FROM team WHERE user_id = $2 LIMIT 1
-    `, { bind: [req.user.id, assignedTo] });
-
-    let hasPermission = rows && rows.length > 0;
-
-    // Check if requester is project manager
-    if (!hasPermission && task.project && task.project.projectManagerId === req.user.id) hasPermission = true;
-
-    // Check if requester is account manager for the project client
-    if (!hasPermission && task.project && task.project.clientId) {
-      const [clients] = await sequelize.query('SELECT 1 FROM clients WHERE id = $1 AND account_manager_id = $2 LIMIT 1', { bind: [task.project.clientId, req.user.id] });
-      if (clients && clients.length > 0) hasPermission = true;
-    }
-
-    if (!hasPermission) return res.status(403).json({ message: 'You are not authorized to assign this task to that user' });
-
-    // Overwrite check
-    if (task.assignedTo && task.assignedTo !== assignedTo && !confirmOverwrite) {
-      return res.status(409).json({ message: 'Task already assigned. Set confirmOverwrite=true to force overwrite', currentAssignee: task.assignedTo });
-    }
-
-    const prevAssignee = task.assignedTo;
-    await task.update({ assignedTo });
-
-    // Notifications for reassignment/assignment
-    try { await notificationSvc.notifyTaskReassigned(task, prevAssignee, req.user?.id || null); } catch (e) { console.error('notifyTaskReassigned failed', e); }
-
-    // Send email notification (emailService will fallback to console in dev)
-    const emailService = require('../services/emailService');
-    try {
-      const assignee = await User.findByPk(assignedTo);
-      await emailService.sendTaskStatusEmail(task, 'assigned', req.user);
-      // Also send direct email to assignee if they have email
-      if (assignee?.email) {
-        await emailService.transporter.sendMail({
-          from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
-          to: assignee.email,
-          subject: `You have been assigned a task: ${task.name}`,
-          html: `<p>Hi ${assignee.firstName || ''},</p><p>You have been assigned the task <strong>${task.name}</strong> in project ${task.project?.projectName || task.projectId}.</p><p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/tasks/${task.id}">View Task</a></p>`
-        });
-      }
-    } catch (e) {
-      console.error('Failed to send assignment email', e);
-    }
-
-    res.json({ message: 'Task assigned successfully', task });
-  } catch (error) {
-    console.error('Error assigning task:', error);
-    res.status(500).json({ message: 'Error assigning task', error: error.message });
-  }
-};
-
-const TaskTimerService = require('../services/TaskTimerService');
-
-const startTask = async (req, res) => {
-  try {
-    const task = await TaskTimerService.start(req.params.id, req.user, req.body?.note || null);
-    res.json({ message: 'Task started', task });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-const pauseTask = async (req, res) => {
-  try {
-    const task = await TaskTimerService.pause(req.params.id, req.user, req.body?.note || null);
-    res.json({ message: 'Task paused', task });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-const resumeTask = async (req, res) => {
-  try {
-    const task = await TaskTimerService.resume(req.params.id, req.user, req.body?.note || null);
-    res.json({ message: 'Task resumed', task });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-const stopTask = async (req, res) => {
-  try {
-    const task = await TaskTimerService.stop(req.params.id, req.user, req.body?.note || null);
-    res.json({ message: 'Task stopped', task });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-const completeTask = async (req, res) => {
-  try {
-    const task = await TaskTimerService.complete(req.params.id, req.user, req.body?.note || null);
-    res.json({ message: 'Task completed and timesheet prefilled', task });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-// Stats endpoint
-const getTaskStats = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { projectId } = req.query;
-    const { Op } = require('sequelize');
-
-    const baseWhere = projectId ? { projectId } : {};
-    const isPending = { status: { [Op.in]: ['pending','in_progress','paused'] }, acceptanceStatus: { [Op.ne]: 'rejected' } };
-    const isOverdue = {
-      sprintEndDate: { [Op.lt]: new Date() },
-      status: { [Op.notIn]: ['completed','cancelled'] }
-    };
-
-    // Assigned to me
-    const assignedWhere = { ...baseWhere, assignedTo: userId };
-    const assignedTotal = await Task.count({ where: assignedWhere });
-    const assignedPending = await Task.count({ where: { ...assignedWhere, ...isPending } });
-    const assignedOverdue = await Task.count({ where: { ...assignedWhere, ...isOverdue } });
-
-    // Created by me
-    const createdWhere = { ...baseWhere, createdBy: userId };
-    const createdTotal = await Task.count({ where: createdWhere });
-    const createdPending = await Task.count({ where: { ...createdWhere, ...isPending } });
-    const createdOverdue = await Task.count({ where: { ...createdWhere, ...isOverdue } });
-
-    res.json({
-      assigned: { total: assignedTotal, pending: assignedPending, overdue: assignedOverdue },
-      created:  { total: createdTotal,  pending: createdPending,  overdue: createdOverdue }
-    });
-  } catch (error) {
-    console.error('Error fetching task stats:', error);
-    res.status(500).json({ message: 'Error fetching task stats', error: error.message });
-  }
-};
-
-module.exports = {
-  getTasks,
-  getTasksByProject,
-  getTask,
-  createTask,
-  updateTask,
-  deleteTask,
-  acceptTask,
-  rejectTask,
-  getMyTasks,
-  assignTask,
-  startTask,
-  pauseTask,
-  resumeTask,
-  stopTask,
-  completeTask,
-  getTaskTimeLogs,
-  getTaskStats
-};
-
-: { [Op.iLike]: `%${searchTerm}%` } } // Search in project name
-        ]
-      };
-      Object.assign(whereClause, searchCondition);
-    }
-
-    // Upcoming filter: tasks due within next N days, exclude completed/cancelled and rejected
-    let order = [['created_at', 'DESC']];
-    let limit;
     if (upcomingWithinDays) {
-      const n = Math.max(1, parseInt(upcomingWithinDays, 10) || 0);
-      const start = new Date();
-      start.setHours(0, 0, 0, 0); // include tasks due earlier today
-      const end = new Date(start);
-      end.setDate(start.getDate() + n);
-      end.setHours(23, 59, 59, 999);
-
-      whereClause.sprintEndDate = { [Op.gte]: start, [Op.lte]: end };
-      // Exclude completed/cancelled and explicitly rejected
-      whereClause.status = whereClause.status || { [Op.notIn]: ['completed', 'cancelled'] };
-      if (!acceptanceStatus) {
-        whereClause.acceptanceStatus = { [Op.ne]: 'rejected' };
+      const days = parseInt(upcomingWithinDays, 10);
+      if (!Number.isNaN(days) && days > 0) {
+        const end = new Date();
+        end.setDate(end.getDate() + days);
+        whereClause.sprintEndDate = { [Op.lte]: end };
       }
-      order = [['sprintEndDate', 'ASC'], ['created_at', 'DESC']];
     }
 
-    if (limitParam) {
-      const l = parseInt(limitParam, 10);
-      if (!Number.isNaN(l) && l > 0) limit = l;
+    const searchOr = [];
+    if (searchTerm && String(searchTerm).trim()) {
+      const t = `%${searchTerm}%`;
+      searchOr.push({ name: { [Op.iLike]: t } });
+      const SequelizeLib = require('sequelize');
+      searchOr.push(SequelizeLib.where(SequelizeLib.col('project.project_name'), { [Op.iLike]: t }));
     }
+
+    let finalWhere = whereClause;
+    if (searchOr.length > 0) {
+      finalWhere = { [Op.and]: [whereClause, { [Op.or]: searchOr }] };
+    }
+
+    const limit = limitParam ? Math.min(parseInt(limitParam, 10) || 25, 200) : 100;
 
     const tasks = await Task.findAll({
-      where: whereClause,
+      where: finalWhere,
       include: [
-        projectInclude // Use the projectInclude object
+        { 
+          model: Project, 
+          as: 'project',
+          attributes: ['id', 'projectName', 'projectCode']
+        },
+        { 
+          model: User, 
+          as: 'assignee',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        }
       ],
-      order,
-      ...(limit ? { limit } : {})
+      order: [['created_at', 'DESC']],
+      limit
     });
+
     res.json(tasks);
   } catch (error) {
     console.error('Error fetching my tasks:', error);
@@ -658,4 +497,3 @@ module.exports = {
   getTaskTimeLogs,
   getTaskStats
 };
-

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -28,35 +29,69 @@ import ProjectSprintVisualization from "@/components/projects/ProjectSprintVisua
 import ProjectSprintCalendar from "@/components/projects/ProjectSprintCalendar";
 
 const ProjectDetail = () => {
-  const [tasks, setTasks] = useState([
-    { id: 1, title: "Design homepage", project: "Website Redesign", dueDate: "Today", priority: "High" as const, completed: false, assignedTo: "Alex Johnson" },
-    { id: 2, title: "Meeting with client", project: "Product Launch", dueDate: "Tomorrow", priority: "Medium" as const, completed: false },
-    { id: 3, title: "Update documentation", project: "Marketing Campaign", dueDate: "In 2 days", priority: "Low" as const, completed: true },
-    { id: 4, title: "Create wireframes", project: "Website Redesign", dueDate: "Next week", priority: "High" as const, completed: false, assignedTo: "Sam Smith" },
-    { id: 5, title: "Research competitors", project: "Product Launch", dueDate: "In 2 weeks", priority: "Medium" as const, completed: false },
-  ]);
+  const { id } = useParams();
+  const projectId = useMemo(() => (id ? parseInt(id, 10) : NaN), [id]);
 
-  const project = {
-    id: 1,
-    name: "Website Redesign",
-    description: "Complete overhaul of company website to improve user experience and modernize the brand with a focus on mobile responsiveness and accessibility.",
-    progress: 65,
-    tasks: 12,
-    completedTasks: 8,
-    pendingTasks: 4,
-    members: 5,
-    color: "bg-blue-500",
-    startDate: "Oct 1, 2023",
-    dueDate: "Dec 15, 2023",
-    status: "active",
-    membersList: [
-      { name: "Alex Johnson", role: "Project Manager", avatar: "https://i.pravatar.cc/150?u=alex" },
-      { name: "Sam Smith", role: "Designer", avatar: "https://i.pravatar.cc/150?u=sam" },
-      { name: "Taylor Brown", role: "Developer", avatar: "https://i.pravatar.cc/150?u=taylor" },
-      { name: "Jordan Lee", role: "QA Engineer", avatar: "https://i.pravatar.cc/150?u=jordan" },
-      { name: "Casey Davis", role: "Content Writer", avatar: "https://i.pravatar.cc/150?u=casey" }
-    ]
-  };
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [project, setProject] = useState<any | null>(null);
+  const [files, setFiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch project details, tasks, and files
+  useEffect(() => {
+    const run = async () => {
+      if (!projectId || Number.isNaN(projectId)) return;
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token') || '';
+        const headers = { Authorization: `Bearer ${token}` } as Record<string,string>;
+
+        const [projRes, tasksRes, filesRes] = await Promise.all([
+          fetch(`/api/projects/${projectId}`, { headers }),
+          fetch(`/api/tasks/project/${projectId}`, { headers }),
+          fetch(`/api/projects/${projectId}/files`, { headers }),
+        ]);
+
+        if (projRes.ok) {
+          const proj = await projRes.json();
+          setProject(proj);
+        } else {
+          setProject(null);
+        }
+
+        if (tasksRes.ok) {
+          const t = await tasksRes.json();
+          // Map tasks to TaskList shape
+          const mapped = (Array.isArray(t) ? t : []).map((task: any) => ({
+            id: task.id,
+            title: task.name || task.title || 'Untitled Task',
+            project: typeof task.project === 'string' ? task.project : (task.project?.projectName || `Project #${task.projectId ?? ''}`),
+            dueDate: task.sprintEndDate ? new Date(task.sprintEndDate).toLocaleDateString() : (task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'),
+            priority: (['High','Medium','Low'].includes(String(task.priority))) ? task.priority : 'Medium',
+            completed: String(task.status || '').toLowerCase() === 'completed',
+            assignedTo: task.assignee ? `${task.assignee.firstName ?? ''} ${task.assignee.lastName ?? ''}`.trim() || task.assignee.email : task.assignedTo
+          }));
+          setTasks(mapped);
+        } else {
+          setTasks([]);
+        }
+
+        if (filesRes.ok) {
+          const f = await filesRes.json();
+          setFiles(Array.isArray(f) ? f : []);
+        } else {
+          setFiles([]);
+        }
+      } catch (e) {
+        console.error('Failed to load project detail', e);
+        setTasks([]);
+        setFiles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [projectId]);
 
   // Mock sprint data
   const sprints = [
@@ -103,7 +138,7 @@ const ProjectDetail = () => {
   ];
 
   const toggleTask = (id: number) => {
-    setTasks(tasks.map(task => 
+    setTasks(tasks.map((task: any) => 
       task.id === id ? { ...task, completed: !task.completed } : task
     ));
   };
@@ -117,15 +152,33 @@ const ProjectDetail = () => {
     }
   };
 
+  if (loading) {
+    return <div className="p-6">Loading project...</div>;
+  }
+
+  if (!project) {
+    return <div className="p-6 text-red-500">Project not found.</div>;
+  }
+
+  // Derive some UI-friendly data
+  const membersList = (project.teamMembers || []).map((m: any) => ({
+    name: [m?.assignedTo?.firstName, m?.assignedTo?.lastName].filter(Boolean).join(' ') || 'Member',
+    role: m?.assignedTo?.department || 'Team Member',
+    avatar: undefined as string | undefined,
+  }));
+
+  const completedTasks = tasks.filter((t: any) => t.completed).length;
+  const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className={`h-4 w-4 rounded-full ${project.color}`}></div>
-            <h1 className="text-2xl font-bold">{project.name}</h1>
-            <Badge className={getStatusColor(project.status)}>
-              {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+            <h1 className="text-2xl font-bold">{project.name || project.project_name}</h1>
+            <Badge className={getStatusColor(project.status || 'active')}>
+              {(project.status || 'active').charAt(0).toUpperCase() + (project.status || 'active').slice(1)}
             </Badge>
           </div>
           <p className="text-muted-foreground max-w-3xl">{project.description}</p>
@@ -157,8 +210,8 @@ const ProjectDetail = () => {
                     <span className="text-sm">Progress</span>
                   </div>
                   <div className="mt-2">
-                    <div className="text-2xl font-bold">{project.progress}%</div>
-                    <Progress value={project.progress} className="mt-2" />
+                    <div className="text-2xl font-bold">{progress}%</div>
+                    <Progress value={progress} className="mt-2" />
                   </div>
                 </div>
                 
@@ -167,7 +220,7 @@ const ProjectDetail = () => {
                     <CheckCircle className="h-4 w-4 mr-2" />
                     <span className="text-sm">Completed</span>
                   </div>
-                  <div className="mt-2 text-2xl font-bold">{project.completedTasks}</div>
+                  <div className="mt-2 text-2xl font-bold">{completedTasks}</div>
                 </div>
                 
                 <div className="border rounded-lg p-4">
@@ -175,7 +228,7 @@ const ProjectDetail = () => {
                     <Clock className="h-4 w-4 mr-2" />
                     <span className="text-sm">Pending</span>
                   </div>
-                  <div className="mt-2 text-2xl font-bold">{project.pendingTasks}</div>
+                  <div className="mt-2 text-2xl font-bold">{tasks.length - completedTasks}</div>
                 </div>
                 
                 <div className="border rounded-lg p-4">
@@ -192,7 +245,7 @@ const ProjectDetail = () => {
                   <h3 className="font-medium mb-2">Timeline</h3>
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.startDate} - {project.dueDate}</span>
+                    <span>{(project.startDate || project.start_date) ?? '—'} - {(project.dueDate || project.end_date) ?? '—'}</span>
                   </div>
                 </div>
                 
@@ -222,7 +275,7 @@ const ProjectDetail = () => {
               <CardTitle className="flex items-center justify-between">
                 <span>Project Tasks</span>
                 <div className="flex gap-2">
-                  <CreateTaskButton />
+                  <CreateTaskButton defaultProjectId={projectId} overrideProjects={[{ id: projectId, projectName: project.name || project.project_name }]} />
                   <Button variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
@@ -263,7 +316,7 @@ const ProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {project.membersList.map((member, index) => (
+                {membersList.map((member: any, index: number) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -298,56 +351,46 @@ const ProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-800 text-xs">PDF</span>
+                {files.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No files uploaded.</p>
+                )}
+                {files.map((file: any) => (
+                  <div key={file.id} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded bg-blue-100 flex items-center justify-center">
+                        <span className="text-blue-800 text-xs">{String(file.file_type || file.filename || 'FILE').slice(0,3).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{file.original_name || file.filename}</p>
+                        <p className="text-xs text-muted-foreground">{file.file_size ? `${Math.round(file.file_size/1024)} KB` : ''}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">Project Requirements</p>
-                      <p className="text-xs text-muted-foreground">2.4 MB</p>
-                    </div>
+                    <Button asChild variant="ghost" size="sm">
+                      <a href={`/${file.file_path}`} target="_blank" rel="noreferrer">Open</a>
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-green-100 flex items-center justify-center">
-                      <span className="text-green-800 text-xs">FIG</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Design Mockups</p>
-                      <p className="text-xs text-muted-foreground">5.1 MB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-purple-100 flex items-center justify-center">
-                      <span className="text-purple-800 text-xs">DOC</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Meeting Notes</p>
-                      <p className="text-xs text-muted-foreground">45 KB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
+                ))}
               </div>
-              
-              <Button className="w-full mt-4" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Upload File
-              </Button>
+              <div className="mt-4">
+                <input id="fileUpload" type="file" multiple className="hidden" onChange={async (e) => {
+                  const token = localStorage.getItem('token') || '';
+                  const filesSel = e.target.files;
+                  if (!filesSel || filesSel.length === 0) return;
+                  const formData = new FormData();
+                  for (let i=0;i<filesSel.length;i++) formData.append('file', filesSel[i]);
+                  const res = await fetch(`/api/projects/${projectId}/files`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+                  if (res.ok) {
+                    const refreshed = await fetch(`/api/projects/${projectId}/files`, { headers: { Authorization: `Bearer ${token}` } });
+                    setFiles(refreshed.ok ? await refreshed.json() : files);
+                  }
+                  (e.target as HTMLInputElement).value = '';
+                }} />
+                <label htmlFor="fileUpload">
+                  <Button className="w-full" variant="outline" asChild>
+                    <span><Plus className="h-4 w-4 mr-2" /> Upload File</span>
+                  </Button>
+                </label>
+              </div>
             </CardContent>
           </Card>
         </div>

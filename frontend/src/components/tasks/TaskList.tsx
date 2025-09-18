@@ -1,6 +1,6 @@
+// TaskList.tsx
 "use client";
 
-import { useState } from "react";
 import TaskCard from "./TaskCard";
 
 interface Task {
@@ -15,20 +15,13 @@ interface Task {
 
 interface TaskListProps {
   tasks: Task[];
+  onToggle?: (id: number) => void; // optional callback from parent
 }
 
-const TaskList = ({ tasks }: TaskListProps) => {
-  const [taskList, setTaskList] = useState<Task[]>(tasks);
-
-  const toggleTask = (id: number) => {
-    setTaskList(taskList.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
+const TaskList = ({ tasks, onToggle }: TaskListProps) => {
   return (
     <div className="space-y-3">
-      {taskList.map((task) => (
+      {tasks.map((task) => (
         <TaskCard
           key={task.id}
           id={task.id}
@@ -38,7 +31,7 @@ const TaskList = ({ tasks }: TaskListProps) => {
           priority={task.priority}
           completed={task.completed}
           assignedTo={task.assignedTo}
-          onToggle={toggleTask}
+          onToggle={onToggle}
         />
       ))}
     </div>
