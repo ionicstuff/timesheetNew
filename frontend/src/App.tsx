@@ -26,6 +26,8 @@ import BillingDetail from "./pages/BillingDetail";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import MainLayout from "./components/layout/MainLayout";
+import AdminLogin from "../admin/components/AdminLogin";
+import AdminDashboard from "../admin/components/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route 
               path="/" 
               element={

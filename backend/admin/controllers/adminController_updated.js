@@ -206,7 +206,7 @@ const getUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { employeeId, email, password, firstName, lastName, phone, department, designation, roleId } = req.body;
+    const { employeeId, email, password, firstName, lastName, phone, department, designation, roleId, managerId } = req.body;
 
     // Check if user already exists
     const [existingUser] = await sequelize.query(`
@@ -232,7 +232,26 @@ const createUser = async (req, res) => {
       bind: [employeeId, email, hashedPassword, firstName, lastName, phone, department, designation, roleId]
     });
 
-    res.status(201).json({ message: 'User created successfully', user: result[0] });
+    const newUser = result[0];
+
+    if (managerId) {
+      await sequelize.transaction(async (t) => {
+        await sequelize.query(
+          `UPDATE user_hierarchies
+             SET is_active = false, effective_to = NOW(), updated_at = NOW()
+           WHERE user_id = $1 AND is_active = true`,
+          { bind: [newUser.id], transaction: t }
+        );
+        await sequelize.query(
+          `INSERT INTO user_hierarchies (
+             user_id, parent_user_id, hierarchy_level, relationship_type, effective_from, is_active, created_by, created_at, updated_at
+           ) VALUES ($1, $2, 1, 'direct_report', NOW(), true, $3, NOW(), NOW())`,
+          { bind: [newUser.id, parseInt(managerId, 10), req.user?.id || null], transaction: t }
+        );
+      });
+    }
+
+    res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ message: 'Error creating user', error: error.message });
@@ -242,7 +261,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { employeeId, email, firstName, lastName, phone, department, designation, roleId, isActive } = req.body;
+    const { employeeId, email, firstName, lastName, phone, department, designation, roleId, isActive, managerId } = req.body;
 
     const [result] = await sequelize.query(`
       UPDATE users 
@@ -256,6 +275,25 @@ const updateUser = async (req, res) => {
 
     if (result.length === 0) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (typeof managerId !== 'undefined') {
+      await sequelize.transaction(async (t) => {
+        await sequelize.query(
+          `UPDATE user_hierarchies
+             SET is_active = false, effective_to = NOW(), updated_at = NOW()
+           WHERE user_id = $1 AND is_active = true`,
+          { bind: [id], transaction: t }
+        );
+        if (managerId) {
+          await sequelize.query(
+            `INSERT INTO user_hierarchies (
+               user_id, parent_user_id, hierarchy_level, relationship_type, effective_from, is_active, created_by, created_at, updated_at
+             ) VALUES ($1, $2, 1, 'direct_report', NOW(), true, $3, NOW(), NOW())`,
+            { bind: [parseInt(id, 10), parseInt(managerId, 10), req.user?.id || null], transaction: t }
+          );
+        }
+      });
     }
 
     res.json({ message: 'User updated successfully' });

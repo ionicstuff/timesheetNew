@@ -13,6 +13,7 @@ const Notification = require('./Notification');
 const Invoice = require('./Invoice');
 const InvoiceItem = require('./InvoiceItem');
 const InvoiceRevision = require('./InvoiceRevision');
+const ProjectMember = require('./ProjectMember');
 
 const TimesheetEntry = require('./TimesheetEntry');
 Timesheet.hasMany(TimesheetEntry, { foreignKey: 'timesheetId', as: 'entries' });
@@ -202,6 +203,12 @@ Project.hasMany(Task, {
   as: 'tasks'
 });
 
+// Project members associations
+ProjectMember.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
+ProjectMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Project.hasMany(ProjectMember, { foreignKey: 'projectId', as: 'members' });
+User.hasMany(ProjectMember, { foreignKey: 'userId', as: 'projectMemberships' });
+
 User.hasMany(Task, {
   foreignKey: 'assignedTo',
   as: 'assignedTasks'
@@ -238,6 +245,7 @@ module.exports = {
   Project,
   Spoc,
   Task,
+  ProjectMember,
   TimesheetEntry,
   Invoice,
   InvoiceItem,

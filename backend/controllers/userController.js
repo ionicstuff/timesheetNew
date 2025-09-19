@@ -340,7 +340,7 @@ const getTeamMembersByManagerId = async (req, res) => {
 // Get team members for the currently logged-in manager/account manager
 const getTeamMembers = async (req, res) => {
   try {
-    const { userId } = req.user; // Get from auth middleware
+    const userId = req.user?.id || req.user?.userId; // Support both shapes
     const {
       includeSubordinates = false,
       page = 1,
@@ -736,7 +736,7 @@ const deactivateUser = async (req, res) => {
 // Get current user's complete profile information
 const getUserProfile = async (req, res) => {
   try {
-    const { userId } = req.user; // Get from auth middleware
+    const userId = req.user?.id || req.user?.userId; // Support both shapes
 
     const user = await User.findByPk(userId, {
       include: [
@@ -930,7 +930,7 @@ const getUserProfile = async (req, res) => {
 // Get user statistics and dashboard data
 const getUserStats = async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = req.user?.id || req.user?.userId;
 
     // Get total users count
     const totalUsers = await User.count({

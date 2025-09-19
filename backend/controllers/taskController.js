@@ -118,6 +118,17 @@ const createTask = async (req, res) => {
       }
     }
 
+    // Enforce project membership for assignee
+    if (finalAssignedTo && projectId) {
+      const [pm] = await sequelize.query(
+        'SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2 AND is_active = true LIMIT 1',
+        { bind: [projectId, finalAssignedTo] }
+      );
+      if (!pm || pm.length === 0) {
+        return res.status(400).json({ message: 'Assignee must be a member of the project. Add them to the project before assigning tasks.' });
+      }
+    }
+
     const task = await Task.create({
       projectId,
       name,
@@ -150,6 +161,17 @@ const updateTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
+    // If changing assignee, ensure membership in project
+    if (typeof assignedTo !== 'undefined' && assignedTo !== null) {
+      const [pm] = await sequelize.query(
+        'SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2 AND is_active = true LIMIT 1',
+        { bind: [task.projectId, assignedTo] }
+      );
+      if (!pm || pm.length === 0) {
+        return res.status(400).json({ message: 'Assignee must be a member of the project. Add them to the project before assigning tasks.' });
+      }
+    }
+
     const prevAssignee = task.assignedTo;
     const prevStatus = task.status;
     await task.update({ name, description, assignedTo, estimatedTime, status, sprintStartDate, sprintEndDate });
@@ -362,6 +384,15 @@ const assignTask = async (req, res) => {
     // Overwrite check
     if (task.assignedTo && task.assignedTo !== assignedTo && !confirmOverwrite) {
       return res.status(409).json({ message: 'Task already assigned. Set confirmOverwrite=true to force overwrite', currentAssignee: task.assignedTo });
+    }
+
+    // Membership check: user must be a member of the task's project
+    const [pm] = await sequelize.query(
+      'SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2 AND is_active = true LIMIT 1',
+      { bind: [task.projectId, assignedTo] }
+    );
+    if (!pm || pm.length === 0) {
+      return res.status(400).json({ message: 'Assignee must be a member of the project. Add them to the project before assigning tasks.' });
     }
 
     const prevAssignee = task.assignedTo;

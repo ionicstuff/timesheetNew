@@ -28,7 +28,7 @@ router.use(authMiddleware);
 // @desc    Get all users with filtering and pagination
 // @access  Private (HR, Admin, Manager)
 router.get('/', 
-  authorizeRoles(['admin', 'hr', 'manager']), 
+  authorizeRoles('admin', 'hr', 'manager'), 
   getAllUsers
 );
 
@@ -66,7 +66,7 @@ router.get('/search', async (req, res, next) => {
 // @desc    Get user statistics and dashboard data
 // @access  Private (HR, Admin, Manager)
 router.get('/stats', 
-  authorizeRoles(['admin', 'hr', 'manager']), 
+  authorizeRoles('admin', 'hr', 'manager'), 
   getUserStats
 );
 
@@ -81,7 +81,7 @@ router.get('/profile',
 // @desc    Get team members for current user (manager/account manager)
 // @access  Private (Manager, Account Manager, Admin)
 router.get('/team', 
-  authorizeRoles(['Admin', 'Account Manager', 'Project Manager']),
+  authorizeRoles('admin', 'account manager', 'project manager'),
   getTeamMembers
 );
 
@@ -89,7 +89,7 @@ router.get('/team',
 // @desc    Get team members by manager ID (for admin/hr to view any manager's team)
 // @access  Private (HR, Admin)
 router.get('/:managerId/team', 
-  authorizeRoles(['admin', 'hr']),
+  authorizeRoles('admin', 'hr'),
   userIdValidation,
   getTeamMembersByManagerId
 );
@@ -106,7 +106,7 @@ router.get('/:userId',
 // @desc    Create new user
 // @access  Private (HR, Admin)
 router.post('/', 
-  authorizeRoles(['admin', 'hr']),
+  authorizeRoles('admin', 'hr'),
   createUserValidation,
   createUser
 );
@@ -123,7 +123,7 @@ router.put('/:userId',
 // @desc    Update user hierarchy (assign/change manager)
 // @access  Private (HR, Admin)
 router.put('/:userId/hierarchy', 
-  authorizeRoles(['admin', 'hr']),
+  authorizeRoles('admin', 'hr'),
   hierarchyValidation,
   updateUserHierarchy
 );
@@ -132,7 +132,7 @@ router.put('/:userId/hierarchy',
 // @desc    Deactivate user (soft delete)
 // @access  Private (HR, Admin)
 router.delete('/:userId', 
-  authorizeRoles(['admin', 'hr']),
+  authorizeRoles('admin', 'hr'),
   userIdValidation,
   deactivateUser
 );

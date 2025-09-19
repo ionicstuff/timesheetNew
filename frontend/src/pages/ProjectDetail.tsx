@@ -4,6 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Modal from "@/components/ui/Modal";
+import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar, 
   Users, 
@@ -36,6 +46,12 @@ const ProjectDetail = () => {
   const [project, setProject] = useState<any | null>(null);
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [members, setMembers] = useState<any[]>([]);
+  const [addOpen, setAddOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<string>("member");
+  const { toast } = useToast();
 
   // Fetch project details, tasks, and files
   useEffect(() => {
@@ -46,10 +62,11 @@ const ProjectDetail = () => {
         const token = localStorage.getItem('token') || '';
         const headers = { Authorization: `Bearer ${token}` } as Record<string,string>;
 
-        const [projRes, tasksRes, filesRes] = await Promise.all([
+        const [projRes, tasksRes, filesRes, membersRes] = await Promise.all([
           fetch(`/api/projects/${projectId}`, { headers }),
           fetch(`/api/tasks/project/${projectId}`, { headers }),
           fetch(`/api/projects/${projectId}/files`, { headers }),
+          fetch(`/api/projects/${projectId}/members`, { headers }),
         ]);
 
         if (projRes.ok) {
@@ -82,6 +99,13 @@ const ProjectDetail = () => {
         } else {
           setFiles([]);
         }
+
+        if (membersRes.ok) {
+          const m = await membersRes.json();
+          setMembers(Array.isArray(m) ? m : []);
+        } else {
+          setMembers([]);
+        }
       } catch (e) {
         console.error('Failed to load project detail', e);
         setTasks([]);
@@ -92,6 +116,54 @@ const ProjectDetail = () => {
     };
     run();
   }, [projectId]);
+
+  // Fetch project users when opening add modal
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        if (!addOpen) return;
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`/api/projects/users`, { headers: { Authorization: `Bearer ${token}` } });
+        setAllUsers(res.ok ? await res.json() : []);
+      } catch {
+        setAllUsers([]);
+      }
+    };
+    loadUsers();
+  }, [addOpen]);
+
+  // Reload helpers for post-actions
+  const reloadProject = async () => {
+    if (!projectId || Number.isNaN(projectId)) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      const headers = { Authorization: `Bearer ${token}` } as Record<string,string>;
+      const projRes = await fetch(`/api/projects/${projectId}`, { headers });
+      if (projRes.ok) setProject(await projRes.json());
+    } catch (e) { console.error('reloadProject failed', e); }
+  };
+
+  const reloadTasks = async () => {
+    if (!projectId || Number.isNaN(projectId)) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      const headers = { Authorization: `Bearer ${token}` } as Record<string,string>;
+      const tasksRes = await fetch(`/api/tasks/project/${projectId}`, { headers });
+      if (tasksRes.ok) {
+        const t = await tasksRes.json();
+        const mapped = (Array.isArray(t) ? t : []).map((task: any) => ({
+          id: task.id,
+          title: task.name || task.title || 'Untitled Task',
+          project: typeof task.project === 'string' ? task.project : (task.project?.projectName || `Project #${task.projectId ?? ''}`),
+          dueDate: task.sprintEndDate ? new Date(task.sprintEndDate).toLocaleDateString() : (task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'),
+          priority: (['High','Medium','Low'].includes(String(task.priority))) ? task.priority : 'Medium',
+          completed: String(task.status || '').toLowerCase() === 'completed',
+          assignedTo: task.assignee ? `${task.assignee.firstName ?? ''} ${task.assignee.lastName ?? ''}`.trim() || task.assignee.email : task.assignedTo
+        }));
+        setTasks(mapped);
+      }
+    } catch (e) { console.error('reloadTasks failed', e); }
+  };
 
   // Mock sprint data
   const sprints = [
@@ -161,14 +233,15 @@ const ProjectDetail = () => {
   }
 
   // Derive some UI-friendly data
-  const membersList = (project.teamMembers || []).map((m: any) => ({
-    name: [m?.assignedTo?.firstName, m?.assignedTo?.lastName].filter(Boolean).join(' ') || 'Member',
-    role: m?.assignedTo?.department || 'Team Member',
+  const membersList = (members || []).map((m: any) => ({
+    name: [m?.user?.firstName, m?.user?.lastName].filter(Boolean).join(' ') || m?.user?.email || 'Member',
+    role: m?.projectRole || m?.user?.designation || 'Team Member',
     avatar: undefined as string | undefined,
   }));
 
   const completedTasks = tasks.filter((t: any) => t.completed).length;
   const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+
 
   return (
     <div className="space-y-6">
@@ -275,7 +348,11 @@ const ProjectDetail = () => {
               <CardTitle className="flex items-center justify-between">
                 <span>Project Tasks</span>
                 <div className="flex gap-2">
-                  <CreateTaskButton defaultProjectId={projectId} overrideProjects={[{ id: projectId, projectName: project.name || project.project_name }]} />
+                  <CreateTaskButton
+                    defaultProjectId={projectId}
+                    overrideProjects={[{ id: projectId, projectName: project.name || project.project_name }]}
+                    onSuccess={async () => { await reloadTasks(); await reloadProject(); }}
+                  />
                   <Button variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
@@ -314,7 +391,7 @@ const ProjectDetail = () => {
               <CardTitle>Team Members</CardTitle>
               <CardDescription>People working on this project</CardDescription>
             </CardHeader>
-            <CardContent>
+              <CardContent>
               <div className="space-y-4">
                 {membersList.map((member: any, index: number) => (
                   <div key={index} className="flex items-center justify-between">
@@ -335,10 +412,75 @@ const ProjectDetail = () => {
                 ))}
               </div>
               
-              <Button className="w-full mt-4" variant="outline">
+              <Button className="w-full mt-4" variant="outline" onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Member
               </Button>
+
+              {/* Add Member Modal */}
+              <Modal open={addOpen} onOpenChange={setAddOpen} title="Add Project Member" size="md">
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm">User</Label>
+                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allUsers.map((u: any) => (
+                          <SelectItem key={u.id} value={String(u.id)}>
+                            {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm">Role</Label>
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="pm">Project Manager</SelectItem>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+                    <Button onClick={async () => {
+                      try {
+                        if (!selectedUserId) { toast({ title: 'Select a user', variant: 'destructive' }); return; }
+                        const token = localStorage.getItem('token') || '';
+                        const res = await fetch(`/api/projects/${projectId}/members`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ userId: Number(selectedUserId), projectRole: selectedRole })
+                        });
+                        if (!res.ok) {
+                          const data = await res.json().catch(() => ({}));
+                          throw new Error(data.message || 'Failed to add member');
+                        }
+                        setAddOpen(false);
+                        setSelectedUserId('');
+                        setSelectedRole('member');
+                        await (async () => {
+                          const memRes = await fetch(`/api/projects/${projectId}/members`, { headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` } });
+                          if (memRes.ok) setMembers(await memRes.json());
+                        })();
+                        toast({ title: 'Member added' });
+                      } catch (e: any) {
+                        toast({ title: 'Error', description: e.message, variant: 'destructive' });
+                      }
+                    }}>Add</Button>
+                  </div>
+                </div>
+              </Modal>
             </CardContent>
           </Card>
           

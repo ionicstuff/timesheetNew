@@ -10,9 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 interface CreateTaskButtonProps {
   defaultProjectId?: number; // preselect project when provided (e.g., on Project Detail)
   overrideProjects?: any[];  // when provided, use this list instead of fetching
+  onSuccess?: () => void;    // callback after successful creation
 }
 
-const CreateTaskButton = ({ defaultProjectId, overrideProjects }: CreateTaskButtonProps) => {
+const CreateTaskButton = ({ defaultProjectId, overrideProjects, onSuccess }: CreateTaskButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -25,7 +26,8 @@ const CreateTaskButton = ({ defaultProjectId, overrideProjects }: CreateTaskButt
 
     const fetchContext = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const pickToken = () => localStorage.getItem("token");
+        const token = pickToken();
         if (!token) throw new Error("Authentication token not found.");
 
         // Projects
@@ -44,8 +46,8 @@ const CreateTaskButton = ({ defaultProjectId, overrideProjects }: CreateTaskButt
         const profRes = await fetch(`/api/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
-        if (!meRes.ok) throw new Error("Failed to fetch current user");
-        const meJson = await meRes.json();
+        if (!profRes.ok) throw new Error("Failed to fetch current user");
+        const meJson = await profRes.json();
         const me = meJson?.user;
         const currentId = me?.id ?? null;
         setCurrentUserId(currentId);
@@ -118,6 +120,7 @@ const CreateTaskButton = ({ defaultProjectId, overrideProjects }: CreateTaskButt
         description: "Task created successfully.",
       });
       setIsOpen(false);
+      try { onSuccess && onSuccess(); } catch {}
     } catch (error: any) {
       console.error("Error creating task:", error);
       toast({

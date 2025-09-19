@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +58,42 @@ const TaskForm = ({
   });
   const defaultAssigneeId = initialData?.assigneeId ?? (currentUserId ? String(currentUserId) : null);
   const [assigneeId, setAssigneeId] = useState<string | null>(defaultAssigneeId);
+  const [projectMembers, setProjectMembers] = useState<TeamMember[] | null>(null); // null => not loaded yet for current project
+
+  // Load project members when project changes
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        if (!project) { setProjectMembers(null); return; }
+        const pid = parseInt(String(project), 10);
+        if (!pid || Number.isNaN(pid)) { setProjectMembers(null); return; }
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`/api/projects/${pid}/members`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) { setProjectMembers([]); return; }
+        const rows = await res.json();
+        const members: TeamMember[] = (Array.isArray(rows) ? rows : []).map((m: any) => ({
+          id: m?.user?.id ?? m?.userId ?? m?.id,
+          firstName: m?.user?.firstName ?? m?.firstName,
+          lastName: m?.user?.lastName ?? m?.lastName,
+          email: m?.user?.email ?? m?.email,
+        })).filter((m: any) => m && m.id);
+        setProjectMembers(members);
+        // If current assignee is not in new list, reset to null
+        if (assigneeId && !members.some(m => String(m.id) === String(assigneeId))) {
+          setAssigneeId(null);
+        }
+      } catch {
+        setProjectMembers([]);
+      }
+    };
+    loadMembers();
+  }, [project]);
+
+  // Decide eligible assignees: project members if loaded, otherwise fallback to provided teamMembers
+  const eligibleAssignees: TeamMember[] = useMemo(() => {
+    if (project && projectMembers) return projectMembers;
+    return teamMembers || [];
+  }, [project, projectMembers, teamMembers]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,28 +162,28 @@ const TaskForm = ({
         </Select>
       </div>
 
-      {/* Assignee selection - only if user can assign others and has team members */}
-      {canAssignOthers && teamMembers.length > 0 ? (
+      {/* Assignee selection - only if user can assign others and there are eligible members */}
+      {canAssignOthers && eligibleAssignees.length > 0 ? (
         <div>
           <Label htmlFor="assignee">Assign to</Label>
           <Select 
-            value={assigneeId ?? (currentUserId ? String(currentUserId) : undefined)} 
+            value={assigneeId ?? undefined}
             onValueChange={setAssigneeId}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select assignee" />
+              <SelectValue placeholder={project ? "Select project member" : "Select assignee"} />
             </SelectTrigger>
             <SelectContent>
-              {currentUserId && (
-                <SelectItem value={String(currentUserId)}>Myself</SelectItem>
-              )}
-              {teamMembers.map((m) => (
+              {eligibleAssignees.map((m) => (
                 <SelectItem key={m.id} value={String(m.id)}>
                   {renderFullName(m)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {project && projectMembers && projectMembers.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-1">No members in this project. Add members on the Project page first.</p>
+          )}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">This task will be assigned to you.</p>
