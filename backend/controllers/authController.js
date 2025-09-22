@@ -13,6 +13,8 @@ const generateToken = (userId) => {
   );
 };
 
+//this is a test comment for checking the workflow
+
 // Register user
 const register = async (req, res) => {
   try {

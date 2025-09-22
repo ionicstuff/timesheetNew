@@ -12,6 +12,8 @@ import { useMe } from "@/hooks/useMe";
 
 const Billings = () => {
 // Resolve current user's role to gate Finance features
+
+//this isthe test comment for checking the workflow
   const { data: me, isLoading: loadingMe } = useMe();
   const u = (me?.user || me) as any;
   const roleName = String(u?.role || u?.roleName || u?.role_master?.roleName || u?.roleMaster?.roleName || '').toLowerCase();
