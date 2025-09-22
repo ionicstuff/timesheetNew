@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   GitGraph,
@@ -7,21 +8,64 @@ import {
   Circle,
   MoreHorizontal
 } from "lucide-react";
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
-const TaskDependencies = () => {
-  const tasks = [
-    { id: 1, title: "Research competitors", status: "completed", dependencies: [] },
-    { id: 2, title: "Create wireframes", status: "completed", dependencies: [1] },
-    { id: 3, title: "Design homepage", status: "in-progress", dependencies: [2] },
-    { id: 4, title: "Develop frontend", status: "pending", dependencies: [3] },
-    { id: 5, title: "Write documentation", status: "pending", dependencies: [4] },
-  ];
+interface Props { taskId: number; }
+
+const TaskDependencies = ({ taskId }: Props) => {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [newDepId, setNewDepId] = useState("");
+  const { toast } = useToast();
+
+  const load = async () => {
+    if (!taskId) return;
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/dependencies`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can view dependencies.', variant: 'destructive' });
+      setTasks([]);
+      return;
+    }
+    if (res.ok) {
+      const rows = await res.json();
+      const mapped = (rows || []).map((r: any) => ({ id: r.dependsOn?.id || r.dependsOnTaskId, title: r.dependsOn?.name || `Task ${r.dependsOnTaskId}`, status: 'pending', dependencies: [] }));
+      setTasks(mapped);
+    }
+  };
+
+  useEffect(() => { load(); }, [taskId]);
+
+  const addDependency = async () => {
+    const val = parseInt(newDepId, 10);
+    if (!val) return;
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/dependencies`, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ dependsOnTaskId: val }) });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can modify dependencies.', variant: 'destructive' });
+      return;
+    }
+    if (res.ok) {
+      setNewDepId("");
+      await load();
+    }
+  };
+
+  const removeDependency = async (depId: number) => {
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/dependencies/${depId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can modify dependencies.', variant: 'destructive' });
+      return;
+    }
+    if (res.ok) await load();
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -56,6 +100,14 @@ const TaskDependencies = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Add dependency UI */}
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Input placeholder="Depends on task ID" value={newDepId} onChange={(e)=>setNewDepId(e.target.value)} />
+            </div>
+            <button className="px-3 py-2 text-sm border rounded" onClick={addDependency}>Add</button>
+          </div>
+
           {tasks.map((task, index) => (
             <div key={task.id} className="flex items-start gap-3">
               <div className="flex flex-col items-center">
@@ -76,19 +128,11 @@ const TaskDependencies = () => {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Dependencies</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">Remove</DropdownMenuItem>
+                      <DropdownMenuItem disabled>View Details</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600" onClick={() => removeDependency(task.id)}>Remove</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                {task.dependencies.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Depends on: {task.dependencies.map(depId => 
-                      tasks.find(t => t.id === depId)?.title
-                    ).join(", ")}
-                  </p>
-                )}
               </div>
             </div>
           ))}

@@ -35,4 +35,7 @@ router.get('/:id(\\d+)/performance', ctrl.getProjectPerformance);
 // ---- Project Members (nested) ----
 router.use('/:projectId(\\d+)/members', require('./projectMemberRoutes'));
 
+// ---- Project Messages (nested chat) ----
+router.use('/:projectId(\\d+)/messages', require('./projectMessageRoutes'));
+
 module.exports = router;

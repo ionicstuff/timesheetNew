@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Modal from "@/components/ui/Modal";
@@ -11,15 +11,41 @@ interface CreateTaskButtonProps {
   defaultProjectId?: number; // preselect project when provided (e.g., on Project Detail)
   overrideProjects?: any[];  // when provided, use this list instead of fetching
   onSuccess?: () => void;    // callback after successful creation
+  label?: string;            // optional button label override
+  lockProjectId?: number;    // when provided, lock project selection to this id
 }
 
-const CreateTaskButton = ({ defaultProjectId, overrideProjects, onSuccess }: CreateTaskButtonProps) => {
+const CreateTaskButton = ({ defaultProjectId, overrideProjects, onSuccess, label, lockProjectId }: CreateTaskButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [canAssignOthers, setCanAssignOthers] = useState<boolean>(false);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const { toast } = useToast();
+
+  // Read assigneeId from URL (used when navigating from Team page)
+  const urlAssigneeId = (() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const v = sp.get('assigneeId');
+      return v ? String(v) : undefined;
+    } catch { return undefined; }
+  })();
+
+  // Auto-open modal if assigneeId is present in URL
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (urlAssigneeId && !autoOpenedRef.current) {
+      setIsOpen(true);
+      autoOpenedRef.current = true;
+      // Clean the URL to avoid reopening on future renders
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('assigneeId');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+    }
+  }, [urlAssigneeId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -135,7 +161,7 @@ const CreateTaskButton = ({ defaultProjectId, overrideProjects, onSuccess }: Cre
     <>
       <Button onClick={() => setIsOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Task
+        {label || 'New Task'}
       </Button>
       
       <Modal
@@ -148,10 +174,11 @@ const CreateTaskButton = ({ defaultProjectId, overrideProjects, onSuccess }: Cre
           onSubmit={handleSubmit} 
           onCancel={() => setIsOpen(false)} 
           projects={projects}
-          initialData={defaultProjectId ? { project: String(defaultProjectId) } : undefined}
+          initialData={(defaultProjectId || urlAssigneeId) ? { ...(defaultProjectId ? { project: String(defaultProjectId) } : {}), ...(urlAssigneeId ? { assigneeId: String(urlAssigneeId) } : {}) } : undefined}
           currentUserId={currentUserId ?? undefined}
           canAssignOthers={canAssignOthers}
           teamMembers={teamMembers}
+          lockProjectId={lockProjectId}
         />
       </Modal>
     </>

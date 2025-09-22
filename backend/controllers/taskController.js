@@ -2,6 +2,47 @@ const { Task, Project, User } = require('../models');
 const sequelize = require('../config/database');
 const notificationSvc = require('../services/notificationService');
 
+async function isProjectMemberByTask(taskId, userId) {
+  const [rows] = await sequelize.query(
+    `SELECT 1 FROM tasks t
+     JOIN project_members pm ON pm.project_id = t.project_id AND pm.user_id = $1 AND pm.is_active = true
+     WHERE t.id = $2 LIMIT 1`,
+    { bind: [userId, taskId] }
+  );
+  return !!(rows && rows.length);
+}
+
+// File uploads for task attachments
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const taskUploadStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '../uploads/tasks');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'task-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadTaskFilesMulter = multer({
+  storage: taskUploadStorage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  fileFilter: function (req, file, cb) {
+    const allowed = /pdf|doc|docx|zip|jpg|jpeg|png|txt|csv|xlsx|ppt|pptx/;
+    const extOk = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mimeOk = allowed.test(file.mimetype);
+    if (extOk && mimeOk) return cb(null, true);
+    cb(new Error('Unsupported file type'));
+  }
+});
+
 // Get all tasks
 const getTasks = async (req, res) => {
   try {
@@ -156,7 +197,7 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, assignedTo, estimatedTime, status, sprintStartDate, sprintEndDate } = req.body;
+    const { name, description, assignedTo, estimatedTime, status, sprintStartDate, sprintEndDate, priority } = req.body;
     const task = await Task.findByPk(id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -174,17 +215,21 @@ const updateTask = async (req, res) => {
 
     const prevAssignee = task.assignedTo;
     const prevStatus = task.status;
-    await task.update({ name, description, assignedTo, estimatedTime, status, sprintStartDate, sprintEndDate });
+    await task.update({ name, description, assignedTo, estimatedTime, status, sprintStartDate, sprintEndDate, priority });
 
-    // Notifications: reassignment and status change
+    // Log activities
     try {
       if (typeof assignedTo !== 'undefined' && assignedTo !== prevAssignee) {
+        const TaskActivity = require('../models/TaskActivity');
+        await TaskActivity.create({ taskId: task.id, actorId: req.user?.id || null, type: 'assigned', detailsJson: { from: prevAssignee, to: assignedTo } });
         await notificationSvc.notifyTaskReassigned(task, prevAssignee, req.user?.id || null);
       }
       if (typeof status !== 'undefined' && status !== prevStatus) {
+        const TaskActivity = require('../models/TaskActivity');
+        await TaskActivity.create({ taskId: task.id, actorId: req.user?.id || null, type: 'status_changed', detailsJson: { from: prevStatus, to: status } });
         await notificationSvc.notifyTaskStatusChanged(task, prevStatus, req.user?.id || null);
       }
-    } catch (e) { console.error('updateTask notifications failed', e); }
+    } catch (e) { console.error('updateTask notifications/activities failed', e); }
 
     res.json({ message: 'Task updated successfully', task });
   } catch (error) {
@@ -398,8 +443,12 @@ const assignTask = async (req, res) => {
     const prevAssignee = task.assignedTo;
     await task.update({ assignedTo });
 
-    // Notifications for reassignment/assignment
-    try { await notificationSvc.notifyTaskReassigned(task, prevAssignee, req.user?.id || null); } catch (e) { console.error('notifyTaskReassigned failed', e); }
+    // Activity + Notifications for reassignment/assignment
+    try { 
+      const TaskActivity = require('../models/TaskActivity');
+      await TaskActivity.create({ taskId: task.id, actorId: req.user?.id || null, type: 'assigned', detailsJson: { from: prevAssignee, to: assignedTo } });
+      await notificationSvc.notifyTaskReassigned(task, prevAssignee, req.user?.id || null);
+    } catch (e) { console.error('notifyTaskReassigned failed', e); }
 
     // Send email notification (emailService will fallback to console in dev)
     const emailService = require('../services/emailService');
@@ -509,6 +558,322 @@ const getTaskStats = async (req, res) => {
   }
 };
 
+// ----- Comments -----
+const { TaskComment, TaskFile, TaskDependency } = require('../models');
+
+const getTaskComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can view comments' });
+    }
+    const { User } = require('../models');
+    const comments = await TaskComment.findAll({
+      where: { taskId: id, isDeleted: false },
+      include: [{ model: User, as: 'author', attributes: ['id','firstName','lastName','email'] }],
+      order: [['created_at','ASC']]
+    });
+    // Attach likes count and whether current user liked
+    const ids = comments.map(c => c.id);
+    let counts = {}, mine = new Set();
+    if (ids.length) {
+      const [cntRows] = await sequelize.query(
+        'SELECT comment_id, COUNT(*)::int as cnt FROM task_comment_likes WHERE comment_id = ANY($1) GROUP BY comment_id',
+        { bind: [ids] }
+      );
+      cntRows.forEach(r => { counts[r.comment_id] = r.cnt; });
+      const [mineRows] = await sequelize.query(
+        'SELECT comment_id FROM task_comment_likes WHERE user_id = $1 AND comment_id = ANY($2)',
+        { bind: [req.user.id, ids] }
+      );
+      mineRows.forEach(r => mine.add(r.comment_id));
+    }
+    const enriched = comments.map(c => ({
+      ...c.toJSON(),
+      likes: counts[c.id] || 0,
+      liked: mine.has(c.id)
+    }));
+    res.json(enriched);
+  } catch (e) {
+    console.error('getTaskComments error', e);
+    res.status(500).json({ message: 'Failed to fetch comments' });
+  }
+};
+
+const createTaskComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can comment' });
+    }
+    const { content, parentCommentId } = req.body || {};
+    if (!content || !String(content).trim()) return res.status(400).json({ message: 'content is required' });
+    const row = await TaskComment.create({ taskId: id, userId: req.user.id, content: content.trim(), parentCommentId: parentCommentId || null });
+    res.status(201).json(row);
+  } catch (e) {
+    console.error('createTaskComment error', e);
+    res.status(500).json({ message: 'Failed to add comment' });
+  }
+};
+
+const updateTaskComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can update comments' });
+    }
+    const { content } = req.body || {};
+    const row = await TaskComment.findOne({ where: { id: commentId, taskId: id } });
+    if (!row) return res.status(404).json({ message: 'Comment not found' });
+    const role = req.user?.roleMaster?.roleName || '';
+    const privileged = ['Admin','Director','Project Manager','Account Manager'].map(s=>s.toLowerCase());
+    const canEdit = row.userId === req.user.id || privileged.includes(role.toLowerCase());
+    if (!canEdit) return res.status(403).json({ message: 'Not allowed' });
+    await row.update({ content: String(content || '').trim() });
+    res.json(row);
+  } catch (e) {
+    console.error('updateTaskComment error', e);
+    res.status(500).json({ message: 'Failed to update comment' });
+  }
+};
+
+const deleteTaskComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can delete comments' });
+    }
+    const row = await TaskComment.findOne({ where: { id: commentId, taskId: id } });
+    if (!row) return res.status(404).json({ message: 'Comment not found' });
+    const role = req.user?.roleMaster?.roleName || '';
+    const privileged = ['Admin','Director','Project Manager','Account Manager'].map(s=>s.toLowerCase());
+    const canDelete = row.userId === req.user.id || privileged.includes(role.toLowerCase());
+    if (!canDelete) return res.status(403).json({ message: 'Not allowed' });
+    await row.update({ isDeleted: true });
+    res.json({ success: true });
+  } catch (e) {
+    console.error('deleteTaskComment error', e);
+    res.status(500).json({ message: 'Failed to delete comment' });
+  }
+};
+
+// ----- Files -----
+const uploadTaskFiles = async (req, res) => {
+  uploadTaskFilesMulter.any()(req, res, async (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    try {
+      const { id } = req.params;
+      if (!(await isProjectMemberByTask(id, req.user.id))) {
+        return res.status(403).json({ message: 'Only project members can upload files' });
+      }
+      const files = req.files || [];
+      if (!files.length) return res.status(400).json({ message: 'No files uploaded' });
+      const saved = await Promise.all(files.map(async (f) => {
+        const savedRow = await TaskFile.create({
+          taskId: id,
+          uploadedBy: req.user.id,
+          originalName: f.originalname,
+          filename: f.filename,
+          mimeType: f.mimetype,
+          size: f.size,
+          path: path.join('uploads/tasks', f.filename)
+        });
+        return savedRow;
+      }));
+      res.status(201).json({ attachments: saved });
+    } catch (e) {
+      console.error('uploadTaskFiles error', e);
+      res.status(500).json({ message: 'Failed to upload files' });
+    }
+  });
+};
+
+const getTaskFiles = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can view files' });
+    }
+    const files = await TaskFile.findAll({ where: { taskId: id }, order: [['created_at','DESC']] });
+    res.json(files);
+  } catch (e) {
+    console.error('getTaskFiles error', e);
+    res.status(500).json({ message: 'Failed to fetch files' });
+  }
+};
+
+const downloadTaskFile = async (req, res) => {
+  try {
+    const { id, fileId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can download files' });
+    }
+    const row = await TaskFile.findOne({ where: { id: fileId, taskId: id } });
+    if (!row) return res.status(404).json({ message: 'File not found' });
+    const absPath = path.join(__dirname, '..', row.path);
+    res.download(absPath, row.originalName);
+  } catch (e) {
+    console.error('downloadTaskFile error', e);
+    res.status(500).json({ message: 'Failed to download file' });
+  }
+};
+
+const deleteTaskFile = async (req, res) => {
+  try {
+    const { id, fileId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can delete files' });
+    }
+    const row = await TaskFile.findOne({ where: { id: fileId, taskId: id } });
+    if (!row) return res.status(404).json({ message: 'File not found' });
+    const role = req.user?.roleMaster?.roleName || '';
+    const privileged = ['Admin','Director','Project Manager','Account Manager'].map(s=>s.toLowerCase());
+    const canDelete = row.uploadedBy === req.user.id || privileged.includes(role.toLowerCase());
+    if (!canDelete) return res.status(403).json({ message: 'Not allowed' });
+    await row.destroy();
+    // best-effort remove file from disk
+    try { fs.unlinkSync(path.join(__dirname,'..',row.path)); } catch {}
+    res.json({ success: true });
+  } catch (e) {
+    console.error('deleteTaskFile error', e);
+    res.status(500).json({ message: 'Failed to delete file' });
+  }
+};
+
+// ----- Dependencies -----
+const getTaskDependencies = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deps = await TaskDependency.findAll({ 
+      where: { taskId: id }, 
+      include: [{ model: Task, as: 'dependsOn', attributes: ['id','name'] }],
+      order: [['created_at','ASC']] 
+    });
+    res.json(deps);
+  } catch (e) {
+    console.error('getTaskDependencies error', e);
+    res.status(500).json({ message: 'Failed to fetch dependencies' });
+  }
+};
+
+const addTaskDependency = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dependsOnTaskId } = req.body || {};
+    if (!dependsOnTaskId) return res.status(400).json({ message: 'dependsOnTaskId is required' });
+    if (String(dependsOnTaskId) === String(id)) return res.status(400).json({ message: 'Task cannot depend on itself' });
+    const base = await Task.findByPk(id);
+    const dep = await Task.findByPk(dependsOnTaskId);
+    if (!base || !dep) return res.status(404).json({ message: 'Task not found' });
+    if (base.projectId !== dep.projectId) return res.status(400).json({ message: 'Tasks must be in the same project' });
+    const [row, created] = await TaskDependency.findOrCreate({ where: { taskId: id, dependsOnTaskId }, defaults: { taskId: id, dependsOnTaskId } });
+    res.status(created ? 201 : 200).json(row);
+  } catch (e) {
+    console.error('addTaskDependency error', e);
+    res.status(500).json({ message: 'Failed to add dependency' });
+  }
+};
+
+const removeTaskDependency = async (req, res) => {
+  try {
+    const { id, depId } = req.params;
+    const row = await TaskDependency.findOne({ where: { id: depId, taskId: id } });
+    if (!row) return res.status(404).json({ message: 'Dependency not found' });
+    await row.destroy();
+    res.json({ success: true });
+  } catch (e) {
+    console.error('removeTaskDependency error', e);
+    res.status(500).json({ message: 'Failed to remove dependency' });
+  }
+};
+
+// ----- History (aggregate simple) -----
+const getTaskHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const TaskTimeLog = require('../models/TaskTimeLog');
+    const TaskActivity = require('../models/TaskActivity');
+    const [logs, comments, files, activities] = await Promise.all([
+      TaskTimeLog.findAll({ where: { taskId: id }, order: [['created_at','ASC']] }),
+      TaskComment.findAll({ where: { taskId: id, isDeleted: false }, order: [['created_at','ASC']] }),
+      TaskFile.findAll({ where: { taskId: id }, order: [['created_at','ASC']] }),
+      TaskActivity.findAll({ where: { taskId: id }, order: [['created_at','ASC']] })
+    ]);
+
+    const timeline = [];
+    logs.forEach(l => timeline.push({ type: 'time_log', createdAt: l.created_at || l.createdAt, payload: l }));
+    comments.forEach(c => timeline.push({ type: 'comment', createdAt: c.created_at || c.createdAt, payload: c }));
+    files.forEach(f => timeline.push({ type: 'file_uploaded', createdAt: f.created_at || f.createdAt, payload: f }));
+    activities.forEach(a => timeline.push({ type: a.type, createdAt: a.created_at || a.createdAt, payload: a.detailsJson || {} }));
+
+    timeline.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+    res.json(timeline);
+  } catch (e) {
+    console.error('getTaskHistory error', e);
+    res.status(500).json({ message: 'Failed to fetch history' });
+  }
+};
+
+// ----- Likes -----
+const TaskCommentLike = require('../models/TaskCommentLike');
+
+const likeTaskComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can like comments' });
+    }
+    await TaskCommentLike.findOrCreate({ where: { commentId, userId: req.user.id }, defaults: { commentId, userId: req.user.id } });
+    const [[{ cnt }]] = await sequelize.query('SELECT COUNT(*)::int as cnt FROM task_comment_likes WHERE comment_id=$1', { bind: [commentId] });
+    res.json({ liked: true, likes: Number(cnt) });
+  } catch (e) {
+    console.error('likeTaskComment error', e);
+    res.status(500).json({ message: 'Failed to like comment' });
+  }
+};
+
+const unlikeTaskComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    if (!(await isProjectMemberByTask(id, req.user.id))) {
+      return res.status(403).json({ message: 'Only project members can unlike comments' });
+    }
+    await TaskCommentLike.destroy({ where: { commentId, userId: req.user.id } });
+    const [[{ cnt }]] = await sequelize.query('SELECT COUNT(*)::int as cnt FROM task_comment_likes WHERE comment_id=$1', { bind: [commentId] });
+    res.json({ liked: false, likes: Number(cnt) });
+  } catch (e) {
+    console.error('unlikeTaskComment error', e);
+    res.status(500).json({ message: 'Failed to unlike comment' });
+  }
+};
+
+// ----- Duplicate -----
+// ----- Duplicate -----
+const duplicateTask = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const source = await Task.findByPk(id);
+    if (!source) return res.status(404).json({ message: 'Task not found' });
+    const clone = await Task.create({
+      projectId: source.projectId,
+      name: `${source.name} (Copy)`,
+      description: source.description,
+      assignedTo: null,
+      estimatedTime: source.estimatedTime,
+      status: 'pending',
+      acceptanceStatus: 'pending',
+      priority: source.priority || 'Medium',
+      createdBy: req.user?.id || null,
+      sprintStartDate: source.sprintStartDate,
+      sprintEndDate: source.sprintEndDate
+    });
+    res.status(201).json({ message: 'Task duplicated', task: clone });
+  } catch (e) {
+    console.error('duplicateTask error', e);
+    res.status(500).json({ message: 'Failed to duplicate task' });
+  }
+};
+
 module.exports = {
   getTasks,
   getTasksByProject,
@@ -526,5 +891,21 @@ module.exports = {
   stopTask,
   completeTask,
   getTaskTimeLogs,
-  getTaskStats
+  getTaskStats,
+  // new
+  getTaskComments,
+  createTaskComment,
+  updateTaskComment,
+  deleteTaskComment,
+  uploadTaskFiles,
+  getTaskFiles,
+  downloadTaskFile,
+  deleteTaskFile,
+  getTaskDependencies,
+  addTaskDependency,
+  removeTaskDependency,
+  getTaskHistory,
+  duplicateTask,
+  likeTaskComment,
+  unlikeTaskComment
 };

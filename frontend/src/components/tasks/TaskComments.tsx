@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -11,62 +11,67 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
 
-const TaskComments = () => {
+interface Props { taskId: number; }
+
+const TaskComments = ({ taskId }: Props) => {
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      user: "Alex Johnson",
-      avatar: "https://i.pravatar.cc/150?u=alex",
-      content: "I've reviewed the design and it looks great! Just a few minor adjustments needed.",
-      time: "2 hours ago",
-      likes: 3,
-      liked: false
-    },
-    {
-      id: 2,
-      user: "Sam Smith",
-      avatar: "https://i.pravatar.cc/150?u=sam",
-      content: "Thanks for the feedback! I'll make those adjustments by tomorrow.",
-      time: "1 hour ago",
-      likes: 1,
-      liked: true
-    },
-    {
-      id: 3,
-      user: "Taylor Brown",
-      avatar: "https://i.pravatar.cc/150?u=taylor",
-      content: "I've attached the updated mockups with the requested changes.",
-      time: "30 minutes ago",
-      likes: 0,
-      liked: false,
-      attachments: ["updated-mockups.pdf"]
-    }
-  ]);
+  const [comments, setComments] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  const handleAddComment = () => {
-    if (comment.trim()) {
-      const newComment = {
-        id: comments.length + 1,
-        user: "You",
-        avatar: "https://github.com/shadcn.png",
-        content: comment,
-        time: "Just now",
-        likes: 0,
-        liked: false
-      };
-      setComments([...comments, newComment]);
-      setComment("");
+  const load = async () => {
+    if (!taskId) return;
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/comments`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can view comments for this task.', variant: 'destructive' });
+      setComments([]);
+      return;
+    }
+    if (res.ok) {
+      const rows = await res.json();
+      const mapped = (rows || []).map((r: any) => ({
+        id: r.id,
+        user: r.author ? `${r.author.firstName} ${r.author.lastName}` : 'User',
+        avatar: "",
+        content: r.content,
+        time: new Date(r.created_at || r.createdAt).toLocaleString(),
+        likes: r.likes ?? 0,
+        liked: !!r.liked
+      }));
+      setComments(mapped);
     }
   };
 
-  const handleLikeComment = (id: number) => {
-    setComments(comments.map(comment => 
-      comment.id === id 
-        ? { ...comment, liked: !comment.liked, likes: comment.liked ? comment.likes - 1 : comment.likes + 1 } 
-        : comment
-    ));
+  useEffect(() => { load(); }, [taskId]);
+
+  const handleAddComment = async () => {
+    if (comment.trim()) {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/tasks/${taskId}/comments`, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ content: comment }) });
+      if (res.status === 403) {
+        toast({ title: 'Members only', description: 'Only project members can comment on this task.', variant: 'destructive' });
+        return;
+      }
+      if (res.ok) {
+        setComment("");
+        await load();
+      }
+    }
+  };
+
+  const handleLikeComment = async (id: number) => {
+    const token = localStorage.getItem('token') || '';
+    const target = comments.find(c => c.id === id);
+    if (!target) return;
+    const liked = !!target.liked;
+    const method = liked ? 'DELETE' : 'POST';
+    const res = await fetch(`/api/tasks/${taskId}/comments/${id}/like`, { method, headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      setComments(comments.map(c => c.id === id ? { ...c, liked: data.liked, likes: data.likes } : c));
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

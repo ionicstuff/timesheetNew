@@ -1,4 +1,4 @@
-const { Client, Project, User, Spoc } = require('../models');
+const { Client, Project, User, Spoc, Notification } = require('../models');
 const { Op } = require('sequelize');
 
 const clientController = {
@@ -388,6 +388,29 @@ const clientController = {
         }
       }
 
+      // Notify finance users to complete client profile
+      try {
+        const [financeUsers] = await sequelize.query(`
+          SELECT u.id FROM users u
+          LEFT JOIN role_masters rm ON u.role_id = rm.id
+          WHERE rm.role_code = 'FIN' AND u.is_active = true
+        `);
+        if (financeUsers && financeUsers.length) {
+          const notifs = financeUsers.map((u) => ({
+            userId: u.id,
+            title: `Client "${clientName}" requires profile completion`,
+            body: 'Please add logo, email, phone, address, and at least one SPOC',
+            link: `/clients/${newClient.id}`,
+            type: 'client_profile_pending',
+            actorUserId: userId,
+            metadata: { clientId: newClient.id },
+            isRead: false
+          }));
+          // Bulk insert via Notification model
+          try { await Notification.bulkCreate(notifs, { ignoreDuplicates: true }); } catch {}
+        }
+      } catch (e) { console.warn('Notify finance failed:', e.message); }
+
       // Fetch the created client with associations
       const clientWithDetails = await Client.findByPk(newClient.id, {
         include: [
@@ -444,6 +467,47 @@ const clientController = {
         message: 'Error creating client',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
+    }
+  },
+
+  // Clients pending completion (Finance)
+  getPendingClients: async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+      const offset = parseInt(req.query.offset, 10) || 0;
+      // A client is pending if email/phone/address missing OR no active SPOC exists
+      const [rows] = await sequelize.query(`
+        SELECT c.id, c.client_name, c.company_name, c.email, c.phone, c.address,
+               COALESCE(sp.spoc_count, 0) AS spoc_count
+        FROM clients c
+        LEFT JOIN (
+          SELECT client_id, COUNT(*)::int AS spoc_count
+          FROM spocs
+          WHERE is_active = true
+          GROUP BY client_id
+        ) sp ON sp.client_id = c.id
+        WHERE c.is_active = true AND (
+          c.email IS NULL OR c.email = '' OR
+          c.phone IS NULL OR c.phone = '' OR
+          c.address IS NULL OR c.address = '' OR
+          COALESCE(sp.spoc_count, 0) = 0
+        )
+        ORDER BY c.client_name ASC
+        LIMIT $1 OFFSET $2
+      `, { bind: [limit, offset] });
+
+      const data = rows.map((r) => ({
+        id: r.id,
+        name: r.client_name || r.company_name || `Client #${r.id}`,
+        email: r.email || null,
+        phone: r.phone || null,
+        address: r.address || null,
+        spocCount: Number(r.spoc_count) || 0,
+      }));
+      return res.json({ items: data, limit, offset });
+    } catch (error) {
+      console.error('Error fetching pending clients:', error);
+      return res.status(500).json({ message: 'Error fetching pending clients' });
     }
   },
 

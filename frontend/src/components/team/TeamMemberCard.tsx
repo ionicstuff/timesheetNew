@@ -92,9 +92,13 @@ const TeamMemberCard = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Profile</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={`/team/${id}`}>View Profile</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Send Message</DropdownMenuItem>
-              <DropdownMenuItem>Assign Task</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={`/tasks?assigneeId=${id}`}>Assign Task</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

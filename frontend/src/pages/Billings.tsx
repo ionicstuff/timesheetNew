@@ -1,157 +1,75 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import InvoiceSummary from "@/components/billings/InvoiceSummary";
-import InvoiceTable from "@/components/billings/InvoiceTable";
 import InvoiceStatusChart from "@/components/billings/InvoiceStatusChart";
-import PaymentReminder from "@/components/billings/PaymentReminder";
 import RevenueChart from "@/components/billings/RevenueChart";
-import ClientPaymentHistory from "@/components/billings/ClientPaymentHistory";
+import ReadyToInvoice from "@/components/billings/ReadyToInvoice";
+import InvoiceList from "@/components/billings/InvoiceList";
+import { useInvoices } from "@/hooks/useFinance";
+import { useMe } from "@/hooks/useMe";
 
 const Billings = () => {
-  const [invoices, setInvoices] = useState([
-    { 
-      id: 1, 
-      project: "Website Redesign", 
-      client: "Acme Corporation", 
-      amount: 25000,
-      status: "paid",
-      invoiceDate: "2023-10-15",
-      dueDate: "2023-11-15",
-      paymentDate: "2023-11-10",
-      tasksCompleted: 12,
-      totalTasks: 12,
-      projectProgress: 100
-    },
-    { 
-      id: 2, 
-      project: "Product Launch", 
-      client: "Globex Inc", 
-      amount: 45000,
-      status: "pending",
-      invoiceDate: "2023-11-01",
-      dueDate: "2023-12-01",
-      paymentDate: null,
-      tasksCompleted: 18,
-      totalTasks: 20,
-      projectProgress: 90
-    },
-    { 
-      id: 3, 
-      project: "Marketing Campaign", 
-      client: "Wayne Enterprises", 
-      amount: 15000,
-      status: "overdue",
-      invoiceDate: "2023-09-01",
-      dueDate: "2023-10-01",
-      paymentDate: null,
-      tasksCompleted: 8,
-      totalTasks: 8,
-      projectProgress: 100
-    },
-    { 
-      id: 4, 
-      project: "Mobile App Development", 
-      client: "Stark Industries", 
-      amount: 75000,
-      status: "draft",
-      invoiceDate: null,
-      dueDate: null,
-      paymentDate: null,
-      tasksCompleted: 5,
-      totalTasks: 25,
-      projectProgress: 20
-    },
-    { 
-      id: 5, 
-      project: "E-commerce Platform", 
-      client: "Parker Industries", 
-      amount: 60000,
-      status: "sent",
-      invoiceDate: "2023-11-10",
-      dueDate: "2023-12-10",
-      paymentDate: null,
-      tasksCompleted: 15,
-      totalTasks: 15,
-      projectProgress: 100
-    },
-  ]);
+// Resolve current user's role to gate Finance features
+  const { data: me, isLoading: loadingMe } = useMe();
+  const u = (me?.user || me) as any;
+  const roleName = String(u?.role || u?.roleName || u?.role_master?.roleName || u?.roleMaster?.roleName || '').toLowerCase();
+  const roleCode = String(u?.roleCode || u?.role_master?.roleCode || u?.roleMaster?.roleCode || '').toUpperCase();
+  const isFinance = roleName === 'finance' || ['FIN','FINANCE'].includes(roleCode);
 
-  const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const totalPaid = invoices
-    .filter(invoice => invoice.status === "paid")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const totalOutstanding = invoices
-    .filter(invoice => invoice.status === "pending" || invoice.status === "overdue" || invoice.status === "sent")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const overdueAmount = invoices
-    .filter(invoice => invoice.status === "overdue")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const paidPercentage = totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 0;
+  // Load invoices only if Finance
+  const { data: invoices } = useInvoices(undefined, { enabled: isFinance });
 
-  const overdueInvoices = invoices.filter(invoice => invoice.status === "overdue").length;
-
-  const handleSearch = (term: string) => {
-    // In a real app, this would filter the invoices
-    console.log("Searching for:", term);
-  };
-
-  const handleFilter = (filters: any) => {
-    // In a real app, this would filter the invoices based on the filters
-    console.log("Filtering with:", filters);
-  };
+  const totalInvoiced = isFinance ? (invoices || []).reduce((sum, inv) => sum + (inv.total || 0), 0) : 0;
+  const totalSent = isFinance ? (invoices || []).filter(i => i.status === 'sent').reduce((s, i) => s + (i.total || 0), 0) : 0;
+  const totalPending = totalInvoiced - totalSent;
+  const paidPercentage = totalInvoiced > 0 ? Math.round((totalSent / totalInvoiced) * 100) : 0;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Billings</h1>
-          <p className="text-muted-foreground">
-            Track project invoices and payments
-          </p>
+          <p className="text-muted-foreground">Generate, approve, and send invoices</p>
         </div>
-        <Button>
+        <Button disabled title="Invoices are generated from closed projects">
           <Plus className="h-4 w-4 mr-2" />
           Create Invoice
         </Button>
       </div>
 
-      <PaymentReminder 
-        overdueInvoices={overdueInvoices} 
-        totalOverdueAmount={overdueAmount} 
-      />
+{/* Ready projects panel (Finance only) */}
+      {isFinance && <ReadyToInvoice />}
 
-      <InvoiceSummary 
-        totalInvoiced={totalInvoiced}
-        totalPaid={totalPaid}
-        totalOutstanding={totalOutstanding}
-        overdueAmount={overdueAmount}
-        paidPercentage={paidPercentage}
-      />
-
+      {/* Simple charts (still static for now) */}
       <div className="grid gap-6 lg:grid-cols-2">
         <InvoiceStatusChart />
         <RevenueChart />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Billing Overview</CardTitle>
-          <CardDescription>Track invoices, payments, and project status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InvoiceTable 
-            invoices={invoices} 
-            onSearch={handleSearch}
-            onFilter={handleFilter}
-          />
-        </CardContent>
-      </Card>
-
-      <ClientPaymentHistory />
+{/* Invoices list (Finance only) */}
+      {isFinance ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoices</CardTitle>
+            <CardDescription>Browse and manage invoices</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InvoiceList />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Access restricted</CardTitle>
+            <CardDescription>Only Finance users can view and manage invoices.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">You do not have permission to access this section.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

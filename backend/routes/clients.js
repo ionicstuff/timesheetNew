@@ -15,6 +15,9 @@ router.get('/all', clientController.getAllClients);
 // GET /api/clients/industries - Get list of industries
 router.get('/industries', clientController.getIndustries);
 
+// GET /api/clients/pending - Clients that need profile completion (Finance)
+router.get('/pending', clientController.getPendingClients);
+
 // GET /api/clients/:id - Get a specific client by ID
 router.get('/:id', clientController.getClientById);
 

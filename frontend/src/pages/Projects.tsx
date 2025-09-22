@@ -41,7 +41,7 @@ const Projects = () => {
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
 
   // API & UI types
-type ApiProject = {
+ type ApiProject = {
   id: number;
   name: string;
   description?: string;
@@ -53,7 +53,7 @@ type ApiProject = {
   statusColor?: "green" | "red" | "orange" | null;
 };
 
-type UiProject = {
+ type UiProject = {
   id: number;
   name: string;
   description: string;
@@ -93,6 +93,7 @@ const mapProjectForUI = (p: ApiProject): UiProject => {
 const [projects, setProjects] = useState<UiProject[]>([]);
 const [loading, setLoading] = useState<boolean>(true);
 const [statusFilter, setStatusFilter] = useState<string>('all');
+const [reloadTick, setReloadTick] = useState<number>(0);
 
 useEffect(() => {
   const run = async () => {
@@ -122,7 +123,7 @@ useEffect(() => {
     }
   };
   run();
-}, [searchTerm, statusFilter]);
+}, [searchTerm, statusFilter, reloadTick]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -163,7 +164,7 @@ useEffect(() => {
             Manage your projects and track progress
           </p>
         </div>
-        <CreateProjectButton />
+        <CreateProjectButton onCreated={() => setReloadTick((x) => x + 1)} />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -324,7 +325,7 @@ useEffect(() => {
           <p className="text-muted-foreground mb-4">
             Try adjusting your search or filter criteria
           </p>
-          <CreateProjectButton />
+          <CreateProjectButton onCreated={() => setReloadTick((x) => x + 1)} />
         </div>
       )}
     </div>

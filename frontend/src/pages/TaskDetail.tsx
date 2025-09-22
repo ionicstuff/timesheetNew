@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -23,26 +24,73 @@ import TaskAttachments from "@/components/tasks/TaskAttachments";
 import TaskHistory from "@/components/tasks/TaskHistory";
 import TaskDependencies from "@/components/tasks/TaskDependencies";
 import TimeTracking from "@/components/tasks/TimeTracking";
+import Modal from "@/components/ui/Modal";
+import TaskForm from "@/components/tasks/TaskForm";
+import { useToast } from "@/hooks/use-toast";
+
+interface ApiTask {
+  id: number;
+  name: string;
+  description?: string;
+  projectId: number;
+  project?: { id: number; projectName: string };
+  assignee?: { id: number; firstName: string; lastName: string; email: string };
+  assignedTo?: number;
+  sprintStartDate?: string;
+  sprintEndDate?: string;
+  estimatedTime: number;
+  status: 'pending'|'in_progress'|'paused'|'completed'|'cancelled';
+  priority?: 'High'|'Medium'|'Low';
+  totalTrackedSeconds?: number;
+}
 
 const TaskDetail = () => {
+  const { id } = useParams();
+  const taskId = id ? parseInt(id, 10) : NaN;
   const [completed, setCompleted] = useState(false);
-  
-  const task = {
-    id: 1,
-    title: "Design homepage for website redesign",
-    description: "Create a modern, responsive homepage design that aligns with our brand guidelines and improves user engagement metrics.",
-    project: "Website Redesign",
-    dueDate: "Dec 15, 2023",
-    priority: "High",
-    status: "In Progress",
-    assignee: "Alex Johnson",
-    startDate: "Dec 1, 2023",
-    estimatedTime: "8 hours",
-    trackedTime: "5 hours"
+  const [task, setTask] = useState<ApiTask | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const { toast } = useToast();
+
+  const reloadTask = async () => {
+    if (!taskId || Number.isNaN(taskId)) return;
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setTask(data);
+      setCompleted(data?.status === 'completed');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    reloadTask();
+  }, [taskId]);
+
+  const ui = useMemo(() => {
+    if (!task) return null;
+    const assigneeName = task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : undefined;
+    return {
+      id: task.id,
+      title: task.name,
+      description: task.description || '',
+      project: task.project?.projectName || `Project ${task.projectId}`,
+      dueDate: task.sprintEndDate ? new Date(task.sprintEndDate).toLocaleDateString() : 'No due date',
+      priority: task.priority || 'Medium',
+      status: task.status === 'in_progress' ? 'In Progress' : task.status === 'pending' ? 'To Do' : task.status.charAt(0).toUpperCase()+task.status.slice(1).replace('_',' '),
+      assignee: assigneeName || 'Unassigned',
+      startDate: task.sprintStartDate ? new Date(task.sprintStartDate).toLocaleDateString() : '—',
+      estimatedTime: `${task.estimatedTime} hours`,
+      trackedTime: task.totalTrackedSeconds ? `${Math.floor((task.totalTrackedSeconds||0)/3600)}h ${Math.floor(((task.totalTrackedSeconds||0)%3600)/60)}m` : '0h 0m'
+    };
+  }, [task]);
+
   const getPriorityColor = () => {
-    switch (task.priority) {
+    switch (ui?.priority) {
       case "High": return "bg-red-100 text-red-800";
       case "Medium": return "bg-yellow-100 text-yellow-800";
       case "Low": return "bg-green-100 text-green-800";
@@ -51,12 +99,77 @@ const TaskDetail = () => {
   };
 
   const getStatusColor = () => {
-    switch (task.status) {
+    switch (ui?.status) {
       case "To Do": return "bg-gray-100 text-gray-800";
       case "In Progress": return "bg-blue-100 text-blue-800";
       case "Review": return "bg-purple-100 text-purple-800";
       case "Completed": return "bg-green-100 text-green-800";
       default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (!ui) return (
+    <div className="space-y-6">
+      <div className="text-sm text-muted-foreground">Loading task...</div>
+    </div>
+  );
+
+  const markComplete = async () => {
+    if (!taskId) return;
+    const token = localStorage.getItem('token') || '';
+    if (completed) {
+      await fetch(`/api/tasks/${taskId}`, { method: 'PUT', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'pending' }) });
+      setCompleted(false);
+      setTask(prev => prev ? { ...prev, status: 'pending' } : prev);
+    } else {
+      await fetch(`/api/tasks/${taskId}/complete`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      setCompleted(true);
+      setTask(prev => prev ? { ...prev, status: 'completed' } : prev);
+    }
+  };
+
+  const handleEditSubmit = async (data: any) => {
+    try {
+      if (!taskId) return;
+      const token = localStorage.getItem('token') || '';
+      const payload: any = {
+        name: data.title,
+        description: data.description,
+        estimatedTime: data.estimatedTime ? Number(data.estimatedTime) : undefined,
+        priority: data.priority,
+        sprintStartDate: data.sprintData?.startDate || undefined,
+        sprintEndDate: data.dueDate || data.sprintData?.endDate || undefined,
+        assignedTo: data.assigneeId ? Number(data.assigneeId) : undefined,
+      };
+      Object.keys(payload).forEach((k) => (payload as any)[k] === undefined && delete (payload as any)[k]);
+
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to update task');
+      }
+      const resp = await res.json();
+      const updated = resp?.task;
+      if (updated) {
+        setTask(updated);
+        setCompleted(String(updated.status || '').toLowerCase() === 'completed');
+      } else {
+        // Fallback refresh
+        const r2 = await fetch(`/api/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (r2.ok) {
+          const d2 = await r2.json();
+          setTask(d2);
+          setCompleted(String(d2?.status || '').toLowerCase() === 'completed');
+        }
+      }
+      setIsEditOpen(false);
+      toast({ title: 'Task updated' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to update task', variant: 'destructive' });
     }
   };
 
@@ -66,15 +179,15 @@ const TaskDetail = () => {
         <div className="flex items-start gap-3">
           <Checkbox 
             checked={completed} 
-            onCheckedChange={(checked) => setCompleted(checked as boolean)}
+            onCheckedChange={(checked) => setCompleted(!!checked)}
             className="mt-1"
           />
           <div>
-            <h1 className="text-2xl font-bold">{task.title}</h1>
-            <p className="text-muted-foreground mt-1">{task.project}</p>
+            <h1 className="text-2xl font-bold">{ui.title}</h1>
+            <p className="text-muted-foreground mt-1">{ui.project}</p>
           </div>
         </div>
-        <Button>
+        <Button onClick={() => setIsEditOpen(true)}>
           <Edit className="h-4 w-4 mr-2" />
           Edit Task
         </Button>
@@ -92,7 +205,7 @@ const TaskDetail = () => {
                 <div>
                   <h3 className="font-medium mb-2">Description</h3>
                   <p className="text-muted-foreground">
-                    {task.description}
+                    {ui.description}
                   </p>
                 </div>
                 
@@ -103,24 +216,24 @@ const TaskDetail = () => {
                     <h3 className="font-medium mb-2">Assignee</h3>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://i.pravatar.cc/150?u=alex" alt="Alex Johnson" />
-                        <AvatarFallback>AJ</AvatarFallback>
+                        <AvatarImage src="" alt={ui.assignee} />
+                        <AvatarFallback>{ui.assignee?.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                       </Avatar>
-                      <span>{task.assignee}</span>
+                      <span>{ui.assignee}</span>
                     </div>
                   </div>
                   
                   <div>
                     <h3 className="font-medium mb-2">Status</h3>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor()}`}>
-                      {task.status}
+                      {ui.status}
                     </span>
                   </div>
                   
                   <div>
                     <h3 className="font-medium mb-2">Priority</h3>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPriorityColor()}`}>
-                      {task.priority}
+                      {ui.priority}
                     </span>
                   </div>
                   
@@ -128,7 +241,7 @@ const TaskDetail = () => {
                     <h3 className="font-medium mb-2">Due Date</h3>
                     <div className="flex items-center text-sm">
                       <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span>{task.dueDate}</span>
+                      <span>{ui.dueDate}</span>
                     </div>
                   </div>
                   
@@ -136,7 +249,7 @@ const TaskDetail = () => {
                     <h3 className="font-medium mb-2">Start Date</h3>
                     <div className="flex items-center text-sm">
                       <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span>{task.startDate}</span>
+                      <span>{ui.startDate}</span>
                     </div>
                   </div>
                   
@@ -144,7 +257,7 @@ const TaskDetail = () => {
                     <h3 className="font-medium mb-2">Time Tracking</h3>
                     <div className="flex items-center text-sm">
                       <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span>{task.trackedTime} / {task.estimatedTime}</span>
+                      <span>{ui.trackedTime} / {ui.estimatedTime}</span>
                     </div>
                   </div>
                 </div>
@@ -161,7 +274,7 @@ const TaskDetail = () => {
               <CardDescription>Discuss this task with your team</CardDescription>
             </CardHeader>
             <CardContent>
-              <TaskComments />
+              <TaskComments taskId={taskId} />
             </CardContent>
           </Card>
           
@@ -175,7 +288,7 @@ const TaskDetail = () => {
                 <CardDescription>Files related to this task</CardDescription>
               </CardHeader>
               <CardContent>
-                <TaskAttachments />
+                <TaskAttachments taskId={taskId} />
               </CardContent>
             </Card>
             
@@ -188,7 +301,7 @@ const TaskDetail = () => {
                 <CardDescription>Task relationships and blockers</CardDescription>
               </CardHeader>
               <CardContent>
-                <TaskDependencies />
+                <TaskDependencies taskId={taskId} />
               </CardContent>
             </Card>
           </div>
@@ -202,13 +315,13 @@ const TaskDetail = () => {
               <CardDescription>Timeline of changes to this task</CardDescription>
             </CardHeader>
             <CardContent>
-              <TaskHistory />
+              <TaskHistory taskId={taskId} />
             </CardContent>
           </Card>
         </div>
         
         <div className="space-y-6">
-          <TimeTracking />
+          <TimeTracking taskId={taskId} taskName={ui.title} onUpdated={reloadTask} />
           
           <Card>
             <CardHeader>
@@ -217,7 +330,7 @@ const TaskDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Button className="w-full" variant={completed ? "outline" : "default"}>
+                <Button className="w-full" variant={completed ? "outline" : "default"} onClick={markComplete}>
                   <Check className="h-4 w-4 mr-2" />
                   {completed ? "Mark Incomplete" : "Mark Complete"}
                 </Button>
@@ -238,6 +351,29 @@ const TaskDetail = () => {
           </Card>
         </div>
       </div>
+      {/* Edit Task Modal */}
+      <Modal open={isEditOpen} onOpenChange={setIsEditOpen} title="Edit Task" size="lg">
+        {task && (
+          <TaskForm
+            onSubmit={handleEditSubmit}
+            onCancel={() => setIsEditOpen(false)}
+            initialData={{
+              title: task.name,
+              description: task.description || '',
+              priority: task.priority || 'Medium',
+              estimatedTime: task.estimatedTime,
+              dueDate: task.sprintEndDate ? new Date(task.sprintEndDate) : undefined,
+              project: String(task.projectId),
+              assigneeId: task.assignee?.id ? String(task.assignee.id) : (task.assignedTo ? String(task.assignedTo) : null),
+            }}
+            projects={[{
+              id: task.project?.id ?? task.projectId,
+              projectName: task.project?.projectName || `Project ${task.projectId}`,
+            }]}
+            canAssignOthers={true}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

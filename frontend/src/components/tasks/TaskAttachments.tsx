@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Paperclip, 
@@ -19,38 +19,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 
-const TaskAttachments = () => {
-  const [attachments, setAttachments] = useState([
-    { 
-      id: 1, 
-      name: "project-requirements.pdf", 
-      type: "pdf", 
-      size: "2.4 MB", 
-      date: "2 days ago" 
-    },
-    { 
-      id: 2, 
-      name: "design-mockups.fig", 
-      type: "fig", 
-      size: "5.1 MB", 
-      date: "1 day ago" 
-    },
-    { 
-      id: 3, 
-      name: "meeting-notes.docx", 
-      type: "docx", 
-      size: "45 KB", 
-      date: "Today" 
-    },
-    { 
-      id: 4, 
-      name: "user-research.png", 
-      type: "png", 
-      size: "1.2 MB", 
-      date: "3 days ago" 
-    },
-  ]);
+interface Props { taskId: number; }
+
+const TaskAttachments = ({ taskId }: Props) => {
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
+
+  const load = async () => {
+    if (!taskId) return;
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/files`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can view files for this task.', variant: 'destructive' });
+      setAttachments([]);
+      return;
+    }
+    if (res.ok) {
+      const rows = await res.json();
+      const mapped = (rows || []).map((r: any) => ({
+        id: r.id,
+        name: r.originalName,
+        type: (r.mimeType || '').split('/').pop() || 'file',
+        size: r.size,
+        date: new Date(r.created_at || r.createdAt).toLocaleString()
+      }));
+      setAttachments(mapped);
+    }
+  };
+
+  useEffect(() => { load(); }, [taskId]);
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -75,16 +75,51 @@ const TaskAttachments = () => {
   };
 
   const handleAddAttachment = () => {
-    // In a real app, this would open a file picker
-    console.log("Adding attachment");
+    inputRef.current?.click();
   };
 
-  const handleDownload = (id: number) => {
-    console.log(`Downloading attachment ${id}`);
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const token = localStorage.getItem('token') || '';
+    const fd = new FormData();
+    Array.from(files).forEach(f => fd.append('file', f));
+    const res = await fetch(`/api/tasks/${taskId}/files`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can upload files to this task.', variant: 'destructive' });
+      return;
+    }
+    if (res.ok) load();
+    if (inputRef.current) inputRef.current.value = '';
   };
 
-  const handleDelete = (id: number) => {
-    setAttachments(attachments.filter(attachment => attachment.id !== id));
+  const handleDownload = async (id: number) => {
+    const token = localStorage.getItem('token') || '';
+    const resp = await fetch(`/api/tasks/${taskId}/files/${id}/download`, { headers: { Authorization: `Bearer ${token}` } });
+    if (resp.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can download files from this task.', variant: 'destructive' });
+      return;
+    }
+    // Let the browser handle via new window
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/files/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403) {
+      toast({ title: 'Members only', description: 'Only project members can delete files from this task.', variant: 'destructive' });
+      return;
+    }
+    if (res.ok) setAttachments(attachments.filter(attachment => attachment.id !== id));
   };
 
   return (
@@ -116,7 +151,7 @@ const TaskAttachments = () => {
               <div>
                 <p className="font-medium text-sm">{attachment.name}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{attachment.size}</span>
+                  <span>{Math.round((attachment.size || 0)/1024)} KB</span>
                   <span>•</span>
                   <span>{attachment.date}</span>
                 </div>
@@ -172,6 +207,8 @@ const TaskAttachments = () => {
           </Button>
         </div>
       )}
+
+      <input ref={inputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   );
 };

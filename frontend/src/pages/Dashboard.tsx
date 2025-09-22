@@ -18,6 +18,7 @@ import ProductivityInsights from "@/components/dashboard/ProductivityInsights";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import GoalTracker from "@/components/dashboard/GoalTracker";
+import ClientCompletionQueue from "@/components/dashboard/ClientCompletionQueue";
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -161,6 +162,9 @@ const Dashboard = () => {
 
         <RecentActivity />
       </div>
+
+      {/* Finance-only widget: Clients pending completion */}
+      <ClientCompletionQueue />
 
       <GoalTracker />
 

@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Calendar, 
   Mail,
   Phone,
   MapPin,
@@ -15,25 +16,65 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
 import TeamCollaboration from "@/components/team/TeamCollaboration";
 
+interface ApiUserDetail {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  designation?: string;
+  isActive?: boolean;
+  profilePicture?: string;
+}
+
 const TeamMemberDetail = () => {
-  const member = {
-    id: 1,
-    name: "Alex Johnson",
-    role: "Senior Product Designer",
-    email: "alex.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    status: "online",
-    tasks: 12,
-    projects: 5,
-    avatar: "https://i.pravatar.cc/150?u=alex",
-    bio: "Product designer with 5+ years of experience in creating user-centered designs for SaaS applications. Passionate about accessibility and inclusive design."
-  };
+  const { id } = useParams();
+  const [data, setData] = useState<ApiUserDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!id) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`/api/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j?.message || `Failed to load user (${res.status})`);
+        }
+        const j = await res.json();
+        setData(j?.data || null);
+      } catch (e: any) {
+        setError(e.message || 'Request failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  const member = useMemo(() => {
+    const fullName = `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim();
+    return {
+      id: data?.id || 0,
+      name: fullName || data?.email || (id ? `User #${id}` : 'User'),
+      role: data?.designation || '—',
+      email: data?.email || '',
+      phone: data?.phone || '',
+      location: '—',
+      status: (data?.isActive ? 'online' : 'offline') as 'online'|'away'|'offline',
+      tasks: 0,
+      projects: 0,
+      avatar: data?.profilePicture || `https://i.pravatar.cc/150?u=${data?.id || id}`,
+      bio: ''
+    };
+  }, [data, id]);
 
   const tasks = [
-    { id: 1, title: "Design homepage", project: "Website Redesign", dueDate: "Today", priority: "High" as const, completed: false },
-    { id: 2, title: "Create wireframes", project: "Website Redesign", dueDate: "In 3 days", priority: "High" as const, completed: false },
-    { id: 3, title: "Update design system", project: "Product Launch", dueDate: "Next week", priority: "Medium" as const, completed: true },
+    // Placeholder until tasks-by-user endpoint is wired
   ];
 
   const getStatusColor = () => {
@@ -48,6 +89,9 @@ const TeamMemberDetail = () => {
   const getStatusText = () => {
     return member.status.charAt(0).toUpperCase() + member.status.slice(1);
   };
+
+  if (loading) return <div className="p-4">Loading member...</div>;
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -83,7 +127,7 @@ const TeamMemberDetail = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                {member.bio}
+                {member.bio || 'No biography available.'}
               </p>
             </CardContent>
           </Card>
@@ -109,7 +153,7 @@ const TeamMemberDetail = () => {
                   </div>
                 </div>
                 <div className="divide-y">
-                  <TaskList tasks={tasks} />
+                  <TaskList tasks={tasks as any[]} />
                 </div>
               </div>
             </CardContent>
@@ -152,7 +196,7 @@ const TeamMemberDetail = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <a href={`tel:${member.phone}`} className="text-sm hover:underline">
-                      {member.phone}
+                      {member.phone || '—'}
                     </a>
                   </div>
                 </div>
@@ -179,34 +223,8 @@ const TeamMemberDetail = () => {
                   <div className="flex items-center gap-3">
                     <div className="h-3 w-3 rounded-full bg-blue-500"></div>
                     <div>
-                      <p className="font-medium text-sm">Website Redesign</p>
-                      <p className="text-xs text-muted-foreground">Project Manager</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                    <div>
-                      <p className="font-medium text-sm">Product Launch</p>
-                      <p className="text-xs text-muted-foreground">Designer</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                    <div>
-                      <p className="font-medium text-sm">Marketing Campaign</p>
-                      <p className="text-xs text-muted-foreground">Contributor</p>
+                      <p className="font-medium text-sm">No linked projects yet</p>
+                      <p className="text-xs text-muted-foreground">—</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon">
@@ -227,30 +245,10 @@ const TeamMemberDetail = () => {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Tasks Completed</span>
-                    <span>85%</span>
+                    <span>—</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: "85%" }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>On-time Delivery</span>
-                    <span>92%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: "92%" }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Team Collaboration</span>
-                    <span>78%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: "78%" }}></div>
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: "0%" }}></div>
                   </div>
                 </div>
               </div>

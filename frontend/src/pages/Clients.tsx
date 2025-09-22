@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -17,81 +17,65 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Modal from "@/components/ui/Modal";
+import ClientForm from "@/components/clients/ClientForm";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+
+interface UiClientCard {
+  id: number;
+  name: string;
+  industry?: string;
+  projects: number;
+  status: string;
+  contact?: string;
+  email?: string;
+}
 
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [clients, setClients] = useState<UiClientCard[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { toast } = useToast();
 
-  const clients = [
-    { 
-      id: 1, 
-      name: "Acme Corporation", 
-      industry: "Technology", 
-      projects: 3, 
-      tasks: 12,
-      status: "Active",
-      contact: "John Smith",
-      email: "john@acme.com",
-      phone: "+1 (555) 123-4567"
-    },
-    { 
-      id: 2, 
-      name: "Globex Inc", 
-      industry: "Finance", 
-      projects: 2, 
-      tasks: 8,
-      status: "Active",
-      contact: "Sarah Johnson",
-      email: "sarah@globex.com",
-      phone: "+1 (555) 987-6543"
-    },
-    { 
-      id: 3, 
-      name: "Wayne Enterprises", 
-      industry: "Defense", 
-      projects: 1, 
-      tasks: 5,
-      status: "Active",
-      contact: "Bruce Wayne",
-      email: "bruce@wayne.com",
-      phone: "+1 (555) 456-7890"
-    },
-    { 
-      id: 4, 
-      name: "Stark Industries", 
-      industry: "Defense", 
-      projects: 4, 
-      tasks: 18,
-      status: "Active",
-      contact: "Tony Stark",
-      email: "tony@stark.com",
-      phone: "+1 (555) 234-5678"
-    },
-    { 
-      id: 5, 
-      name: "Parker Industries", 
-      industry: "Technology", 
-      projects: 2, 
-      tasks: 7,
-      status: "Inactive",
-      contact: "Peter Parker",
-      email: "peter@parker.com",
-      phone: "+1 (555) 876-5432"
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active": return "bg-green-100 text-green-800";
-      case "Inactive": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token') || '';
+      const params = new URLSearchParams();
+      if (searchTerm) params.set('search', searchTerm);
+      const res = await fetch(`/api/clients?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      const rows = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
+      const mapped: UiClientCard[] = rows.map((c: any) => ({
+        id: c.id,
+        name: c.clientName || c.name || `Client #${c.id}`,
+        industry: c.industry || c.companyName || undefined,
+        projects: Array.isArray(c.projects) ? c.projects.length : (c.projectsCount ?? 0),
+        status: (c.status || (c.isActive ? 'Active' : 'Inactive')) + '',
+        contact: c.contact || c.primaryContact || c.contactName,
+        email: c.email || c.contactEmail
+      }));
+      setClients(mapped);
+    } catch (e) {
+      console.error('Failed to load clients', e);
+      setClients([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contact.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => { void fetchClients(); }, [searchTerm]);
+
+  const getStatusColor = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case "active": return "bg-green-100 text-green-800";
+      case "inactive": return "bg-gray-100 text-gray-800";
+      case "prospect": return "bg-yellow-100 text-yellow-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -102,7 +86,7 @@ const Clients = () => {
             Manage your client relationships and projects
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Client
         </Button>
@@ -120,7 +104,7 @@ const Clients = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredClients.map((client) => (
+        {clients.map((client) => (
           <Card key={client.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
@@ -131,8 +115,12 @@ const Clients = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-lg">{client.name}</CardTitle>
-                    <CardDescription>{client.industry}</CardDescription>
+                    <CardTitle className="text-lg">
+                      <Link to={`/clients/${client.id}`} className="hover:underline">
+                        {client.name}
+                      </Link>
+                    </CardTitle>
+                    <CardDescription>{client.industry || '—'}</CardDescription>
                   </div>
                 </div>
                 <DropdownMenu>
@@ -142,10 +130,9 @@ const Clients = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Details</DropdownMenuItem>
-                    <DropdownMenuItem>Edit Client</DropdownMenuItem>
-                    <DropdownMenuItem>View Projects</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Delete Client</DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/clients/${client.id}`}>View Details</Link>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -153,30 +140,22 @@ const Clients = () => {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Contact</span>
-                  <span className="text-sm font-medium">{client.contact}</span>
+                  <span className="text-sm text-muted-foreground">Primary Contact</span>
+                  <span className="text-sm font-medium">{client.contact || client.email || '—'}</span>
                 </div>
-                
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Projects</span>
                   <span className="text-sm font-medium">{client.projects}</span>
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Tasks</span>
-                  <span className="text-sm font-medium">{client.tasks}</span>
-                </div>
-                
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
                   <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(client.status)}`}>
                     {client.status}
                   </span>
                 </div>
-                
                 <div className="pt-2">
                   <Button className="w-full" variant="outline" asChild>
-                    <a href={`/clients/${client.id}`}>View Client</a>
+                    <Link to={`/clients/${client.id}`}>View Client</Link>
                   </Button>
                 </div>
               </div>
@@ -185,19 +164,50 @@ const Clients = () => {
         ))}
       </div>
 
-      {filteredClients.length === 0 && (
+      {!loading && clients.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg">
           <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-1">No clients found</h3>
           <p className="text-muted-foreground mb-4">
             Try adjusting your search or add a new client
           </p>
-          <Button>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Client
           </Button>
         </div>
       )}
+
+      <Modal open={createOpen} onOpenChange={setCreateOpen} title="Create Client" size="lg">
+        <ClientForm onSubmit={async (data: any) => {
+          try {
+            const token = localStorage.getItem('token') || '';
+              const statusNorm = (data.status ? String(data.status) : 'active').toLowerCase().replace(/\s+/g,'_');
+              const payload: any = {
+              clientName: data.name,
+              industry: data.industry || undefined,
+              email: data.email || undefined,
+              phone: data.phone || undefined,
+              address: data.address || undefined,
+              website: data.website || undefined,
+              status: statusNorm,
+              notes: data.notes || undefined
+            };
+            const res = await fetch('/api/clients', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(payload)
+            });
+            const j = await res.json().catch(()=>({}));
+            if (!res.ok) throw new Error(j?.message || 'Failed to create client');
+            setCreateOpen(false);
+            toast({ title: 'Client created' });
+            await fetchClients();
+          } catch (e: any) {
+            toast({ title: 'Error', description: e.message || 'Failed to create client', variant: 'destructive' });
+          }
+        }} onCancel={() => setCreateOpen(false)} />
+      </Modal>
     </div>
   );
 };

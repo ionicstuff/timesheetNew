@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,48 +13,50 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const TeamCollaboration = () => {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      user: "Alex Johnson",
-      avatar: "https://i.pravatar.cc/150?u=alex",
-      content: "Hey team, I've finished the homepage design. What do you think?",
-      time: "10:30 AM",
-      reactions: [{ emoji: "👍", count: 3 }]
-    },
-    {
-      id: 2,
-      user: "Sam Smith",
-      avatar: "https://i.pravatar.cc/150?u=sam",
-      content: "Looks great! I especially like the color scheme.",
-      time: "10:32 AM",
-      reactions: []
-    },
-    {
-      id: 3,
-      user: "Taylor Brown",
-      avatar: "https://i.pravatar.cc/150?u=taylor",
-      content: "I've attached the feedback document with some suggestions.",
-      time: "10:35 AM",
-      reactions: [{ emoji: "👀", count: 1 }],
-      attachments: ["feedback.docx"]
-    }
-  ]);
+type ChatMessage = {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: { id: number; firstName?: string; lastName?: string; email?: string } | null;
+  attachments?: { id: number; originalName: string; filePath: string }[];
+};
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        user: "You",
-        avatar: "https://github.com/shadcn.png",
-        content: message,
-        time: "Just now",
-        reactions: []
-      };
-      setMessages([...messages, newMessage]);
+const TeamCollaboration = ({ projectId }: { projectId: number }) => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const loadMessages = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/projects/${projectId}/messages?limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (Array.isArray(data)) setMessages(data);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!projectId) return;
+    void loadMessages();
+    const id = setInterval(loadMessages, 10000);
+    return () => clearInterval(id);
+  }, [projectId]);
+
+  const handleSendMessage = async () => {
+    const content = message.trim();
+    if (!content) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/projects/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to send');
+      setMessages(prev => [...prev, data]);
       setMessage("");
+    } catch (e) {
+      // swallow error for now or show toast via prop later
     }
   };
 
@@ -75,40 +77,37 @@ const TeamCollaboration = () => {
       </div>
       
       <div className="h-64 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id} className="flex gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={msg.avatar} alt={msg.user} />
-              <AvatarFallback>{msg.user.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="bg-muted rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{msg.user}</span>
-                  <span className="text-xs text-muted-foreground">{msg.time}</span>
-                </div>
-                <p className="text-sm mt-1">{msg.content}</p>
-                {msg.attachments && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {msg.attachments.join(", ")}
-                    </span>
+        {messages.map((msg) => {
+          const name = msg.author ? [msg.author.firstName, msg.author.lastName].filter(Boolean).join(' ') || msg.author.email || 'User' : 'User';
+          const initials = name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+          const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return (
+            <div key={msg.id} className="flex gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>{initials || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="bg-muted rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{name}</span>
+                    <span className="text-xs text-muted-foreground">{time}</span>
                   </div>
-                )}
-              </div>
-              {msg.reactions.length > 0 && (
-                <div className="flex gap-1 mt-1">
-                  {msg.reactions.map((reaction, idx) => (
-                    <span key={idx} className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                      {reaction.emoji} {reaction.count}
-                    </span>
-                  ))}
+                  <p className="text-sm mt-1 whitespace-pre-wrap">{msg.content}</p>
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {msg.attachments.map(a => (
+                          <a key={a.id} href={`/${a.filePath}`} target="_blank" rel="noreferrer" className="underline">{a.originalName}</a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="border-t p-4">

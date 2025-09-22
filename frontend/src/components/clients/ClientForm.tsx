@@ -72,7 +72,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
     { value: "Active", label: "Active" },
     { value: "Inactive", label: "Inactive" },
     { value: "Prospect", label: "Prospect" },
-    { value: "On Hold", label: "On Hold" }
+    { value: "Closed", label: "Closed" }
   ];
 
   return (

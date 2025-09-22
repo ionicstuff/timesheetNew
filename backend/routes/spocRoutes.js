@@ -1,17 +1,21 @@
 const express = require('express');
 const spocController = require('../controllers/spocController');
 const authorizeRoles = require('../middleware/authorizeRoles');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Protect all SPOC routes with roles that can manage SPOCs
-router.use(authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'));
+// All SPOC routes require authentication
+router.use(authMiddleware);
 
 // SPOC routes
-router.get('/', spocController.getAllSpocs);
+// List all spocs (admin/manager level)
+router.get('/', authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'), spocController.getAllSpocs);
+// List spocs for a client (any authenticated user)
 router.get('/client/:clientId', spocController.getSpocsByClient);
-router.post('/', spocController.createSpoc);
-router.put('/:id', spocController.updateSpoc);
-router.delete('/:id', spocController.deleteSpoc);
+// Create/Update/Delete restricted to management roles
+router.post('/', authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'), spocController.createSpoc);
+router.put('/:id', authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'), spocController.updateSpoc);
+router.delete('/:id', authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager'), spocController.deleteSpoc);
 
 module.exports = router;

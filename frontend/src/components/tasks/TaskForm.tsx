@@ -34,6 +34,7 @@ interface TaskFormProps {
   currentUserId?: number;
   canAssignOthers?: boolean;
   teamMembers?: TeamMember[];
+  lockProjectId?: number; // when provided, lock project selection to this id
 }
 
 const TaskForm = ({ 
@@ -43,11 +44,12 @@ const TaskForm = ({
   projects = [],
   currentUserId,
   canAssignOthers,
-  teamMembers = []
+  teamMembers = [],
+  lockProjectId
 }: TaskFormProps) => {
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(initialData?.description || "");
-  const [project, setProject] = useState(initialData?.project || "");
+  const [project, setProject] = useState(initialData?.project || (lockProjectId ? String(lockProjectId) : ""));
   const [priority, setPriority] = useState(initialData?.priority || "Medium");
   const [dueDate, setDueDate] = useState<Date | undefined>(initialData?.dueDate);
   const [estimatedTime, setEstimatedTime] = useState(initialData?.estimatedTime || "");
@@ -59,6 +61,11 @@ const TaskForm = ({
   const defaultAssigneeId = initialData?.assigneeId ?? (currentUserId ? String(currentUserId) : null);
   const [assigneeId, setAssigneeId] = useState<string | null>(defaultAssigneeId);
   const [projectMembers, setProjectMembers] = useState<TeamMember[] | null>(null); // null => not loaded yet for current project
+
+  // Sync lockProjectId if it changes
+  useEffect(() => {
+    if (lockProjectId) setProject(String(lockProjectId));
+  }, [lockProjectId]);
 
   // Load project members when project changes
   useEffect(() => {
@@ -89,11 +96,11 @@ const TaskForm = ({
     loadMembers();
   }, [project]);
 
-  // Decide eligible assignees: project members if loaded, otherwise fallback to provided teamMembers
+  // Decide eligible assignees: only project members matter for selection; if none, will auto-assign to current user
   const eligibleAssignees: TeamMember[] = useMemo(() => {
     if (project && projectMembers) return projectMembers;
-    return teamMembers || [];
-  }, [project, projectMembers, teamMembers]);
+    return [];
+  }, [project, projectMembers]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,8 +155,8 @@ const TaskForm = ({
       
       <div>
         <Label htmlFor="project">Project</Label>
-        <Select value={project} onValueChange={setProject}>
-          <SelectTrigger>
+        <Select value={project} onValueChange={(v)=>{ if (lockProjectId) return; setProject(v); }}>
+          <SelectTrigger disabled={!!lockProjectId}>
             <SelectValue placeholder="Select project" />
           </SelectTrigger>
           <SelectContent>
@@ -162,8 +169,8 @@ const TaskForm = ({
         </Select>
       </div>
 
-      {/* Assignee selection - only if user can assign others and there are eligible members */}
-      {canAssignOthers && eligibleAssignees.length > 0 ? (
+      {/* Assignee selection - show only when selected project has members; otherwise assign to current user */}
+      {project && projectMembers && projectMembers.length > 0 ? (
         <div>
           <Label htmlFor="assignee">Assign to</Label>
           <Select 

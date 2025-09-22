@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Modal from "@/components/ui/Modal";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { 
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import TaskTemplates from "@/components/tasks/TaskTemplates";
 import CreateTaskButton from "@/components/tasks/CreateTaskButton";
 import ProjectSprintVisualization from "@/components/projects/ProjectSprintVisualization";
 import ProjectSprintCalendar from "@/components/projects/ProjectSprintCalendar";
+import ProjectForm from "@/components/projects/ProjectForm";
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -48,9 +50,12 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [members, setMembers] = useState<any[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("member");
+  const [openSearchUser, setOpenSearchUser] = useState(false);
+  const SEARCH_USER_VALUE = "__search_user__";
   const { toast } = useToast();
 
   // Fetch project details, tasks, and files
@@ -239,6 +244,7 @@ const ProjectDetail = () => {
     avatar: undefined as string | undefined,
   }));
 
+  const membersCount = Array.isArray(members) ? members.length : 0;
   const completedTasks = tasks.filter((t: any) => t.completed).length;
   const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
@@ -257,7 +263,7 @@ const ProjectDetail = () => {
           <p className="text-muted-foreground max-w-3xl">{project.description}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={()=>setEditOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Project
           </Button>
@@ -309,7 +315,7 @@ const ProjectDetail = () => {
                     <Users className="h-4 w-4 mr-2" />
                     <span className="text-sm">Members</span>
                   </div>
-                  <div className="mt-2 text-2xl font-bold">{project.members}</div>
+                  <div className="mt-2 text-2xl font-bold">{membersCount}</div>
                 </div>
               </div>
               
@@ -343,6 +349,50 @@ const ProjectDetail = () => {
           
           <ProjectSprintVisualization sprints={sprints} />
           
+          {/* Edit Project Modal */}
+          <Modal open={editOpen} onOpenChange={setEditOpen} title="Edit Project" size="xl">
+            <ProjectForm
+              onSubmit={async (data: any) => {
+                try {
+                  if (!projectId || Number.isNaN(projectId)) return;
+                  const token = localStorage.getItem('token') || '';
+                  const payload: any = {
+                    name: data.name,
+                    description: data.description || undefined,
+                    clientId: data.clientId ? Number(data.clientId) : undefined,
+                    managerId: data.managerId ? Number(data.managerId) : undefined,
+                    startDate: data.startDate || undefined,
+                    endDate: data.endDate || undefined,
+                    isActive: typeof data.isActive === 'boolean' ? data.isActive : true,
+                  };
+                  const res = await fetch(`/api/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                  });
+                  const j = await res.json().catch(()=>({}));
+                  if (!res.ok) throw new Error(j?.message || 'Failed to update project');
+                  setEditOpen(false);
+                  await reloadProject();
+                  toast({ title: 'Project updated' });
+                } catch (e: any) {
+                  toast({ title: 'Error', description: e.message || 'Failed to update project', variant: 'destructive' });
+                }
+              }}
+              onCancel={() => setEditOpen(false)}
+              initialData={project ? {
+                name: project.name || project.project_name,
+                description: project.description,
+                clientId: project.client?.id,
+                // spocId intentionally omitted (backend update not supported here)
+                managerId: project.manager?.id,
+                startDate: project.startDate ? new Date(project.startDate) : (project.start_date ? new Date(project.start_date) : undefined),
+                dueDate: project.endDate ? new Date(project.endDate) : (project.end_date ? new Date(project.end_date) : undefined),
+                isActive: project.isActive,
+              } : undefined}
+            />
+          </Modal>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -350,6 +400,7 @@ const ProjectDetail = () => {
                 <div className="flex gap-2">
                   <CreateTaskButton
                     defaultProjectId={projectId}
+                    lockProjectId={projectId}
                     overrideProjects={[{ id: projectId, projectName: project.name || project.project_name }]}
                     onSuccess={async () => { await reloadTasks(); await reloadProject(); }}
                   />
@@ -374,7 +425,7 @@ const ProjectDetail = () => {
                   </div>
                 </div>
                 <div className="divide-y">
-                  <TaskList tasks={tasks} />
+                  <TaskList tasks={tasks} variant="row" />
                 </div>
               </div>
             </CardContent>
@@ -422,7 +473,10 @@ const ProjectDetail = () => {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm">User</Label>
-                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <Select value={selectedUserId || undefined} onValueChange={(v)=>{
+                      if (v === SEARCH_USER_VALUE) { setOpenSearchUser(true); return; }
+                      setSelectedUserId(v);
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select user" />
                       </SelectTrigger>
@@ -432,6 +486,7 @@ const ProjectDetail = () => {
                             {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
                           </SelectItem>
                         ))}
+                        <SelectItem value={SEARCH_USER_VALUE}>🔎 Search users…</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -481,11 +536,19 @@ const ProjectDetail = () => {
                   </div>
                 </div>
               </Modal>
+
+              {/* Search users modal */}
+              <Modal open={openSearchUser} onOpenChange={setOpenSearchUser} title="Search Users" size="lg">
+                <QuickSearchUser onPick={(u)=>{
+                  if (!allUsers.some((x:any)=> String(x.id) === String(u.id))) {
+                    setAllUsers(prev => [...prev, { id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email }]);
+                  }
+                  setSelectedUserId(String(u.id));
+                  setOpenSearchUser(false);
+                }} />
+              </Modal>
             </CardContent>
           </Card>
-          
-          <TeamCollaboration />
-          
           <Card>
             <CardHeader>
               <CardTitle>Project Files</CardTitle>
@@ -514,18 +577,25 @@ const ProjectDetail = () => {
                 ))}
               </div>
               <div className="mt-4">
-                <input id="fileUpload" type="file" multiple className="hidden" onChange={async (e) => {
-                  const token = localStorage.getItem('token') || '';
-                  const filesSel = e.target.files;
-                  if (!filesSel || filesSel.length === 0) return;
-                  const formData = new FormData();
-                  for (let i=0;i<filesSel.length;i++) formData.append('file', filesSel[i]);
-                  const res = await fetch(`/api/projects/${projectId}/files`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
-                  if (res.ok) {
+                <input id="fileUpload" type="file" multiple accept=".pdf,.doc,.docx,.zip,.jpg,.jpeg,.png" className="hidden" onChange={async (e) => {
+                  try {
+                    const token = localStorage.getItem('token') || '';
+                    const filesSel = e.target.files;
+                    if (!filesSel || filesSel.length === 0) return;
+                    const formData = new FormData();
+                    for (let i=0;i<filesSel.length;i++) formData.append('file', filesSel[i]);
+                    const res = await fetch(`/api/projects/${projectId}/files`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+                    if (!res.ok) {
+                      const data = await res.json().catch(()=>({}));
+                      throw new Error(data?.message || 'Failed to upload files. Allowed: PDF/DOC/DOCX/ZIP/JPG/PNG up to 10MB each.');
+                    }
                     const refreshed = await fetch(`/api/projects/${projectId}/files`, { headers: { Authorization: `Bearer ${token}` } });
                     setFiles(refreshed.ok ? await refreshed.json() : files);
+                  } catch (err: any) {
+                    toast({ title: 'Upload failed', description: err?.message || 'Please try again.', variant: 'destructive' });
+                  } finally {
+                    (e.target as HTMLInputElement).value = '';
                   }
-                  (e.target as HTMLInputElement).value = '';
                 }} />
                 <label htmlFor="fileUpload">
                   <Button className="w-full" variant="outline" asChild>
@@ -535,10 +605,53 @@ const ProjectDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Team chat */}
+          <TeamCollaboration projectId={projectId} />
         </div>
       </div>
     </div>
   );
 };
+
+function QuickSearchUser({ onPick }: { onPick: (u: { id:number, firstName?:string, lastName?:string, email?:string })=>void }){
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const search = async (query: string) => {
+    try{
+      setBusy(true);
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/users/search?query=${encodeURIComponent(query)}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json().catch(()=>({}));
+      const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+      setResults(list);
+    }catch{ setResults([]); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>Search</Label>
+        <Input value={q} onChange={(e)=> setQ(e.target.value)} placeholder="Type a name or email" onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault(); search(q); } }} />
+        <div className="flex justify-end mt-2">
+          <Button size="sm" disabled={!q || busy} onClick={()=>search(q)}>Search</Button>
+        </div>
+      </div>
+      <div className="max-h-64 overflow-auto border rounded">
+        {results.length === 0 && <p className="p-3 text-sm text-muted-foreground">{busy ? 'Searching…' : 'No results'}</p>}
+        {results.map((u)=>{
+          const label = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || `User ${u.id}`;
+          return (
+            <button key={u.id} className="w-full text-left p-3 hover:bg-muted" onClick={()=>onPick(u)}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default ProjectDetail;

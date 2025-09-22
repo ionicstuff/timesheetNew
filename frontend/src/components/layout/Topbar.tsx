@@ -19,10 +19,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import GlobalSearch from "./GlobalSearch";
 import NotificationBadge from "./NotificationBadge";
 import QuickCreate from "./QuickCreate";
+import TimesheetClockButton from "@/components/timesheet/TimesheetClockButton";
+import { useTimesheet } from "../../contexts/TimesheetContext";
 
 const Topbar = () => {
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
+  const { status: clockStatus } = useTimesheet();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -45,6 +48,7 @@ const Topbar = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        <TimesheetClockButton />
         <NotificationBadge />
         
         <DropdownMenu>
@@ -54,6 +58,13 @@ const Topbar = () => {
                 <AvatarImage src={user?.profilePictureUrl || "https://github.com/shadcn.png"} alt="User avatar" />
                 <AvatarFallback>{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
               </Avatar>
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  clockStatus === 'clocked_in' ? 'bg-green-500' : clockStatus === 'clocked_out' ? 'bg-red-500' : 'bg-gray-400'
+                }`}
+                title={clockStatus === 'clocked_in' ? 'Clocked In' : clockStatus === 'clocked_out' ? 'Clocked Out' : 'Not Clocked In'}
+                aria-label={clockStatus}
+              />
               <span className="text-sm">{user ? `${user.firstName} ${user.lastName}` : "Loading..."}</span>
             </Button>
           </DropdownMenuTrigger>

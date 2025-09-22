@@ -14,6 +14,12 @@ const Invoice = require('./Invoice');
 const InvoiceItem = require('./InvoiceItem');
 const InvoiceRevision = require('./InvoiceRevision');
 const ProjectMember = require('./ProjectMember');
+const ProjectMessage = require('./ProjectMessage');
+const TaskComment = require('./TaskComment');
+const TaskFile = require('./TaskFile');
+const TaskDependency = require('./TaskDependency');
+const TaskActivity = require('./TaskActivity');
+const TaskCommentLike = require('./TaskCommentLike');
 
 const TimesheetEntry = require('./TimesheetEntry');
 Timesheet.hasMany(TimesheetEntry, { foreignKey: 'timesheetId', as: 'entries' });
@@ -203,11 +209,37 @@ Project.hasMany(Task, {
   as: 'tasks'
 });
 
+// Task comments/files/dependencies/activities
+Task.hasMany(TaskComment, { foreignKey: 'taskId', as: 'comments' });
+TaskComment.belongsTo(Task, { foreignKey: 'taskId', as: 'task' });
+TaskComment.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+TaskComment.hasMany(TaskCommentLike, { foreignKey: 'commentId', as: 'likes' });
+TaskCommentLike.belongsTo(TaskComment, { foreignKey: 'commentId', as: 'comment' });
+TaskCommentLike.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Task.hasMany(TaskFile, { foreignKey: 'taskId', as: 'files' });
+TaskFile.belongsTo(Task, { foreignKey: 'taskId', as: 'task' });
+TaskFile.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+
+Task.hasMany(TaskDependency, { foreignKey: 'taskId', as: 'dependencies' });
+TaskDependency.belongsTo(Task, { foreignKey: 'taskId', as: 'task' });
+TaskDependency.belongsTo(Task, { foreignKey: 'dependsOnTaskId', as: 'dependsOn' });
+
+Task.hasMany(TaskActivity, { foreignKey: 'taskId', as: 'activities' });
+TaskActivity.belongsTo(Task, { foreignKey: 'taskId', as: 'task' });
+TaskActivity.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+
 // Project members associations
 ProjectMember.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
 ProjectMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Project.hasMany(ProjectMember, { foreignKey: 'projectId', as: 'members' });
 User.hasMany(ProjectMember, { foreignKey: 'userId', as: 'projectMemberships' });
+
+// Project messages associations
+ProjectMessage.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
+ProjectMessage.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+Project.hasMany(ProjectMessage, { foreignKey: 'projectId', as: 'messages' });
+User.hasMany(ProjectMessage, { foreignKey: 'userId', as: 'projectMessages' });
 
 User.hasMany(Task, {
   foreignKey: 'assignedTo',
@@ -246,10 +278,15 @@ module.exports = {
   Spoc,
   Task,
   ProjectMember,
+  ProjectMessage,
   TimesheetEntry,
   Invoice,
   InvoiceItem,
-  InvoiceRevision
-  ,
-  Notification
+  InvoiceRevision,
+  Notification,
+  TaskComment,
+  TaskFile,
+  TaskDependency,
+  TaskActivity,
+  TaskCommentLike
 };
