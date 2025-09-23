@@ -60,7 +60,7 @@ jobs:
     env:
       AWS_REGION: ap-south-1
       CLUSTER: myapp-cluster
-      SERVICE: myapp-task-service-q7lwbixg
+      SERVICE: myapp-task-service-alb
       CONTAINER: myapp-container
       NEW_IMAGE: ${{ needs.build-and-push.outputs.image_uri_sha }}
     steps:
