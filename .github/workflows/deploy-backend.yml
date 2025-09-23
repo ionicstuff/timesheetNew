@@ -54,7 +54,8 @@ jobs:
         id: meta
         run: echo "image_uri_sha=${{ steps.ecr-info.outputs.uri }}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
-  deploy-ecs:
+  prepare-taskdef:
+    # Renders + registers a new task definition revision with the NEW_IMAGE and outputs its ARN
     runs-on: ubuntu-latest
     needs: [build-and-push]
     env:
@@ -63,6 +64,8 @@ jobs:
       SERVICE: myapp-task-service-q7lwbixg
       CONTAINER: myapp-container
       NEW_IMAGE: ${{ needs.build-and-push.outputs.image_uri_sha }}
+    outputs:
+      new_taskdef_arn: ${{ steps.register.outputs.new_taskdef_arn }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -101,11 +104,85 @@ jobs:
           NEW_TD_ARN=$(aws ecs register-task-definition --cli-input-json file://register.json --query "taskDefinition.taskDefinitionArn" --output text)
           echo "new_taskdef_arn=$NEW_TD_ARN" >> $GITHUB_OUTPUT
 
+  migrate-db:
+    # Runs DB migrations as a one-off Fargate task using the newly registered task definition
+    runs-on: ubuntu-latest
+    needs: [prepare-taskdef]
+    env:
+      AWS_REGION: ap-south-1
+      CLUSTER: myapp-cluster
+      SUBNETS: (subnet-0edf2dbee72fe373b,subnet-018e2886e7ca1a98d,subnet-0c0160cb1bfaba1cf)         # e.g. subnet-aaa,subnet-bbb  (private subnets)
+      SECURITY_GROUPS: sg-0416d844a13f4199a  # e.g. sg-xxxx  (must reach RDS)
+      CONTAINER: myapp-container
+      TASK_DEF_ARN: ${{ needs.prepare-taskdef.outputs.new_taskdef_arn }}
+      # Default migration command (change if needed):
+      # Prisma: ["npx","prisma","migrate","deploy"]
+      # Sequelize: ["npx","sequelize-cli","db:migrate"]
+      # Knex: ["npx","knex","migrate:latest"]
+      # Django: ["python","manage.py","migrate","--noinput"]
+      # Rails: ["bundle","exec","rails","db:migrate"]
+      MIGRATION_CMD: '["npm","run","migrate"]'
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run migration task
+        id: run
+        run: |
+          # Launch one-off Fargate task overriding the container command to run migrations
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$TASK_DEF_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SECURITY_GROUPS}],assignPublicIp=DISABLED}" \
+            --overrides "$(jq -n --arg c "$CONTAINER" --argjson cmd "$MIGRATION_CMD" '{containerOverrides:[{name:$c,command:$cmd}] }')" \
+            --query 'tasks[0].taskArn' --output text)
+
+          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
+          echo "Started migration task: $TASK_ARN"
+
+      - name: Wait for task to stop
+        run: aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "${{ steps.run.outputs.task_arn }}"
+
+      - name: Check migration exit code
+        id: status
+        run: |
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "${{ steps.run.outputs.task_arn }}" \
+            --query "tasks[0].containers[?name=='$CONTAINER'].exitCode | [0]" --output text)
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "Migration exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration failed"; exit 1; fi
+
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: [prepare-taskdef, migrate-db]
+    env:
+      AWS_REGION: ap-south-1
+      CLUSTER: myapp-cluster
+      SERVICE: myapp-task-service-q7lwbixg
+      NEW_TASKDEF_ARN: ${{ needs.prepare-taskdef.outputs.new_taskdef_arn }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Update service to new revision
         run: |
           aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
-            --task-definition "${{ steps.register.outputs.new_taskdef_arn }}" \
+            --task-definition "$NEW_TASKDEF_ARN" \
             --force-new-deployment
 
+      # Optional:
       # - name: Wait for service stability
       #   run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
