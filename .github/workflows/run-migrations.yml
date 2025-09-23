@@ -2,11 +2,17 @@ name: DB Migrations
 
 on:
   workflow_dispatch:
-    inputs:
-      migration:
-        description: "Which migration script to run (apply or baseline)"
-        required: true
-        default: apply
+  push:
+    branches: ["master"]
+    paths:
+      - "backend/**"
+      - "infra/**"
+      - ".github/workflows/run-migrations.yml"
+  # inputs:
+  #     migration:
+  #       description: "Which migration script to run (apply or baseline)"
+  #       required: true
+  #       default: apply
 
 jobs:
   run-migration:
@@ -18,7 +24,7 @@ jobs:
       CONTAINER_NAME: myapp-container
       SUBNETS: (subnet-0edf2dbee72fe373b,subnet-018e2886e7ca1a98d,subnet-0c0160cb1bfaba1cf)
       SECURITY_GROUPS: sg-0416d844a13f4199a
-      RDS_INSTANCE_ID: myapp-database.cl282y08qf6r.ap-south-1.rds.amazonaws.com
+      DB_HOST: myapp-database.cl282y08qf6r.ap-south-1.rds.amazonaws.com
       DB_NAME: myapp_production
       DB_USER: myapp_user
     steps:
@@ -40,27 +46,27 @@ jobs:
             echo "script=migrations/apply.js" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create DB snapshot (optional)
-        if: always()
-        id: snapshot
-        run: |
-          # Example: create a snapshot of the RDS instance before running migrations.
-          # This step is optional and can be removed if not needed.
-          SNAPSHOT_ID="pre-migration-$(date +%Y%m%d%H%M%S)"
-          aws rds create-db-snapshot \
-            --db-snapshot-identifier "$SNAPSHOT_ID" \
-            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}"
-          echo "snapshot_id=$SNAPSHOT_ID" >> "$GITHUB_OUTPUT"
+      # - name: Create DB snapshot (optional)
+      #   if: always()
+      #   id: snapshot
+      #   run: |
+      #     # Example: create a snapshot of the RDS instance before running migrations.
+      #     # This step is optional and can be removed if not needed.
+      #     SNAPSHOT_ID="pre-migration-$(date +%Y%m%d%H%M%S)"
+      #     aws rds create-db-snapshot \
+      #       --db-snapshot-identifier "$SNAPSHOT_ID" \
+      #       --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}"
+      #     echo "snapshot_id=$SNAPSHOT_ID" >> "$GITHUB_OUTPUT"
 
       - name: Resolve DB host (placeholder)
         id: dbinfo
         run: |
-          # Replace this with your method to obtain DB host/endpoint.
-          # Example using aws rds describe-db-instances:
-          DB_HOST=$(aws rds describe-db-instances \
-            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}" \
-            --query 'DBInstances[0].Endpoint.Address' --output text)
-          echo "db_host=$DB_HOST" >> "$GITHUB_OUTPUT"
+          # # Replace this with your method to obtain DB host/endpoint.
+          # # Example using aws rds describe-db-instances:
+          # DB_HOST=$(aws rds describe-db-instances \
+          #   --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}" \
+          #   --query 'DBInstances[0].Endpoint.Address' --output text)
+          echo "db_host=${{ env.DB_HOST }}" >> "$GITHUB_OUTPUT"
           echo "db_name=${{ env.DB_NAME }}" >> "$GITHUB_OUTPUT"
           echo "db_user=${{ env.DB_USER }}" >> "$GITHUB_OUTPUT"
 
