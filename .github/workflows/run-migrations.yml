@@ -12,15 +12,15 @@ jobs:
   run-migration:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
-      TASK_DEFINITION: ${{ secrets.TASK_DEFINITION }}
-      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
-      SUBNETS: ${{ secrets.SUBNETS }}
-      SECURITY_GROUPS: ${{ secrets.SECURITY_GROUPS }}
-      RDS_INSTANCE_ID: ${{ secrets.RDS_INSTANCE_ID }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
+      AWS_REGION: ap-south-1
+      ECS_CLUSTER_NAME: myapp-cluster
+      TASK_DEFINITION: myapp-task
+      CONTAINER_NAME: myapp-container
+      SUBNETS: (subnet-0edf2dbee72fe373b,subnet-018e2886e7ca1a98d,subnet-0c0160cb1bfaba1cf)
+      SECURITY_GROUPS: sg-0416d844a13f4199a
+      RDS_INSTANCE_ID: myapp-database.cl282y08qf6r.ap-south-1.rds.amazonaws.com
+      DB_NAME: myapp_production
+      DB_USER: myapp_user
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
