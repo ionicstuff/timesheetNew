@@ -11,7 +11,7 @@ if (process.env.NODE_ENV === 'development') {
 const host = process.env.DB_HOST || process.env.PGHOST;
 const port = Number(process.env.DB_PORT || process.env.PGPORT || 5432);
 const database = process.env.DB_NAME || process.env.PGDATABASE || 'postgres';
-const user = process.env.DB_USER || process.env.PGUSER;
+const user = process.env.DB_USER || process.env.DB_USERNAME || process.env.PGUSER;
 const password = process.env.DB_PASSWORD || process.env.PGPASSWORD;
 
 // Validate required environment variables in production
