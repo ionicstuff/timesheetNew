@@ -136,12 +136,30 @@ jobs:
       - name: Run migration task
         id: run
         run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+          # Sanitize inputs: remove parentheses/spaces; split to arrays
+          SUBNETS_CLEAN=$(echo "$SUBNETS" | tr -d '() ' )
+          SGS_CLEAN=$(echo "$SECURITY_GROUPS" | tr -d '() ' )
+
+          # Optional: verify subnets exist (helps catch typos early)
+          aws ec2 describe-subnets --subnet-ids $(echo "$SUBNETS_CLEAN" | tr ',' ' ') >/dev/null
+
+          # Build proper JSON for awsvpcConfiguration
+          NETCFG=$(jq -n --arg subs "$SUBNETS_CLEAN" --arg sgs "$SGS_CLEAN" '{
+            awsvpcConfiguration: {
+              subnets: ($subs | split(",")),
+              securityGroups: ($sgs | split(",")),
+              assignPublicIp: "DISABLED"
+            }
+          }')
+
           # Launch one-off Fargate task overriding the container command to run migrations
           TASK_ARN=$(aws ecs run-task \
             --cluster "$CLUSTER" \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF_ARN" \
-            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SECURITY_GROUPS}],assignPublicIp=DISABLED}" \
+            --network-configuration "$NETCFG" \
             --overrides "$(jq -n --arg c "$CONTAINER" --argjson cmd "$MIGRATION_CMD" '{containerOverrides:[{name:$c,command:$cmd}] }')" \
             --query 'tasks[0].taskArn' --output text)
 
