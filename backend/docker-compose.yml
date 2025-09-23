@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=myapp_production
+      - DB_USERNAME=myapp_user
+      - DB_PASSWORD=Somnath1980
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "db", "-p", "5432", "-U", "myapp_user", "-d", "myapp_production"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=myapp_production
+      - POSTGRES_USER=myapp_user
+      - POSTGRES_PASSWORD=Somnath1980
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

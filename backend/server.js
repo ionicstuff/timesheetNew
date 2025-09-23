@@ -4,81 +4,128 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-require('dotenv').config();
+
+// Load dotenv only in development
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 const timesheetEntryRoutes = require('./routes/timesheetEntryRoutes');
-
 const sequelize = require('./config/database');
 
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  // Customize helmet for your needs
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 1000, // limit each IP to 1000 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX) || 1000,
   message: 'Too many requests from this IP, please try again later.',
-  skip: (req) => {
-    // Skip rate limiting for admin routes
-    return req.path.startsWith('/api/admin');
-  }
+  skip: (req) => req.path.startsWith('/api/admin')
 });
 app.use('/api', limiter);
 
-// CORS
-const defaultOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3001'
-];
-const allowedOrigins = (process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean);
-const origins = allowedOrigins.length ? allowedOrigins : defaultOrigins;
+// CORS configuration
+const getCorsOrigins = () => {
+  if (process.env.NODE_ENV === 'production') {
+    const productionOrigins = (process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '')
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean);
+    
+    // Default production origins if none specified
+    return productionOrigins.length > 0 ? productionOrigins : [
+      'https://your-domain.com' // Replace with your actual domain
+    ];
+  }
+  
+  // Development origins
+  return [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001'
+  ];
+};
 
-const isDev = (process.env.NODE_ENV || 'development') !== 'production';
 app.use(cors({
-  // In development, reflect the request origin to simplify local testing and avoid surprises.
-  origin: isDev ? true : origins,
+  origin: getCorsOrigins(),
   credentials: true,
   methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','x-auth-token']
 }));
 
-// Explicitly enable preflight for all routes
 app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
-app.use(morgan('combined'));
+// Logging middleware - use combined for production, dev for development
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Static file serving for uploads (project/task attachments)
-// This allows links like /uploads/projects/<filename> to be accessible.
+// Static file serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Enhanced health check endpoint
+app.get('/api/health', async (req, res) => {
+  const healthCheck = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: 'Checking...'
+  };
+
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    healthCheck.database = 'Connected';
+    
+    res.json(healthCheck);
+  } catch (error) {
+    healthCheck.status = 'Degraded';
+    healthCheck.database = 'Disconnected';
+    healthCheck.error = error.message;
+    
+    res.status(503).json(healthCheck);
+  }
+});
+
+// Deep health check (for load balancers)
+app.get('/api/health/deep', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    
+    res.json({
+      status: 'OK',
+      database: 'Connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      database: 'Disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 // Routes
 app.get('/', (req, res) => {
   res.json({
     message: 'Timesheet API Server',
     version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     status: 'running'
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
   });
 });
 
@@ -98,8 +145,17 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('Error stack:', err.stack);
+  
+  // Database connection errors
+  if (err.name === 'SequelizeConnectionError') {
+    return res.status(503).json({
+      message: 'Database connection unavailable',
+      error: process.env.NODE_ENV === 'development' ? err.message : {}
+    });
+  }
+  
+  res.status(err.status || 500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
@@ -108,27 +164,86 @@ app.use((err, req, res, next) => {
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
-    message: 'Route not found'
+    message: 'Route not found',
+    path: req.originalUrl
   });
 });
 
 const PORT = process.env.PORT || 3000;
 
-// Database connection and server startup
-async function startServer() {
+// Database connection with retry logic
+async function connectToDatabase(retries = 5, delay = 5000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Attempting database connection (attempt ${i + 1}/${retries})...`);
+      await sequelize.authenticate();
+      console.log('✅ Database connection established successfully.');
+      return true;
+    } catch (error) {
+      console.error(`❌ Database connection failed (attempt ${i + 1}/${retries}):`, error.message);
+      
+      if (i < retries - 1) {
+        console.log(`Waiting ${delay / 1000} seconds before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        // Increase delay for next retry (exponential backoff)
+        delay *= 1.5;
+      }
+    }
+  }
+  throw new Error(`Failed to connect to database after ${retries} attempts`);
+}
+
+// Graceful shutdown handler
+async function gracefulShutdown(signal) {
+  console.log(`\n${signal} received, shutting down gracefully...`);
+  
   try {
-    await sequelize.authenticate();
-    console.log('✅ Database connection established successfully.');
+    // Close database connection
+    await sequelize.close();
+    console.log('✅ Database connection closed.');
     
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-    });
+    // Exit process
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Unable to connect to the database:', error);
+    console.error('❌ Error during shutdown:', error);
     process.exit(1);
   }
 }
 
+// Server startup
+async function startServer() {
+  try {
+    // Connect to database with retry logic
+    await connectToDatabase();
+    
+    // Start server
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`🔗 Deep health check: http://localhost:${PORT}/api/health/deep`);
+    });
+
+    // Graceful shutdown handlers
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception:', error);
+      gracefulShutdown('uncaughtException');
+    });
+    
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      gracefulShutdown('unhandledRejection');
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
 startServer();
