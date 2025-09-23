@@ -3,61 +3,111 @@ name: Deploy backend to ECS
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - "backend/**"
       - "infra/**"
       - ".github/workflows/deploy-backend.yml"
-
-env:
-  AWS_REGION: ap-south-1
-  ECR_REPOSITORY: timesheet-backend
-  ECS_CLUSTER: timesheet-cluster
-  ECS_SERVICE: timesheet-service
-  CONTAINER_NAME: backend
-
 jobs:
-  deploy:
-    permissions:
-      id-token: write
-      contents: read
+  build-and-push:
     runs-on: ubuntu-latest
-
+    env:
+      AWS_REGION: ap-south-1       # e.g., ap-south-1 or us-east-1
+      ECR_REPOSITORY: myapp-repo # plain repo name, e.g., myapp
+      ECS_CLUSTER: myapp-cluster
+      ECS_SERVICE: myapp-task-service-q7lwbixg
+      CONTAINER_NAME: myapp-container
+    outputs:
+      image_uri_sha: ${{ steps.meta.outputs.image_uri_sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials via OIDC
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::170779027636:role/github-oidc-ecs-deploy
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push image
-        id: build-image
+      - name: Get ECR repository URI
+        id: ecr-info
         run: |
-          IMAGE_TAG=${GITHUB_SHA::7}
-          ECR_URI=$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].repositoryUri' --output text)
-          docker build -f backend/Dockerfile -t "$ECR_URI:$IMAGE_TAG" backend
-          docker push "$ECR_URI:$IMAGE_TAG"
-          echo "ECR_URI=$ECR_URI" >> $GITHUB_OUTPUT
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          URI=$(aws ecr describe-repositories \
+            --repository-names "${ECR_REPOSITORY}" \
+            --query "repositories[0].repositoryUri" --output text)
+          echo "uri=$URI" >> $GITHUB_OUTPUT
 
-      - name: Render task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: infra/ecs-task-def-backend.json
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.ECR_URI }}:${{ steps.build-image.outputs.IMAGE_TAG }}
+      - name: Build image
+        run: docker build -t ${{ steps.ecr-info.outputs.uri }}:latest .
 
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      - name: Tag with git SHA
+        run: docker tag ${{ steps.ecr-info.outputs.uri }}:latest ${{ steps.ecr-info.outputs.uri }}:${{ github.sha }}
+
+      - name: Push images
+        run: |
+          docker push ${{ steps.ecr-info.outputs.uri }}:latest
+          docker push ${{ steps.ecr-info.outputs.uri }}:${{ github.sha }}
+
+      - name: Expose image URI (SHA)
+        id: meta
+        run: echo "image_uri_sha=${{ steps.ecr-info.outputs.uri }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}            # e.g., ap-south-1 or us-east-1
+      CLUSTER: ${{ secrets.ECS_CLUSTER }}              # e.g., my-ecs-cluster
+      SERVICE: ${{ secrets.ECS_SERVICE }}              # e.g., my-ecs-service
+      CONTAINER: ${{ secrets.ECS_CONTAINER }}          # container name in task def
+      NEW_IMAGE: ${{ needs.build-and-push.outputs.image_uri_sha }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Get current task definition
+        id: describe
+        run: |
+          TD_ARN=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --query "services[0].taskDefinition" --output text)
+          echo "taskdef_arn=$TD_ARN" >> $GITHUB_OUTPUT
+          aws ecs describe-task-definition --task-definition "$TD_ARN" --query "taskDefinition" > taskdef.json
+
+      - name: Create new task definition with updated image
+        id: render
+        run: |
+          jq --arg CN "$CONTAINER" --arg IMG "$NEW_IMAGE" '
+            .containerDefinitions |= (map(if .name == $CN then .image = $IMG else . end))
+            | {
+                family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes,
+                placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform,
+                proxyConfiguration, inferenceAccelerators, ephemeralStorage
+              }
+            | delpaths([ path(.. | select(. == null)) ])
+          ' taskdef.json > register.json
+          echo "Prepared register.json:"; cat register.json
+
+      - name: Register new task definition revision
+        id: register
+        run: |
+          NEW_TD_ARN=$(aws ecs register-task-definition --cli-input-json file://register.json --query "taskDefinition.taskDefinitionArn" --output text)
+          echo "new_taskdef_arn=$NEW_TD_ARN" >> $GITHUB_OUTPUT
+
+      - name: Update service to new revision
+        run: |
+          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+            --task-definition "${{ steps.register.outputs.new_taskdef_arn }}" \
+            --force-new-deployment
+
+      - name: Wait for service stability
+        run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
