@@ -1,14 +1,132 @@
-name: DB Migrations\n\non:\n  workflow_dispatch:\n    inputs:\n      migration:\n        description: "Which migration script to run (apply or baseline)"\n        required: true\n        default: apply\n        type: choice\n        options: [apply, baseline]\n      create_snapshot:\n        description: "Create RDS snapshot before running?"\n        required: true\n        default: "true"\n        type: choice\n        options: ["true", "false"]\n\njobs:\n  migrate:\n    runs-on: ubuntu-latest\n    permissions:\n      id-token: write   # for OIDC to assume role\n      contents: read\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n\n      - name: Configure AWS credentials\n        # Prefer OIDC role assumption. Provide AWS_ROLE_TO_ASSUME and AWS_REGION in repo/org secrets.\n        uses: aws-actions/configure-aws-credentials@v4\n        with:\n          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}\n          aws-region: ${{ secrets.AWS_REGION }}\n\n      - name: Install jq\n        run: sudo apt-get update && sudo apt-get install -y jq\n\n      - name: Snapshot RDS (optional)\n        if: ${{ github.event.inputs.create_snapshot == 'true' }}\n        run: |\n          SNAPSHOT_ID="ts-$(date +%Y%m%d-%H%M%S)"\n          aws rds create-db-snapshot \
-            --db-instance-identifier "${{ secrets.RDS_INSTANCE_ID }}" \
-            --db-snapshot-identifier "$SNAPSHOT_ID"\n\n      - name: Choose migration script\n        id: pick\n        run: |\n          if [ "${{ github.event.inputs.migration }}" = "baseline" ]; then\n            echo "script=scripts/baselineMigrations.js" >> $GITHUB_OUTPUT\n          else\n            echo "script=scripts/applyTaskDetailMigrations.js" >> $GITHUB_OUTPUT\n          fi\n\n      - name: Run ECS one-off task for migrations\n        id: run\n        env:\n          ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}\n          TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}   # family or family:revision\n          SUBNETS: ${{ secrets.ECS_SUBNETS }}                   # e.g. subnet-aaa,subnet-bbb\n          SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }}   # e.g. sg-xxxx,sg-yyyy\n          CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}     # e.g. myapp-container\n          DB_HOST: ${{ secrets.DB_HOST }}\n          DB_NAME: ${{ secrets.DB_NAME }}\n          DB_USER: ${{ secrets.DB_USER }}\n        run: |\n          # Build overrides JSON safely with jq\n          overrides=$(jq -n --arg name "$CONTAINER_NAME" \
-                           --arg script "${{ steps.pick.outputs.script }}" \
-                           --arg dbhost "$DB_HOST" --arg dbname "$DB_NAME" --arg dbuser "$DB_USER" \
-                       '{containerOverrides:[{name:$name,\n                         command:["node",$script],\n                         environment:[\n                           {name:"NODE_ENV",value:"production"},\n                           {name:"DB_USER",value:$dbuser},\n                           {name:"DB_HOST",value:$dbhost},\n                           {name:"DB_NAME",value:$dbname},\n                           {name:"DB_PORT",value:"5432"}\n                         ]}]}\n                       ')\n\n          # Launch task (within VPC)\n          TASK_ARN=$(aws ecs run-task \
-            --cluster "$ECS_CLUSTER_NAME" \
-            --task-definition "$TASK_DEFINITION" \
+name: DB Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration:
+        description: "Which migration script to run (apply or baseline)"
+        required: true
+        default: apply
+
+jobs:
+  run-migration:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+      TASK_DEFINITION: ${{ secrets.TASK_DEFINITION }}
+      CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+      SUBNETS: ${{ secrets.SUBNETS }}
+      SECURITY_GROUPS: ${{ secrets.SECURITY_GROUPS }}
+      RDS_INSTANCE_ID: ${{ secrets.RDS_INSTANCE_ID }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Choose migration script
+        id: pick
+        run: |
+          if [ "${{ github.event.inputs.migration }}" = "baseline" ]; then
+            echo "script=migrations/baseline.js" >> "$GITHUB_OUTPUT"
+          else
+            echo "script=migrations/apply.js" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create DB snapshot (optional)
+        if: always()
+        id: snapshot
+        run: |
+          # Example: create a snapshot of the RDS instance before running migrations.
+          # This step is optional and can be removed if not needed.
+          SNAPSHOT_ID="pre-migration-$(date +%Y%m%d%H%M%S)"
+          aws rds create-db-snapshot \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}"
+          echo "snapshot_id=$SNAPSHOT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve DB host (placeholder)
+        id: dbinfo
+        run: |
+          # Replace this with your method to obtain DB host/endpoint.
+          # Example using aws rds describe-db-instances:
+          DB_HOST=$(aws rds describe-db-instances \
+            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}" \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          echo "db_host=$DB_HOST" >> "$GITHUB_OUTPUT"
+          echo "db_name=${{ env.DB_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "db_user=${{ env.DB_USER }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run migration task on ECS Fargate
+        id: run-task
+        run: |
+          # Build container overrides JSON. This runs node <script> inside the container.
+          overrides=$(
+            jq -c -n \
+              --arg name "${{ env.CONTAINER_NAME }}" \
+              --arg script "${{ steps.pick.outputs.script }}" \
+              --arg dbhost "${{ steps.dbinfo.outputs.db_host }}" \
+              --arg dbname "${{ steps.dbinfo.outputs.db_name }}" \
+              --arg dbuser "${{ steps.dbinfo.outputs.db_user }}" \
+              '{containerOverrides:[{name:$name, command:["node",$script], environment:[ {name:"NODE_ENV",value:"production"},{name:"DB_HOST",value:$dbhost},{name:"DB_NAME",value:$dbname},{name:"DB_USER",value:$dbuser} ]}]}'
+          )
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "${{ env.ECS_CLUSTER_NAME }}" \
+            --task-definition "${{ env.TASK_DEFINITION }}" \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=DISABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.SUBNETS }}],securityGroups=[${{ env.SECURITY_GROUPS }}],assignPublicIp=DISABLED}" \
             --overrides "$overrides" \
-            --query 'tasks[0].taskArn' --output text)\n\n          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT\n\n      - name: Wait for task and assert success\n        run: |\n          aws ecs wait tasks-stopped --cluster "${{ secrets.ECS_CLUSTER_NAME }}" --tasks "${{ steps.run.outputs.task_arn }}"\n          aws ecs describe-tasks --cluster "${{ secrets.ECS_CLUSTER_NAME }}" --tasks "${{ steps.run.outputs.task_arn }}" > describe.json\n          cat describe.json\n          EXIT_CODE=$(jq -r '.tasks[0].containers[] | select(.name=="'${{ secrets.ECS_CONTAINER_NAME }}'") | .exitCode' describe.json)\n          echo "Container exit code: $EXIT_CODE"\n          test "$EXIT_CODE" = "0"\n\n      - name: Show recent log lines (best-effort)\n        if: always()\n        env:\n          LOG_GROUP: ${{ secrets.CLOUDWATCH_LOG_GROUP }}        # e.g. /ecs/myapp\n          CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}\n        run: |\n          TASK_ID="${{ steps.run.outputs.task_arn##*/ }}"\n          aws logs filter-log-events --log-group-name "$LOG_GROUP" \
-            --log-stream-names "ecs/$CONTAINER_NAME/$TASK_ID" \
-            --max-items 200 || true\n
+            --query 'tasks[0].taskArn' --output text)
+
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "Failed to start ECS task" >&2
+            exit 1
+          fi
+
+          echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for task to stop
+        run: |
+          TASK_ARN="${{ steps.run-task.outputs.task_arn }}"
+          aws ecs wait tasks-stopped --cluster "${{ env.ECS_CLUSTER_NAME }}" --tasks "$TASK_ARN"
+
+      - name: Get task exit code and assert success
+        run: |
+          TASK_ARN="${{ steps.run-task.outputs.task_arn }}"
+          TASK_ID=$(basename "$TASK_ARN")
+          # Get container exit code (may vary if using multiple containers)
+          EXIT_CODE=$(aws logs describe-log-streams \
+            --log-group-name "/ecs/${{ env.CONTAINER_NAME }}" \
+            --query 'logStreams[?contains(logStreamName, `'"$TASK_ID"'`) == `true`].logStreamName' \
+            --output text || true)
+
+          # Optionally fetch and show logs (best-effort)
+          if [ -n "$EXIT_CODE" ]; then
+            aws logs get-log-events --log-group-name "/ecs/${{ env.CONTAINER_NAME }}" \
+              --log-stream-name "$EXIT_CODE" --max-items 200 || true
+          fi
+
+          # Note: Determining the container exit code reliably requires describing the task:
+          DESCRIBE_JSON=$(aws ecs describe-tasks --cluster "${{ env.ECS_CLUSTER_NAME }}" --tasks "$TASK_ARN")
+          # Try to extract the exit code of the first container
+          EXIT_CODE=$(echo "$DESCRIBE_JSON" | jq -r '.tasks[0].containers[0].exitCode // "null"')
+          if [ "$EXIT_CODE" = "null" ]; then
+            echo "Could not determine exit code; failing to be safe." >&2
+            exit 1
+          fi
+
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "Migration task failed with exit code $EXIT_CODE" >&2
+            exit $EXIT_CODE
+          fi
+
+      - name: Done
+        run: echo "Migration completed successfully"
