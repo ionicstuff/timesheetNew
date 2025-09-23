@@ -3,7 +3,7 @@ name: Deploy frontend to S3/CloudFront
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
