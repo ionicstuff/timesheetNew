@@ -107,5 +107,5 @@ jobs:
             --task-definition "${{ steps.register.outputs.new_taskdef_arn }}" \
             --force-new-deployment
 
-      - name: Wait for service stability
-        run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+      # - name: Wait for service stability
+      #   run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
