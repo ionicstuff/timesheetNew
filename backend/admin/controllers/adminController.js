@@ -2,18 +2,8 @@ const { Sequelize } = require('sequelize');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// Database configuration
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'timesheet_db',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'password',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',
-    logging: false
-  }
-);
+// Use the shared Sequelize instance which already handles SSL in production
+const sequelize = require('../../config/database');
 
 // ====================
 // DASHBOARD STATS
