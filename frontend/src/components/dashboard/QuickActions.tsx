@@ -20,9 +20,14 @@ import {
 import Modal from '@/components/ui/Modal';
 import EventForm from '@/components/calendar/EventForm';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const QuickActions = () => {
   const [eventOpen, setEventOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageTo, setMessageTo] = useState('');
+  const [messageBody, setMessageBody] = useState('');
   const { toast } = useToast();
 
   const handleEventSubmit = (data: any) => {
@@ -68,7 +73,7 @@ const QuickActions = () => {
       description: 'Communicate with your team',
       icon: <MessageSquare className="h-5 w-5" />,
       color: 'bg-pink-500',
-      onClick: () => console.log('Send message'),
+      onClick: () => setMessageOpen(true),
     },
     {
       title: 'View Reports',
@@ -105,8 +110,38 @@ const QuickActions = () => {
           ))}
         </div>
 
-        <Modal open={eventOpen} onOpenChange={setEventOpen} title="Create New Event" size="lg">
-          <EventForm onSubmit={handleEventSubmit} onCancel={() => setEventOpen(false)} />
+        <Modal
+          open={eventOpen}
+          onOpenChange={setEventOpen}
+          title="Create New Event"
+          size="lg"
+        >
+          <EventForm
+            onSubmit={handleEventSubmit}
+            onCancel={() => setEventOpen(false)}
+          />
+        </Modal>
+
+        <Modal open={messageOpen} onOpenChange={setMessageOpen} title="New Message" size="lg">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium" htmlFor="msg-to">To</label>
+              <Input id="msg-to" placeholder="Name or email (UI only)" value={messageTo} onChange={(e) => setMessageTo(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium" htmlFor="msg-body">Message</label>
+              <Textarea id="msg-body" rows={4} placeholder="Type your message..." value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setMessageOpen(false)}>Cancel</Button>
+              <Button onClick={() => {
+                toast({ title: 'Message sent', description: 'Your message has been sent (demo).' });
+                setMessageOpen(false);
+                setMessageTo('');
+                setMessageBody('');
+              }}>Send</Button>
+            </div>
+          </div>
         </Modal>
       </CardContent>
     </Card>
