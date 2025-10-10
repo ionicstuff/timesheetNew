@@ -25,7 +25,9 @@ const CreateEventButton = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ dueDate: new Date(data.endDate).toISOString() }),
+          body: JSON.stringify({
+            dueDate: new Date(data.endDate).toISOString(),
+          }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -58,7 +60,11 @@ const CreateEventButton = () => {
         title="Create New Event"
         size="lg"
       >
-        <EventForm onSubmit={handleSubmit} onCancel={() => setIsOpen(false)} />
+        <EventForm
+          onSubmit={handleSubmit}
+          onCancel={() => setIsOpen(false)}
+          initialData={{ linkTaskId: 11 }}
+        />
       </Modal>
     </>
   );

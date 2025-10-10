@@ -42,7 +42,9 @@ const QuickActions = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ dueDate: new Date(data.endDate).toISOString() }),
+          body: JSON.stringify({
+            dueDate: new Date(data.endDate).toISOString(),
+          }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -142,7 +144,7 @@ const QuickActions = () => {
           <EventForm
             onSubmit={handleEventSubmit}
             onCancel={() => setEventOpen(false)}
-            initialData={{ linkTaskId: 123 }}
+            initialData={{ linkTaskId: 11 }}
           />
         </Modal>
 
