@@ -42,12 +42,10 @@ const getDashboardStats = async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error fetching dashboard stats",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching dashboard stats",
+      error: error.message,
+    });
   }
 };
 
@@ -286,11 +284,9 @@ const createUser = async (req, res) => {
     );
 
     if (existingUser.length > 0) {
-      return res
-        .status(400)
-        .json({
-          message: "User already exists with this email or employee ID",
-        });
+      return res.status(400).json({
+        message: "User already exists with this email or employee ID",
+      });
     }
 
     // Hash password

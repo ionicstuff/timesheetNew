@@ -595,12 +595,10 @@ const updateProjectDetails = async (req, res) => {
       !["ACM", "PM", "ADM", "ADMIN", "DIR"].includes(currentUser[0].role_code)
     ) {
       console.log("Debug: Permission denied for user:", currentUser[0]);
-      return res
-        .status(403)
-        .json({
-          message:
-            "Only Account Managers, Project Managers, and Admins can update project details",
-        });
+      return res.status(403).json({
+        message:
+          "Only Account Managers, Project Managers, and Admins can update project details",
+      });
     }
 
     console.log("Debug: Permission granted for user:", currentUser[0]);
@@ -678,12 +676,10 @@ const updateProjectDetails = async (req, res) => {
     res.json({ message: "Project details updated successfully" });
   } catch (error) {
     console.error("Error updating project details:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error updating project details",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error updating project details",
+      error: error.message,
+    });
   }
 };
 
@@ -776,12 +772,10 @@ const uploadProjectFiles = async (req, res) => {
         }),
       );
 
-      res
-        .status(201)
-        .json({
-          message: "Files uploaded successfully",
-          attachments: uploadedFiles,
-        });
+      res.status(201).json({
+        message: "Files uploaded successfully",
+        attachments: uploadedFiles,
+      });
     } catch (error) {
       console.error("Error saving file information to database:", error);
       res
@@ -837,12 +831,10 @@ const closeProject = async (req, res) => {
     const isAssignedAM =
       client?.accountManagerId && client.accountManagerId === req.user.id;
     if (!isAssignedPM && !isAssignedAM) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Only the assigned Project Manager or Account Manager can close this project",
-        });
+      return res.status(403).json({
+        message:
+          "Only the assigned Project Manager or Account Manager can close this project",
+      });
     }
 
     // Require all tasks to be completed and no running timers
@@ -854,12 +846,10 @@ const closeProject = async (req, res) => {
       where: { projectId: id, activeTimerStartedAt: { [Op.ne]: null } },
     });
     if (openCount > 0 || runningCount > 0) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Cannot close project until all tasks are completed and no timers are running",
-        });
+      return res.status(400).json({
+        message:
+          "Cannot close project until all tasks are completed and no timers are running",
+      });
     }
 
     project.status = "completed";
@@ -1006,12 +996,10 @@ const getProjectPerformance = async (req, res) => {
     });
   } catch (error) {
     console.error("Error calculating project performance:", error);
-    return res
-      .status(500)
-      .json({
-        message: "Error calculating project performance",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "Error calculating project performance",
+      error: error.message,
+    });
   }
 };
 

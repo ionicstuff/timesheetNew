@@ -96,12 +96,10 @@ const getTasksByProject = async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error("Error fetching tasks by project:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error fetching tasks by project",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching tasks by project",
+      error: error.message,
+    });
   }
 };
 
@@ -182,11 +180,9 @@ const createTask = async (req, res) => {
       }
 
       if (!hasPermission) {
-        return res
-          .status(403)
-          .json({
-            message: "You are not authorized to assign this task to that user",
-          });
+        return res.status(403).json({
+          message: "You are not authorized to assign this task to that user",
+        });
       }
     }
 
@@ -197,12 +193,10 @@ const createTask = async (req, res) => {
         { bind: [projectId, finalAssignedTo] },
       );
       if (!pm || pm.length === 0) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Assignee must be a member of the project. Add them to the project before assigning tasks.",
-          });
+        return res.status(400).json({
+          message:
+            "Assignee must be a member of the project. Add them to the project before assigning tasks.",
+        });
       }
     }
 
@@ -260,12 +254,10 @@ const updateTask = async (req, res) => {
         { bind: [task.projectId, assignedTo] },
       );
       if (!pm || pm.length === 0) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Assignee must be a member of the project. Add them to the project before assigning tasks.",
-          });
+        return res.status(400).json({
+          message:
+            "Assignee must be a member of the project. Add them to the project before assigning tasks.",
+        });
       }
     }
 
@@ -558,11 +550,9 @@ const assignTask = async (req, res) => {
     }
 
     if (!hasPermission)
-      return res
-        .status(403)
-        .json({
-          message: "You are not authorized to assign this task to that user",
-        });
+      return res.status(403).json({
+        message: "You are not authorized to assign this task to that user",
+      });
 
     // Overwrite check
     if (
@@ -570,13 +560,11 @@ const assignTask = async (req, res) => {
       task.assignedTo !== assignedTo &&
       !confirmOverwrite
     ) {
-      return res
-        .status(409)
-        .json({
-          message:
-            "Task already assigned. Set confirmOverwrite=true to force overwrite",
-          currentAssignee: task.assignedTo,
-        });
+      return res.status(409).json({
+        message:
+          "Task already assigned. Set confirmOverwrite=true to force overwrite",
+        currentAssignee: task.assignedTo,
+      });
     }
 
     // Membership check: user must be a member of the task's project
@@ -585,12 +573,10 @@ const assignTask = async (req, res) => {
       { bind: [task.projectId, assignedTo] },
     );
     if (!pm || pm.length === 0) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Assignee must be a member of the project. Add them to the project before assigning tasks.",
-        });
+      return res.status(400).json({
+        message:
+          "Assignee must be a member of the project. Add them to the project before assigning tasks.",
+      });
     }
 
     const prevAssignee = task.assignedTo;
