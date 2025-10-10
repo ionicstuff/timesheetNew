@@ -78,7 +78,7 @@ const UserHierarchy = sequelize.define(
     indexes: [
       {
         unique: true,
-        fields: ['user_id', 'parent_user_id', 'effective_from'],
+        fields: ['user_id', 'parent_user_id'],
         where: {
           is_active: true,
         },

@@ -1002,6 +1002,25 @@ const updateUserHierarchy = async (req, res) => {
       }
     }
 
+    // If the same relationship already exists and is active, block duplicate invite
+    if (parentUserId) {
+      const existingActive = await UserHierarchy.findOne({
+        where: {
+          userId,
+          parentUserId,
+          isActive: true,
+          effectiveFrom: { [Op.lte]: new Date() },
+          [Op.or]: [{ effectiveTo: null }, { effectiveTo: { [Op.gte]: new Date() } }],
+        },
+      });
+      if (existingActive) {
+        return res.status(409).json({
+          success: false,
+          message: 'User is already on your team',
+        });
+      }
+    }
+
     // Deactivate existing hierarchy
     await UserHierarchy.update(
       { isActive: false, effectiveTo: new Date() },
