@@ -78,27 +78,8 @@ const Billings = () => {
         )}
       </div>
 
-      {/* Ready projects panel (Finance only) */}
-      {isFinance && <ReadyToInvoice />}
-
-      {/* Simple charts (still static for now) */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <InvoiceStatusChart />
-        <RevenueChart />
-      </div>
-
-      {/* Invoices list (Finance only) */}
-      {isFinance ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoices</CardTitle>
-            <CardDescription>Browse and manage invoices</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InvoiceList />
-          </CardContent>
-        </Card>
-      ) : (
+      {/* For non-Finance users, show access restriction at the top and hide invoice UI */}
+      {!isFinance ? (
         <Card>
           <CardHeader>
             <CardTitle>Access restricted</CardTitle>
@@ -112,6 +93,28 @@ const Billings = () => {
             </p>
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {/* Ready projects panel (Finance only) */}
+          <ReadyToInvoice />
+
+          {/* Simple charts (still static for now) */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <InvoiceStatusChart />
+            <RevenueChart />
+          </div>
+
+          {/* Invoices list (Finance only) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoices</CardTitle>
+              <CardDescription>Browse and manage invoices</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InvoiceList />
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
