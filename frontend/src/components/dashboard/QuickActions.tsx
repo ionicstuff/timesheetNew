@@ -37,13 +37,13 @@ const QuickActions = () => {
       if (taskId && data?.endDate) {
         const token = localStorage.getItem('token') || '';
         const res = await fetch(`/api/tasks/${taskId}`, {
-          method: 'PATCH',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            dueDate: new Date(data.endDate).toISOString(),
+            sprintEndDate: new Date(data.endDate).toISOString(),
           }),
         });
         if (!res.ok) {
