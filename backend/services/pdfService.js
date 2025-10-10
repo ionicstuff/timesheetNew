@@ -41,18 +41,28 @@ function getTemplateConfig() {
 
 async function generateInvoicePdf(invoiceData, destRelativePath) {
   const templatePath = getTemplatePath();
-  if (!fs.existsSync(templatePath)) {
-    throw new Error(
-      `Invoice template not found at ${templatePath}. Set INVOICE_TEMPLATE_PATH or copy a template to templates/invoice-template.pdf`,
-    );
+  const hasTemplate = fs.existsSync(templatePath);
+
+  let pdfDoc;
+  let page;
+
+  if (hasTemplate) {
+    // Use the provided or fallback template if it exists
+    const bytes = fs.readFileSync(templatePath);
+    pdfDoc = await PDFDocument.load(bytes);
+  } else {
+    // No template available: create a simple one-page PDF
+    pdfDoc = await PDFDocument.create();
+    // A4 size: 595.28 x 841.89 points
+    page = pdfDoc.addPage([595.28, 841.89]);
   }
 
-  const bytes = fs.readFileSync(templatePath);
-  const pdfDoc = await PDFDocument.load(bytes);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
   const cfg = getTemplateConfig();
-  const page = pdfDoc.getPage(cfg.page || 0);
+  // If we loaded a template, use configured page index; otherwise use the page we just created
+  if (!page) {
+    page = pdfDoc.getPage(cfg.page || 0);
+  }
 
   const draw = (text, pos) => {
     if (!pos) return;
@@ -64,14 +74,19 @@ async function generateInvoicePdf(invoiceData, destRelativePath) {
     });
   };
 
-  draw(invoiceData.invoiceNumber, cfg.fields.invoiceNumber);
-  draw(invoiceData.issueDate, cfg.fields.issueDate);
-  draw(invoiceData.dueDate, cfg.fields.dueDate);
-  draw(invoiceData.clientName, cfg.fields.clientName);
-  draw(invoiceData.clientEmail, cfg.fields.clientEmail);
-  draw(invoiceData.projectName, cfg.fields.projectName);
-  draw((invoiceData.total ?? 0).toFixed(2), cfg.fields.total);
-  draw(invoiceData.notes || '', cfg.fields.notes);
+  // Basic header if we don't have a template (place a title)
+  if (!hasTemplate) {
+    page.drawText('Invoice', { x: 60, y: 780, size: 18, font });
+  }
+
+  draw(invoiceData.invoiceNumber, cfg.fields.invoiceNumber || { x: 430, y: 740, size: 12 });
+  draw(invoiceData.issueDate, cfg.fields.issueDate || { x: 430, y: 720, size: 12 });
+  draw(invoiceData.dueDate, cfg.fields.dueDate || { x: 430, y: 700, size: 12 });
+  draw(invoiceData.clientName, cfg.fields.clientName || { x: 60, y: 700, size: 12 });
+  draw(invoiceData.clientEmail, cfg.fields.clientEmail || { x: 60, y: 682, size: 12 });
+  draw(invoiceData.projectName, cfg.fields.projectName || { x: 60, y: 664, size: 12 });
+  draw((invoiceData.total ?? 0).toFixed(2), cfg.fields.total || { x: 470, y: 120, size: 14 });
+  draw(invoiceData.notes || '', cfg.fields.notes || { x: 60, y: 600, size: 10 });
 
   const outDir = path.join(__dirname, '..', 'uploads', 'invoices');
   await ensureDir(outDir);

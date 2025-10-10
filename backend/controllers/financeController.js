@@ -107,18 +107,40 @@ const listInvoices = async (req, res) => {
 const getInvoicePdf = async (req, res) => {
   try {
     const { id } = req.params;
-    const invoice = await Invoice.findByPk(id);
-    if (!invoice || !invoice.pdfPath) {
-      return res.status(404).json({ message: 'Invoice or PDF not found' });
+    let invoice = await Invoice.findByPk(id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
     }
-    const pdfPath = path.join(__dirname, '..', invoice.pdfPath);
-    if (!fs.existsSync(pdfPath))
-      return res.status(404).json({ message: 'PDF file missing on disk' });
+
+    let pdfPathFull = invoice.pdfPath
+      ? path.join(__dirname, '..', invoice.pdfPath)
+      : null;
+
+    // If missing or the file doesn't exist on disk, attempt to (re)generate on the fly
+    if (!pdfPathFull || !fs.existsSync(pdfPathFull)) {
+      try {
+        const { invoice: regenerated } = await generateOrRegenerateInvoice(
+          invoice.projectId,
+          req.user,
+        );
+        invoice = regenerated || invoice;
+        if (invoice.pdfPath) {
+          pdfPathFull = path.join(__dirname, '..', invoice.pdfPath);
+        }
+      } catch (regenErr) {
+        console.warn('Regenerating invoice PDF failed:', regenErr.message);
+      }
+    }
+
+    if (!pdfPathFull || !fs.existsSync(pdfPathFull)) {
+      return res.status(404).json({ message: 'Invoice PDF not available' });
+    }
+
     // Set headers to encourage download with a friendly filename
     res.setHeader('Content-Type', 'application/pdf');
     const fname = `invoice-${invoice.id}.pdf`;
-    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
-    return res.sendFile(path.resolve(pdfPath));
+    res.setHeader('Content-Disposition', `attachment; filename=\"${fname}\"`);
+    return res.sendFile(path.resolve(pdfPathFull));
   } catch (e) {
     console.error('getInvoicePdf error', e);
     return res.status(500).json({ message: 'Failed to fetch invoice PDF' });
