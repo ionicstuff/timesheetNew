@@ -12,11 +12,9 @@ const authorizeRoles = (...allowedRoles) => {
     );
 
     if (!allowedRolesLowerCase.includes(userRole.toLowerCase())) {
-      return res
-        .status(403)
-        .json({
-          message: `Access denied. Role '${userRole}' is not authorized.`,
-        });
+      return res.status(403).json({
+        message: `Access denied. Role '${userRole}' is not authorized.`,
+      });
     }
 
     next();

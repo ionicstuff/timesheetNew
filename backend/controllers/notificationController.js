@@ -64,12 +64,10 @@ exports.markRead = async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Error marking notification as read:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error marking notification as read",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error marking notification as read",
+      error: error.message,
+    });
   }
 };
 
@@ -83,11 +81,9 @@ exports.markAllRead = async (req, res) => {
     res.json({ success: true, updated });
   } catch (error) {
     console.error("Error marking all notifications as read:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error marking all notifications as read",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error marking all notifications as read",
+      error: error.message,
+    });
   }
 };

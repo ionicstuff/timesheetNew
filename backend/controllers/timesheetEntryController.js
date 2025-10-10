@@ -63,12 +63,10 @@ exports.create = async (req, res) => {
       endedAt,
     } = req.body;
     if (!date || !projectId || !minutes) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "date, projectId, minutes are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "date, projectId, minutes are required",
+      });
     }
     const header = await ensureTimesheet(userId, date);
     const billable = await defaultBillable(projectId, isBillable);
