@@ -15,12 +15,14 @@ import ReadyToInvoice from '@/components/billings/ReadyToInvoice';
 import InvoiceList from '@/components/billings/InvoiceList';
 import { useInvoices } from '@/hooks/useFinance';
 import { useMe } from '@/hooks/useMe';
+import { useToast } from '@/hooks/use-toast';
 
 const Billings = () => {
   // Resolve current user's role to gate Finance features
 
   //this isthe test comment for checking the workflow
   const { data: me, isLoading: loadingMe } = useMe();
+  const { toast } = useToast();
   const u = (me?.user || me) as any;
   const roleName = String(
     u?.role ||
@@ -59,10 +61,21 @@ const Billings = () => {
             Generate, approve, and send invoices
           </p>
         </div>
-        <Button disabled title="Invoices are generated from closed projects">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Invoice
-        </Button>
+        {isFinance && (
+          <Button
+            title="Invoices are generated from closed projects"
+            onClick={() =>
+              toast({
+                title: 'Create Invoice',
+                description:
+                  'Invoices are created from closed projects. Use the "Ready to Invoice" panel to proceed.',
+              })
+            }
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Invoice
+          </Button>
+        )}
       </div>
 
       {/* Ready projects panel (Finance only) */}
