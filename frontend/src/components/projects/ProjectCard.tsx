@@ -24,6 +24,7 @@ interface ProjectCardProps {
   status: string;
   dueDate: string;
   membersList?: string[];
+  onArchive?: (id: number) => void;
 }
 
 const ProjectCard = ({
@@ -69,7 +70,20 @@ const ProjectCard = ({
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem>Share</DropdownMenuItem>
-            <DropdownMenuItem>Archive</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (status === 'completed') {
+                  onArchive?.(id);
+                }
+              }}
+              title={
+                status === 'completed'
+                  ? 'Archive this project'
+                  : 'Archive available when project is completed'
+              }
+            >
+              Archive
+            </DropdownMenuItem>
             <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -32,12 +32,14 @@ import { Separator } from '@/components/ui/separator';
 import CreateProjectButton from '@/components/projects/CreateProjectButton';
 import ProjectFilter from '@/components/projects/ProjectFilter';
 import ProjectCard from '@/components/projects/ProjectCard';
+import { useToast } from '@/hooks/use-toast';
 
 import axios from 'axios';
 const Projects = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const { toast } = useToast();
 
   // API & UI types
   type ApiProject = {
@@ -172,6 +174,39 @@ const Projects = () => {
     }
   };
 
+  const archiveProject = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      // Try preferred archive endpoint, fallback to status update
+      let res = await fetch(`/api/projects/${id}/archive`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        res = await fetch(`/api/projects/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: 'archived' }),
+        });
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to archive project');
+      }
+      toast({ title: 'Archived', description: `Project #${id} archived.` });
+      setReloadTick((x) => x + 1);
+    } catch (e: any) {
+      toast({
+        title: 'Archive failed',
+        description: e.message || 'Request failed',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -241,6 +276,7 @@ const Projects = () => {
               status={project.status}
               dueDate={project.dueDate}
               membersList={project.membersList}
+              onArchive={archiveProject}
             />
           ))}
         </div>
@@ -341,7 +377,20 @@ const Projects = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>Share</DropdownMenuItem>
-                        <DropdownMenuItem>Archive</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            project.status === 'completed'
+                              ? archiveProject(project.id)
+                              : undefined
+                          }
+                          title={
+                            project.status === 'completed'
+                              ? 'Archive this project'
+                              : 'Archive available when project is completed'
+                          }
+                        >
+                          Archive
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600">
                           Delete
                         </DropdownMenuItem>
