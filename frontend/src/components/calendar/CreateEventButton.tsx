@@ -11,13 +11,37 @@ const CreateEventButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = async (data: any) => {
     console.log('Event data:', data);
     // In a real app, you would save this to your database
-    toast({
-      title: 'Event created',
-      description: 'Your event has been created successfully.',
-    });
+    try {
+      // Optional: sync linked task deadline to event endDate
+      const taskId = Number(data?.linkTaskId || 0);
+      if (taskId && data?.endDate) {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ dueDate: new Date(data.endDate).toISOString() }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || 'Failed to sync task deadline');
+        }
+      }
+      toast({
+        title: 'Event created',
+        description: 'Your event has been created successfully.',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Event created (partial)',
+        description: e.message || 'Task sync failed',
+      });
+    }
     setIsOpen(false);
   };
 

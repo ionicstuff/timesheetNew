@@ -30,12 +30,35 @@ const QuickActions = () => {
   const [messageBody, setMessageBody] = useState('');
   const { toast } = useToast();
 
-  const handleEventSubmit = (data: any) => {
+  const handleEventSubmit = async (data: any) => {
     console.log('Event data:', data);
-    toast({
-      title: 'Event created',
-      description: 'Your event has been created successfully.',
-    });
+    try {
+      const taskId = Number(data?.linkTaskId || 0);
+      if (taskId && data?.endDate) {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ dueDate: new Date(data.endDate).toISOString() }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || 'Failed to sync task deadline');
+        }
+      }
+      toast({
+        title: 'Event created',
+        description: 'Your event has been created successfully.',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Event created (partial)',
+        description: e.message || 'Task sync failed',
+      });
+    }
     setEventOpen(false);
   };
 
@@ -122,24 +145,53 @@ const QuickActions = () => {
           />
         </Modal>
 
-        <Modal open={messageOpen} onOpenChange={setMessageOpen} title="New Message" size="lg">
+        <Modal
+          open={messageOpen}
+          onOpenChange={setMessageOpen}
+          title="New Message"
+          size="lg"
+        >
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="msg-to">To</label>
-              <Input id="msg-to" placeholder="Name or email (UI only)" value={messageTo} onChange={(e) => setMessageTo(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor="msg-to">
+                To
+              </label>
+              <Input
+                id="msg-to"
+                placeholder="Name or email (UI only)"
+                value={messageTo}
+                onChange={(e) => setMessageTo(e.target.value)}
+              />
             </div>
             <div>
-              <label className="text-sm font-medium" htmlFor="msg-body">Message</label>
-              <Textarea id="msg-body" rows={4} placeholder="Type your message..." value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor="msg-body">
+                Message
+              </label>
+              <Textarea
+                id="msg-body"
+                rows={4}
+                placeholder="Type your message..."
+                value={messageBody}
+                onChange={(e) => setMessageBody(e.target.value)}
+              />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setMessageOpen(false)}>Cancel</Button>
-              <Button onClick={() => {
-                toast({ title: 'Message sent', description: 'Your message has been sent (demo).' });
-                setMessageOpen(false);
-                setMessageTo('');
-                setMessageBody('');
-              }}>Send</Button>
+              <Button variant="outline" onClick={() => setMessageOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  toast({
+                    title: 'Message sent',
+                    description: 'Your message has been sent (demo).',
+                  });
+                  setMessageOpen(false);
+                  setMessageTo('');
+                  setMessageBody('');
+                }}
+              >
+                Send
+              </Button>
             </div>
           </div>
         </Modal>
