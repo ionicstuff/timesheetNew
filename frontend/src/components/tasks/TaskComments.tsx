@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Paperclip, Send, Smile, ThumbsUp } from 'lucide-react';
+import { MessageSquare, Paperclip, Send, Smile, ThumbsUp, Edit, Check, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -14,7 +14,18 @@ interface Props {
 const TaskComments = ({ taskId }: Props) => {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState<string>('');
   const { toast } = useToast();
+
+  const currentUserId = useMemo(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return Number(u?.id || 0);
+    } catch {
+      return 0;
+    }
+  }, []);
 
   const load = async () => {
     if (!taskId) return;
@@ -36,6 +47,7 @@ const TaskComments = ({ taskId }: Props) => {
       const mapped = (rows || []).map((r: any) => ({
         id: r.id,
         user: r.author ? `${r.author.firstName} ${r.author.lastName}` : 'User',
+        authorId: r.author?.id ?? null,
         avatar: '',
         content: r.content,
         time: new Date(r.created_at || r.createdAt).toLocaleString(),
@@ -103,6 +115,49 @@ const TaskComments = ({ taskId }: Props) => {
     }
   };
 
+  const startEdit = (c: any) => {
+    setEditingId(c.id);
+    setEditContent(c.content || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const content = editContent.trim();
+    if (!content) return;
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`/api/tasks/${taskId}/comments/${editingId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    if (res.status === 403) {
+      toast({
+        title: 'Not allowed',
+        description: 'You do not have permission to edit this comment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (res.ok) {
+      setComments((prev) => prev.map((c) => (c.id === editingId ? { ...c, content } : c)));
+      setEditingId(null);
+      setEditContent('');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast({ title: 'Update failed', description: err.message || 'Could not update comment', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -130,14 +185,37 @@ const TaskComments = ({ taskId }: Props) => {
                     {comment.time}
                   </span>
                 </div>
-                <p className="text-sm mt-1">{comment.content}</p>
-                {comment.attachments && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {comment.attachments.join(', ')}
-                    </span>
+                {editingId === comment.id ? (
+                  <div className="mt-2">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                    />
+                    <div className="flex items-center gap-2 mt-2 justify-end">
+                      <Button variant="outline" size="sm" onClick={cancelEdit}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={saveEdit}>
+                        <Check className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <p className="text-sm mt-1">{comment.content}</p>
+                    {comment.attachments && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Paperclip className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {comment.attachments.join(', ')}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               <div className="flex items-center gap-4 mt-2">
@@ -155,6 +233,17 @@ const TaskComments = ({ taskId }: Props) => {
                 <Button variant="ghost" size="sm" className="text-xs">
                   Reply
                 </Button>
+                {comment.authorId && comment.authorId === currentUserId && editingId !== comment.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => startEdit(comment)}
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                )}
               </div>
             </div>
           </div>
