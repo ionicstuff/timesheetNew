@@ -7,8 +7,8 @@ const adminApi = axios.create({
   baseURL: `${API_URL}/admin`,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Add token to requests if available
@@ -78,7 +78,12 @@ export const updateUser = async (id: string, userData: any) => {
   const payload = {
     ...userData,
     roleId: userData?.roleId ? Number(userData.roleId) : undefined,
-    managerId: userData?.managerId === '' || userData?.managerId === null ? null : (userData?.managerId ? Number(userData.managerId) : undefined),
+    managerId:
+      userData?.managerId === '' || userData?.managerId === null
+        ? null
+        : userData?.managerId
+          ? Number(userData.managerId)
+          : undefined,
   };
   const response = await adminApi.put(`/users/${id}`, payload);
   return response.data;

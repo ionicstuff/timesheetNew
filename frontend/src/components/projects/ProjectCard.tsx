@@ -1,20 +1,17 @@
-"use client";
+'use client';
 
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  MoreHorizontal,
-  Users
-} from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 interface ProjectCardProps {
   id: number;
@@ -29,24 +26,28 @@ interface ProjectCardProps {
   membersList?: string[];
 }
 
-const ProjectCard = ({ 
-  id, 
-  name, 
-  description, 
-  progress, 
-  tasks, 
-  members, 
+const ProjectCard = ({
+  id,
+  name,
+  description,
+  progress,
+  tasks,
+  members,
   color,
   status,
   dueDate,
-  membersList = []
+  membersList = [],
 }: ProjectCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "completed": return "bg-blue-100 text-blue-800";
-      case "on-hold": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'on-hold':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -73,12 +74,15 @@ const ProjectCard = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
-      <Link to={`/projects/${id}`} className="font-semibold mt-3 hover:underline">
+
+      <Link
+        to={`/projects/${id}`}
+        className="font-semibold mt-3 hover:underline"
+      >
         {name}
       </Link>
       <p className="text-muted-foreground text-sm mt-1">{description}</p>
-      
+
       <div className="mt-4">
         <div className="flex justify-between text-sm mb-1">
           <span>Progress</span>
@@ -86,7 +90,7 @@ const ProjectCard = ({
         </div>
         <Progress value={progress} />
       </div>
-      
+
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center text-sm text-muted-foreground">
           <Users className="h-4 w-4 mr-1" />
@@ -94,13 +98,16 @@ const ProjectCard = ({
         </div>
         <span className="text-sm text-muted-foreground">{tasks} tasks</span>
       </div>
-      
+
       {membersList.length > 0 && (
         <div className="flex -space-x-2 mt-3">
           {membersList.slice(0, 3).map((member, index) => (
             <Avatar key={index} className="h-6 w-6 border-2 border-background">
               <AvatarFallback className="text-xs">
-                {member.split(' ').map(n => n[0]).join('')}
+                {member
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')}
               </AvatarFallback>
             </Avatar>
           ))}
@@ -111,7 +118,7 @@ const ProjectCard = ({
           )}
         </div>
       )}
-      
+
       <div className="flex items-center justify-between mt-4">
         <span className="text-sm text-muted-foreground">Due {dueDate}</span>
         <Button asChild className="text-sm" variant="outline">

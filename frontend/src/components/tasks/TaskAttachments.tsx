@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Paperclip, 
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Paperclip,
   FileText,
   Image,
   Film,
@@ -11,17 +11,19 @@ import {
   Archive,
   MoreHorizontal,
   Download,
-  Trash2
-} from "lucide-react";
+  Trash2,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 
-interface Props { taskId: number; }
+interface Props {
+  taskId: number;
+}
 
 const TaskAttachments = ({ taskId }: Props) => {
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -31,9 +33,15 @@ const TaskAttachments = ({ taskId }: Props) => {
   const load = async () => {
     if (!taskId) return;
     const token = localStorage.getItem('token') || '';
-    const res = await fetch(`/api/tasks/${taskId}/files`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/tasks/${taskId}/files`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.status === 403) {
-      toast({ title: 'Members only', description: 'Only project members can view files for this task.', variant: 'destructive' });
+      toast({
+        title: 'Members only',
+        description: 'Only project members can view files for this task.',
+        variant: 'destructive',
+      });
       setAttachments([]);
       return;
     }
@@ -44,30 +52,32 @@ const TaskAttachments = ({ taskId }: Props) => {
         name: r.originalName,
         type: (r.mimeType || '').split('/').pop() || 'file',
         size: r.size,
-        date: new Date(r.created_at || r.createdAt).toLocaleString()
+        date: new Date(r.created_at || r.createdAt).toLocaleString(),
       }));
       setAttachments(mapped);
     }
   };
 
-  useEffect(() => { load(); }, [taskId]);
+  useEffect(() => {
+    load();
+  }, [taskId]);
 
   const getFileIcon = (type: string) => {
     switch (type) {
-      case "pdf":
+      case 'pdf':
         return <FileText className="h-5 w-5 text-red-500" />;
-      case "png":
-      case "jpg":
-      case "jpeg":
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
         return <Image className="h-5 w-5 text-blue-500" />;
-      case "mp4":
-      case "mov":
+      case 'mp4':
+      case 'mov':
         return <Film className="h-5 w-5 text-purple-500" />;
-      case "mp3":
-      case "wav":
+      case 'mp3':
+      case 'wav':
         return <Music className="h-5 w-5 text-green-500" />;
-      case "zip":
-      case "rar":
+      case 'zip':
+      case 'rar':
         return <Archive className="h-5 w-5 text-yellow-500" />;
       default:
         return <FileText className="h-5 w-5 text-muted-foreground" />;
@@ -83,10 +93,18 @@ const TaskAttachments = ({ taskId }: Props) => {
     if (!files || files.length === 0) return;
     const token = localStorage.getItem('token') || '';
     const fd = new FormData();
-    Array.from(files).forEach(f => fd.append('file', f));
-    const res = await fetch(`/api/tasks/${taskId}/files`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+    Array.from(files).forEach((f) => fd.append('file', f));
+    const res = await fetch(`/api/tasks/${taskId}/files`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
     if (res.status === 403) {
-      toast({ title: 'Members only', description: 'Only project members can upload files to this task.', variant: 'destructive' });
+      toast({
+        title: 'Members only',
+        description: 'Only project members can upload files to this task.',
+        variant: 'destructive',
+      });
       return;
     }
     if (res.ok) load();
@@ -95,9 +113,15 @@ const TaskAttachments = ({ taskId }: Props) => {
 
   const handleDownload = async (id: number) => {
     const token = localStorage.getItem('token') || '';
-    const resp = await fetch(`/api/tasks/${taskId}/files/${id}/download`, { headers: { Authorization: `Bearer ${token}` } });
+    const resp = await fetch(`/api/tasks/${taskId}/files/${id}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (resp.status === 403) {
-      toast({ title: 'Members only', description: 'Only project members can download files from this task.', variant: 'destructive' });
+      toast({
+        title: 'Members only',
+        description: 'Only project members can download files from this task.',
+        variant: 'destructive',
+      });
       return;
     }
     // Let the browser handle via new window
@@ -114,12 +138,20 @@ const TaskAttachments = ({ taskId }: Props) => {
 
   const handleDelete = async (id: number) => {
     const token = localStorage.getItem('token') || '';
-    const res = await fetch(`/api/tasks/${taskId}/files/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/tasks/${taskId}/files/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.status === 403) {
-      toast({ title: 'Members only', description: 'Only project members can delete files from this task.', variant: 'destructive' });
+      toast({
+        title: 'Members only',
+        description: 'Only project members can delete files from this task.',
+        variant: 'destructive',
+      });
       return;
     }
-    if (res.ok) setAttachments(attachments.filter(attachment => attachment.id !== id));
+    if (res.ok)
+      setAttachments(attachments.filter((attachment) => attachment.id !== id));
   };
 
   return (
@@ -139,11 +171,11 @@ const TaskAttachments = ({ taskId }: Props) => {
           Add Attachment
         </Button>
       </div>
-      
+
       <div className="grid gap-3">
         {attachments.map((attachment) => (
-          <div 
-            key={attachment.id} 
+          <div
+            key={attachment.id}
             className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
           >
             <div className="flex items-center gap-3">
@@ -151,17 +183,17 @@ const TaskAttachments = ({ taskId }: Props) => {
               <div>
                 <p className="font-medium text-sm">{attachment.name}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{Math.round((attachment.size || 0)/1024)} KB</span>
+                  <span>{Math.round((attachment.size || 0) / 1024)} KB</span>
                   <span>•</span>
                   <span>{attachment.date}</span>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleDownload(attachment.id)}
               >
                 <Download className="h-4 w-4" />
@@ -173,7 +205,9 @@ const TaskAttachments = ({ taskId }: Props) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDownload(attachment.id)}>
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(attachment.id)}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </DropdownMenuItem>
@@ -181,8 +215,8 @@ const TaskAttachments = ({ taskId }: Props) => {
                     <FileText className="h-4 w-4 mr-2" />
                     Preview
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-red-600" 
+                  <DropdownMenuItem
+                    className="text-red-600"
                     onClick={() => handleDelete(attachment.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -194,7 +228,7 @@ const TaskAttachments = ({ taskId }: Props) => {
           </div>
         ))}
       </div>
-      
+
       {attachments.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center border rounded-lg">
           <Paperclip className="h-10 w-10 text-muted-foreground mb-3" />
@@ -208,7 +242,13 @@ const TaskAttachments = ({ taskId }: Props) => {
         </div>
       )}
 
-      <input ref={inputRef} type="file" multiple className="hidden" onChange={onFileChange} />
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={onFileChange}
+      />
     </div>
   );
 };

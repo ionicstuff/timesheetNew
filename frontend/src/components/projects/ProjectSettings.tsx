@@ -1,40 +1,42 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Settings, 
-  Bell, 
-  Lock,
-  Trash2,
-  Save
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Settings, Bell, Lock, Trash2, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 const ProjectSettings = () => {
-  const [projectName, setProjectName] = useState("Website Redesign");
-  const [projectDescription, setProjectDescription] = useState("Complete overhaul of company website");
+  const [projectName, setProjectName] = useState('Website Redesign');
+  const [projectDescription, setProjectDescription] = useState(
+    'Complete overhaul of company website'
+  );
   const [notifications, setNotifications] = useState(true);
   const [privateProject, setPrivateProject] = useState(false);
   const { toast } = useToast();
 
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Your project settings have been updated."
+      title: 'Settings saved',
+      description: 'Your project settings have been updated.',
     });
   };
 
   const handleDelete = () => {
     toast({
-      title: "Project deleted",
-      description: "The project has been permanently deleted.",
-      variant: "destructive"
+      title: 'Project deleted',
+      description: 'The project has been permanently deleted.',
+      variant: 'destructive',
     });
   };
 
@@ -71,7 +73,7 @@ const ProjectSettings = () => {
               </div>
             </div>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium mb-4">Preferences</h3>
             <div className="space-y-4">
@@ -91,7 +93,7 @@ const ProjectSettings = () => {
                   onCheckedChange={setNotifications}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Lock className="h-5 w-5 text-muted-foreground" />
@@ -110,7 +112,7 @@ const ProjectSettings = () => {
               </div>
             </div>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium mb-4">Danger Zone</h3>
             <div className="border rounded-lg p-4">
@@ -121,17 +123,14 @@ const ProjectSettings = () => {
                     Permanently delete this project and all its data
                   </p>
                 </div>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDelete}
-                >
+                <Button variant="destructive" onClick={handleDelete}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Project
                 </Button>
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-end">
             <Button onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />

@@ -1,43 +1,52 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
-} from "recharts";
-import { 
+  Cell,
+} from 'recharts';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { 
+} from '@/components/ui/select';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { 
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import {
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
   Download,
-  Filter
-} from "lucide-react";
+  Filter,
+} from 'lucide-react';
 
 const Reports = () => {
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
@@ -65,7 +74,9 @@ const Reports = () => {
     { name: 'Jordan Lee', tasks: 5, color: '#f59e0b' },
   ];
 
-  const handleDateRangeSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+  const handleDateRangeSelect = (
+    range: { from: Date | undefined; to: Date | undefined } | undefined
+  ) => {
     if (range) {
       setDateRange(range);
     }
@@ -84,8 +95,13 @@ const Reports = () => {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline">
-                {dateRange.from ? format(dateRange.from, "MMM dd, yyyy") : "Start Date"} - 
-                {dateRange.to ? format(dateRange.to, "MMM dd, yyyy") : "End Date"}
+                {dateRange.from
+                  ? format(dateRange.from, 'MMM dd, yyyy')
+                  : 'Start Date'}{' '}
+                -
+                {dateRange.to
+                  ? format(dateRange.to, 'MMM dd, yyyy')
+                  : 'End Date'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -135,25 +151,27 @@ const Reports = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Completed Tasks
+            </CardTitle>
             <div className="h-4 w-4 text-muted-foreground bg-green-100 rounded-full flex items-center justify-center">
               <span className="text-green-800 text-xs">C</span>
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">108</div>
-            <p className="text-xs text-muted-foreground">
-              76% completion rate
-            </p>
+            <p className="text-xs text-muted-foreground">76% completion rate</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Productivity</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Team Productivity
+            </CardTitle>
             <div className="h-4 w-4 text-muted-foreground bg-purple-100 rounded-full flex items-center justify-center">
               <span className="text-purple-800 text-xs">P</span>
             </div>
@@ -165,10 +183,12 @@ const Reports = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Completion Time</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg. Completion Time
+            </CardTitle>
             <div className="h-4 w-4 text-muted-foreground bg-yellow-100 rounded-full flex items-center justify-center">
               <span className="text-yellow-800 text-xs">T</span>
             </div>
@@ -186,7 +206,9 @@ const Reports = () => {
         <Card>
           <CardHeader>
             <CardTitle>Task Completion Trend</CardTitle>
-            <CardDescription>Tasks completed vs pending over time</CardDescription>
+            <CardDescription>
+              Tasks completed vs pending over time
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -203,7 +225,7 @@ const Reports = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Project Progress</CardTitle>
@@ -221,7 +243,9 @@ const Reports = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                   >
                     <Cell key={`cell-0`} fill={projectData[0].color} />
                     <Cell key={`cell-1`} fill={projectData[1].color} />
@@ -244,10 +268,7 @@ const Reports = () => {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={teamData}
-                  layout="vertical"
-                >
+                <BarChart data={teamData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" />
@@ -258,7 +279,7 @@ const Reports = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Productivity Insights</CardTitle>
@@ -269,28 +290,34 @@ const Reports = () => {
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h3 className="font-medium text-blue-800">Peak Productivity</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  Your team is most productive on Fridays with an average of 6 tasks completed.
+                  Your team is most productive on Fridays with an average of 6
+                  tasks completed.
                 </p>
               </div>
-              
+
               <div className="p-4 bg-green-50 rounded-lg">
                 <h3 className="font-medium text-green-800">Top Performer</h3>
                 <p className="text-sm text-green-700 mt-1">
-                  Taylor Brown has completed 15 tasks this period, leading the team.
+                  Taylor Brown has completed 15 tasks this period, leading the
+                  team.
                 </p>
               </div>
-              
+
               <div className="p-4 bg-yellow-50 rounded-lg">
-                <h3 className="font-medium text-yellow-800">Improvement Area</h3>
+                <h3 className="font-medium text-yellow-800">
+                  Improvement Area
+                </h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Task completion time has decreased by 0.5 days. Keep up the good work!
+                  Task completion time has decreased by 0.5 days. Keep up the
+                  good work!
                 </p>
               </div>
-              
+
               <div className="p-4 bg-purple-50 rounded-lg">
                 <h3 className="font-medium text-purple-800">Recommendation</h3>
                 <p className="text-sm text-purple-700 mt-1">
-                  Consider redistributing tasks to balance workload across team members.
+                  Consider redistributing tasks to balance workload across team
+                  members.
                 </p>
               </div>
             </div>

@@ -1,22 +1,26 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Upload } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar as CalendarIcon, Upload } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ClientFormProps {
   onSubmit: (data: any) => void;
@@ -25,17 +29,21 @@ interface ClientFormProps {
 }
 
 const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
-  const [name, setName] = useState(initialData?.name || "");
-  const [industry, setIndustry] = useState(initialData?.industry || "");
-  const [contact, setContact] = useState(initialData?.contact || "");
-  const [email, setEmail] = useState(initialData?.email || "");
-  const [phone, setPhone] = useState(initialData?.phone || "");
-  const [address, setAddress] = useState(initialData?.address || "");
-  const [website, setWebsite] = useState(initialData?.website || "");
-  const [contractValue, setContractValue] = useState(initialData?.contractValue || "");
-  const [startDate, setStartDate] = useState<Date | undefined>(initialData?.startDate);
-  const [status, setStatus] = useState(initialData?.status || "Active");
-  const [notes, setNotes] = useState(initialData?.notes || "");
+  const [name, setName] = useState(initialData?.name || '');
+  const [industry, setIndustry] = useState(initialData?.industry || '');
+  const [contact, setContact] = useState(initialData?.contact || '');
+  const [email, setEmail] = useState(initialData?.email || '');
+  const [phone, setPhone] = useState(initialData?.phone || '');
+  const [address, setAddress] = useState(initialData?.address || '');
+  const [website, setWebsite] = useState(initialData?.website || '');
+  const [contractValue, setContractValue] = useState(
+    initialData?.contractValue || ''
+  );
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    initialData?.startDate
+  );
+  const [status, setStatus] = useState(initialData?.status || 'Active');
+  const [notes, setNotes] = useState(initialData?.notes || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,29 +58,29 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
       contractValue,
       startDate,
       status,
-      notes
+      notes,
     });
   };
 
   const industryOptions = [
-    "Technology",
-    "Finance",
-    "Healthcare",
-    "Education",
-    "Retail",
-    "Manufacturing",
-    "Media",
-    "Real Estate",
-    "Non-Profit",
-    "Government",
-    "Other"
+    'Technology',
+    'Finance',
+    'Healthcare',
+    'Education',
+    'Retail',
+    'Manufacturing',
+    'Media',
+    'Real Estate',
+    'Non-Profit',
+    'Government',
+    'Other',
   ];
 
   const statusOptions = [
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
-    { value: "Prospect", label: "Prospect" },
-    { value: "Closed", label: "Closed" }
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+    { value: 'Prospect', label: 'Prospect' },
+    { value: 'Closed', label: 'Closed' },
   ];
 
   return (
@@ -88,7 +96,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
             required
           />
         </div>
-        
+
         <div>
           <Label htmlFor="industry">Industry</Label>
           <Select value={industry} onValueChange={setIndustry}>
@@ -105,7 +113,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           </Select>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="contact">Primary Contact</Label>
@@ -116,7 +124,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
             placeholder="John Smith"
           />
         </div>
-        
+
         <div>
           <Label htmlFor="email">Email</Label>
           <Input
@@ -128,7 +136,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="phone">Phone</Label>
@@ -139,7 +147,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
             placeholder="+1 (555) 123-4567"
           />
         </div>
-        
+
         <div>
           <Label htmlFor="website">Website</Label>
           <Input
@@ -150,7 +158,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           />
         </div>
       </div>
-      
+
       <div>
         <Label htmlFor="address">Address</Label>
         <Textarea
@@ -161,7 +169,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           rows={2}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="contractValue">Contract Value</Label>
@@ -172,20 +180,24 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
             placeholder="$125,000"
           />
         </div>
-        
+
         <div>
           <Label htmlFor="startDate">Start Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                variant={"outline"}
+                variant={'outline'}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !startDate && "text-muted-foreground"
+                  'w-full justify-start text-left font-normal',
+                  !startDate && 'text-muted-foreground'
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                {startDate ? (
+                  format(startDate, 'PPP')
+                ) : (
+                  <span>Pick a date</span>
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -199,7 +211,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           </Popover>
         </div>
       </div>
-      
+
       <div>
         <Label htmlFor="status">Status</Label>
         <Select value={status} onValueChange={setStatus}>
@@ -215,7 +227,7 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           </SelectContent>
         </Select>
       </div>
-      
+
       <div>
         <Label htmlFor="notes">Notes</Label>
         <Textarea
@@ -226,13 +238,13 @@ const ClientForm = ({ onSubmit, onCancel, initialData }: ClientFormProps) => {
           rows={4}
         />
       </div>
-      
+
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">
-          {initialData ? "Update Client" : "Create Client"}
+          {initialData ? 'Update Client' : 'Create Client'}
         </Button>
       </div>
     </form>

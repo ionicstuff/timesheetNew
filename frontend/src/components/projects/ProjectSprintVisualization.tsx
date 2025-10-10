@@ -1,21 +1,27 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import {
+  Calendar,
   Clock,
   CheckCircle,
   Circle,
-  MoreHorizontal
-} from "lucide-react";
+  MoreHorizontal,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 interface Sprint {
   id: number;
@@ -25,19 +31,21 @@ interface Sprint {
   duration: number; // in hours
   tasks: number;
   completed: number;
-  status: "planned" | "in-progress" | "completed";
+  status: 'planned' | 'in-progress' | 'completed';
 }
 
 interface ProjectSprintVisualizationProps {
   sprints: Sprint[];
 }
 
-const ProjectSprintVisualization = ({ sprints }: ProjectSprintVisualizationProps) => {
+const ProjectSprintVisualization = ({
+  sprints,
+}: ProjectSprintVisualizationProps) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "in-progress":
+      case 'in-progress':
         return <Circle className="h-4 w-4 text-blue-500 fill-blue-500" />;
       default:
         return <Circle className="h-4 w-4 text-muted-foreground" />;
@@ -46,12 +54,12 @@ const ProjectSprintVisualization = ({ sprints }: ProjectSprintVisualizationProps
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "in-progress":
-        return "bg-blue-100 text-blue-800";
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -88,7 +96,8 @@ const ProjectSprintVisualization = ({ sprints }: ProjectSprintVisualizationProps
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4 mr-1" />
                         <span>
-                          {sprint.startDate.toLocaleDateString()} - {sprint.endDate.toLocaleDateString()}
+                          {sprint.startDate.toLocaleDateString()} -{' '}
+                          {sprint.endDate.toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -102,25 +111,34 @@ const ProjectSprintVisualization = ({ sprints }: ProjectSprintVisualizationProps
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View Details</DropdownMenuItem>
                       <DropdownMenuItem>Edit Sprint</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
+
                 <div className="mt-3">
                   <div className="flex justify-between text-sm mb-1">
                     <span>Tasks</span>
-                    <span>{sprint.completed}/{sprint.tasks}</span>
+                    <span>
+                      {sprint.completed}/{sprint.tasks}
+                    </span>
                   </div>
-                  <Progress 
-                    value={sprint.tasks > 0 ? (sprint.completed / sprint.tasks) * 100 : 0} 
-                    className="h-2" 
+                  <Progress
+                    value={
+                      sprint.tasks > 0
+                        ? (sprint.completed / sprint.tasks) * 100
+                        : 0
+                    }
+                    className="h-2"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={getStatusColor(sprint.status)}>
-                    {sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1)}
+                    {sprint.status.charAt(0).toUpperCase() +
+                      sprint.status.slice(1)}
                   </Badge>
                 </div>
               </div>

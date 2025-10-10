@@ -1,148 +1,165 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  Plus, 
-  Grid, 
-  List,
-  Filter,
-  MoreHorizontal
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Plus, Grid, List, Filter, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import CreateProjectButton from "@/components/projects/CreateProjectButton";
-import ProjectFilter from "@/components/projects/ProjectFilter";
-import ProjectCard from "@/components/projects/ProjectCard";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import CreateProjectButton from '@/components/projects/CreateProjectButton';
+import ProjectFilter from '@/components/projects/ProjectFilter';
+import ProjectCard from '@/components/projects/ProjectCard';
 
-import axios from "axios";
+import axios from 'axios';
 const Projects = () => {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
 
   // API & UI types
- type ApiProject = {
-  id: number;
-  name: string;
-  description?: string;
-  endDate?: string;
-  status?: string;
-  tasksCount: number;
-  openTasksCount: number;
-  membersCount: number;
-  statusColor?: "green" | "red" | "orange" | null;
-};
-
- type UiProject = {
-  id: number;
-  name: string;
-  description: string;
-  progress: number;
-  tasks: number;
-  members: number;
-  color: string;  // tailwind class
-  status: string;
-  dueDate: string;
-  membersList?: string[];
-};
-
-const mapProjectForUI = (p: ApiProject): UiProject => {
-  const progress = p.tasksCount > 0
-    ? Math.round(((p.tasksCount - p.openTasksCount) / p.tasksCount) * 100)
-    : 0;
-
-  const colorClass =
-    p.statusColor === "green"  ? "bg-green-500"  :
-    p.statusColor === "red"    ? "bg-red-500"    :
-    p.statusColor === "orange" ? "bg-orange-500" :
-                                 "bg-gray-400";
-
-  return {
-    id: p.id,
-    name: p.name,
-    description: p.description ?? "",
-    progress,
-    tasks: p.tasksCount,
-    members: p.membersCount,
-    color: colorClass,
-    status: p.status ?? "active",
-    dueDate: p.endDate ? new Date(p.endDate).toLocaleDateString() : "—",
+  type ApiProject = {
+    id: number;
+    name: string;
+    description?: string;
+    endDate?: string;
+    status?: string;
+    tasksCount: number;
+    openTasksCount: number;
+    membersCount: number;
+    statusColor?: 'green' | 'red' | 'orange' | null;
   };
-};
 
-const [projects, setProjects] = useState<UiProject[]>([]);
-const [loading, setLoading] = useState<boolean>(true);
-const [statusFilter, setStatusFilter] = useState<string>('all');
-const [reloadTick, setReloadTick] = useState<number>(0);
-
-useEffect(() => {
-  const run = async () => {
-    try {
-      setLoading(true);
-      const base = '';
-
-      const params = new URLSearchParams();
-      if (searchTerm) params.set('q', searchTerm);
-      if (statusFilter !== 'all') params.set('status', statusFilter);
-      params.set('limit', '30');
-      params.set('offset', '0');
-      params.set('sortBy', 'name');
-      params.set('sortDir', 'ASC');
-
-      const res = await axios.get<ApiProject[] | { projects: ApiProject[] }>(`${base}/api/projects?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
-      });
-
-      const list = Array.isArray(res.data) ? res.data : (res.data && 'projects' in res.data ? res.data.projects : []);
-      setProjects(list.map(mapProjectForUI)); 
-    } catch (e) {
-      console.error('Failed to load projects', e);
-      setProjects([]);
-    } finally {
-      setLoading(false);
-    }
+  type UiProject = {
+    id: number;
+    name: string;
+    description: string;
+    progress: number;
+    tasks: number;
+    members: number;
+    color: string; // tailwind class
+    status: string;
+    dueDate: string;
+    membersList?: string[];
   };
-  run();
-}, [searchTerm, statusFilter, reloadTick]);
+
+  const mapProjectForUI = (p: ApiProject): UiProject => {
+    const progress =
+      p.tasksCount > 0
+        ? Math.round(((p.tasksCount - p.openTasksCount) / p.tasksCount) * 100)
+        : 0;
+
+    const colorClass =
+      p.statusColor === 'green'
+        ? 'bg-green-500'
+        : p.statusColor === 'red'
+          ? 'bg-red-500'
+          : p.statusColor === 'orange'
+            ? 'bg-orange-500'
+            : 'bg-gray-400';
+
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? '',
+      progress,
+      tasks: p.tasksCount,
+      members: p.membersCount,
+      color: colorClass,
+      status: p.status ?? 'active',
+      dueDate: p.endDate ? new Date(p.endDate).toLocaleDateString() : '—',
+    };
+  };
+
+  const [projects, setProjects] = useState<UiProject[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [reloadTick, setReloadTick] = useState<number>(0);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        setLoading(true);
+        const base = '';
+
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('q', searchTerm);
+        if (statusFilter !== 'all') params.set('status', statusFilter);
+        params.set('limit', '30');
+        params.set('offset', '0');
+        params.set('sortBy', 'name');
+        params.set('sortDir', 'ASC');
+
+        const res = await axios.get<ApiProject[] | { projects: ApiProject[] }>(
+          `${base}/api/projects?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+            },
+          }
+        );
+
+        const list = Array.isArray(res.data)
+          ? res.data
+          : res.data && 'projects' in res.data
+            ? res.data.projects
+            : [];
+        setProjects(list.map(mapProjectForUI));
+      } catch (e) {
+        console.error('Failed to load projects', e);
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [searchTerm, statusFilter, reloadTick]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "completed": return "bg-blue-100 text-blue-800";
-      case "on-hold": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'on-hold':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredProjects = projects.filter(project => 
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProjects = projects.filter(
+    (project) =>
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleProjectSelection = (id: number) => {
-    setSelectedProjects(prev => 
-      prev.includes(id) 
-        ? prev.filter(projectId => projectId !== id) 
+    setSelectedProjects((prev) =>
+      prev.includes(id)
+        ? prev.filter((projectId) => projectId !== id)
         : [...prev, id]
     );
   };
@@ -151,7 +168,7 @@ useEffect(() => {
     if (selectedProjects.length === filteredProjects.length) {
       setSelectedProjects([]);
     } else {
-      setSelectedProjects(filteredProjects.map(project => project.id));
+      setSelectedProjects(filteredProjects.map((project) => project.id));
     }
   };
 
@@ -198,10 +215,10 @@ useEffect(() => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setViewMode("grid")}>
+              <DropdownMenuItem onClick={() => setViewMode('grid')}>
                 Grid View
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewMode("list")}>
+              <DropdownMenuItem onClick={() => setViewMode('list')}>
                 List View
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -209,7 +226,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {viewMode === "grid" ? (
+      {viewMode === 'grid' ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
             <ProjectCard
@@ -232,8 +249,11 @@ useEffect(() => {
           <CardHeader className="hidden sm:block">
             <div className="grid grid-cols-12 gap-4 px-2">
               <div className="col-span-1 flex items-center">
-                <Checkbox 
-                  checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0}
+                <Checkbox
+                  checked={
+                    selectedProjects.length === filteredProjects.length &&
+                    filteredProjects.length > 0
+                  }
                   onCheckedChange={selectAllProjects}
                 />
               </div>
@@ -247,10 +267,13 @@ useEffect(() => {
           <Separator className="hidden sm:block" />
           <CardContent className="space-y-4 sm:space-y-0">
             {filteredProjects.map((project) => (
-              <div key={project.id} className="border rounded-lg p-4 sm:p-0 sm:border-0 sm:py-3 hover:bg-muted/50">
+              <div
+                key={project.id}
+                className="border rounded-lg p-4 sm:p-0 sm:border-0 sm:py-3 hover:bg-muted/50"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                   <div className="sm:col-span-1 flex items-center">
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedProjects.includes(project.id)}
                       onCheckedChange={() => toggleProjectSelection(project.id)}
                       className="sm:ml-2"
@@ -258,7 +281,9 @@ useEffect(() => {
                   </div>
                   <div className="sm:col-span-3">
                     <div className="flex items-center gap-2">
-                      <div className={`h-3 w-3 rounded-full ${project.color}`}></div>
+                      <div
+                        className={`h-3 w-3 rounded-full ${project.color}`}
+                      ></div>
                       <div>
                         <div className="font-medium">{project.name}</div>
                         <div className="text-sm text-muted-foreground sm:hidden">
@@ -269,7 +294,8 @@ useEffect(() => {
                   </div>
                   <div className="sm:col-span-2">
                     <Badge className={getStatusColor(project.status)}>
-                      {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                      {project.status.charAt(0).toUpperCase() +
+                        project.status.slice(1)}
                     </Badge>
                   </div>
                   <div className="sm:col-span-2">
@@ -279,15 +305,23 @@ useEffect(() => {
                   <div className="sm:col-span-2">
                     <div className="flex -space-x-1">
                       {project.membersList.slice(0, 3).map((member, index) => (
-                        <Avatar key={index} className="h-6 w-6 border-2 border-background">
+                        <Avatar
+                          key={index}
+                          className="h-6 w-6 border-2 border-background"
+                        >
                           <AvatarFallback className="text-xs">
-                            {member.split(' ').map(n => n[0]).join('')}
+                            {member
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
                           </AvatarFallback>
                         </Avatar>
                       ))}
                       {project.membersList.length > 3 && (
                         <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                          <span className="text-xs">+{project.membersList.length - 3}</span>
+                          <span className="text-xs">
+                            +{project.membersList.length - 3}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -296,7 +330,11 @@ useEffect(() => {
                     <span className="text-sm">{project.dueDate}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="sm:hidden">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="sm:hidden"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -304,7 +342,9 @@ useEffect(() => {
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>Share</DropdownMenuItem>
                         <DropdownMenuItem>Archive</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

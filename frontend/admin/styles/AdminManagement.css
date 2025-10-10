@@ -185,7 +185,7 @@
   font-size: 14px;
 }
 
-.form-group input[type="checkbox"] {
+.form-group input[type='checkbox'] {
   width: auto;
   margin-right: 6px;
 }
@@ -350,4 +350,3 @@
     grid-template-columns: 1fr;
   }
 }
-

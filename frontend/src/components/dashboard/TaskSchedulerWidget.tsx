@@ -1,7 +1,13 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import AITaskScheduler from "@/components/tasks/AITaskScheduler";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import AITaskScheduler from '@/components/tasks/AITaskScheduler';
 
 const TaskSchedulerWidget = () => {
   return (

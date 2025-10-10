@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const ThemeToggle = () => {
-  const toggleTheme = (theme: "light" | "dark" | "system") => {
-    if (theme === "light") {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    } else if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+  const toggleTheme = (theme: 'light' | 'dark' | 'system') => {
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      localStorage.removeItem("theme");
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
+      localStorage.removeItem('theme');
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
       } else {
-        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.remove('dark');
       }
     }
   };
@@ -37,13 +37,13 @@ const ThemeToggle = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => toggleTheme("light")}>
+        <DropdownMenuItem onClick={() => toggleTheme('light')}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toggleTheme("dark")}>
+        <DropdownMenuItem onClick={() => toggleTheme('dark')}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toggleTheme("system")}>
+        <DropdownMenuItem onClick={() => toggleTheme('system')}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

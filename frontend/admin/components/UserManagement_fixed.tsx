@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getRoles } from '../services/admin-api.service';
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  getRoles,
+} from '../services/admin-api.service';
 import '../styles/AdminManagement.css';
 
 interface User {
@@ -42,7 +48,7 @@ const UserManagement: React.FC = () => {
     lastName: '',
     roleId: '',
     managerId: '',
-    isActive: true
+    isActive: true,
   });
 
   useEffect(() => {
@@ -95,7 +101,7 @@ const UserManagement: React.FC = () => {
       lastName: user.lastName,
       roleId: user.role.id,
       managerId: user.manager?.id || '',
-      isActive: user.isActive
+      isActive: user.isActive,
     });
     setShowModal(true);
   };
@@ -120,23 +126,26 @@ const UserManagement: React.FC = () => {
       lastName: '',
       roleId: '',
       managerId: '',
-      isActive: true
+      isActive: true,
     });
     setEditingUser(null);
     setShowModal(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]:
+        type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
   const getPotentialManagers = () => {
     if (!editingUser) return users;
-    return users.filter(user => user.id !== editingUser.id);
+    return users.filter((user) => user.id !== editingUser.id);
   };
 
   if (isLoading) {
@@ -166,9 +175,11 @@ const UserManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.firstName} {user.lastName}</td>
+                <td>
+                  {user.firstName} {user.lastName}
+                </td>
                 <td>{user.email}</td>
                 <td>{user.username}</td>
                 <td>
@@ -177,22 +188,26 @@ const UserManagement: React.FC = () => {
                   </span>
                 </td>
                 <td>
-                  {user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : 'None'}
+                  {user.manager
+                    ? `${user.manager.firstName} ${user.manager.lastName}`
+                    : 'None'}
                 </td>
                 <td>
-                  <span className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}>
+                  <span
+                    className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}
+                  >
                     {user.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td>
-                  <button 
-                    className="btn btn-sm btn-secondary" 
+                  <button
+                    className="btn btn-sm btn-secondary"
                     onClick={() => handleEdit(user)}
                   >
                     Edit
                   </button>
-                  <button 
-                    className="btn btn-sm btn-danger" 
+                  <button
+                    className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(user.id)}
                   >
                     Delete
@@ -209,7 +224,9 @@ const UserManagement: React.FC = () => {
           <div className="modal">
             <div className="modal-header">
               <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
-              <button className="modal-close" onClick={resetForm}>×</button>
+              <button className="modal-close" onClick={resetForm}>
+                ×
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
@@ -274,7 +291,7 @@ const UserManagement: React.FC = () => {
                     required
                   >
                     <option value="">Select Role</option>
-                    {roles.map(role => (
+                    {roles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>
@@ -289,7 +306,7 @@ const UserManagement: React.FC = () => {
                     onChange={handleInputChange}
                   >
                     <option value="">No Manager</option>
-                    {getPotentialManagers().map(user => (
+                    {getPotentialManagers().map((user) => (
                       <option key={user.id} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
@@ -309,7 +326,11 @@ const UserManagement: React.FC = () => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={resetForm}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

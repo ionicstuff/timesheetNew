@@ -1,31 +1,33 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  MessageSquare, 
-  Paperclip, 
-  Send,
-  Smile,
-  ThumbsUp
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { MessageSquare, Paperclip, Send, Smile, ThumbsUp } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/components/ui/use-toast';
 
-interface Props { taskId: number; }
+interface Props {
+  taskId: number;
+}
 
 const TaskComments = ({ taskId }: Props) => {
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const { toast } = useToast();
 
   const load = async () => {
     if (!taskId) return;
     const token = localStorage.getItem('token') || '';
-    const res = await fetch(`/api/tasks/${taskId}/comments`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/tasks/${taskId}/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.status === 403) {
-      toast({ title: 'Members only', description: 'Only project members can view comments for this task.', variant: 'destructive' });
+      toast({
+        title: 'Members only',
+        description: 'Only project members can view comments for this task.',
+        variant: 'destructive',
+      });
       setComments([]);
       return;
     }
@@ -34,28 +36,41 @@ const TaskComments = ({ taskId }: Props) => {
       const mapped = (rows || []).map((r: any) => ({
         id: r.id,
         user: r.author ? `${r.author.firstName} ${r.author.lastName}` : 'User',
-        avatar: "",
+        avatar: '',
         content: r.content,
         time: new Date(r.created_at || r.createdAt).toLocaleString(),
         likes: r.likes ?? 0,
-        liked: !!r.liked
+        liked: !!r.liked,
       }));
       setComments(mapped);
     }
   };
 
-  useEffect(() => { load(); }, [taskId]);
+  useEffect(() => {
+    load();
+  }, [taskId]);
 
   const handleAddComment = async () => {
     if (comment.trim()) {
       const token = localStorage.getItem('token') || '';
-      const res = await fetch(`/api/tasks/${taskId}/comments`, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ content: comment }) });
+      const res = await fetch(`/api/tasks/${taskId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: comment }),
+      });
       if (res.status === 403) {
-        toast({ title: 'Members only', description: 'Only project members can comment on this task.', variant: 'destructive' });
+        toast({
+          title: 'Members only',
+          description: 'Only project members can comment on this task.',
+          variant: 'destructive',
+        });
         return;
       }
       if (res.ok) {
-        setComment("");
+        setComment('');
         await load();
       }
     }
@@ -63,19 +78,26 @@ const TaskComments = ({ taskId }: Props) => {
 
   const handleLikeComment = async (id: number) => {
     const token = localStorage.getItem('token') || '';
-    const target = comments.find(c => c.id === id);
+    const target = comments.find((c) => c.id === id);
     if (!target) return;
     const liked = !!target.liked;
     const method = liked ? 'DELETE' : 'POST';
-    const res = await fetch(`/api/tasks/${taskId}/comments/${id}/like`, { method, headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/tasks/${taskId}/comments/${id}/like`, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.ok) {
       const data = await res.json();
-      setComments(comments.map(c => c.id === id ? { ...c, liked: data.liked, likes: data.likes } : c));
+      setComments(
+        comments.map((c) =>
+          c.id === id ? { ...c, liked: data.liked, likes: data.likes } : c
+        )
+      );
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAddComment();
     }
@@ -92,7 +114,7 @@ const TaskComments = ({ taskId }: Props) => {
           Discuss this task with your team
         </p>
       </div>
-      
+
       <div className="space-y-6">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3">
@@ -104,27 +126,31 @@ const TaskComments = ({ taskId }: Props) => {
               <div className="bg-muted rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{comment.user}</span>
-                  <span className="text-xs text-muted-foreground">{comment.time}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {comment.time}
+                  </span>
                 </div>
                 <p className="text-sm mt-1">{comment.content}</p>
                 {comment.attachments && (
                   <div className="mt-2 flex items-center gap-2">
                     <Paperclip className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      {comment.attachments.join(", ")}
+                      {comment.attachments.join(', ')}
                     </span>
                   </div>
                 )}
               </div>
               <div className="flex items-center gap-4 mt-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="text-xs"
                   onClick={() => handleLikeComment(comment.id)}
                 >
-                  <ThumbsUp className={`h-3 w-3 mr-1 ${comment.liked ? "fill-current" : ""}`} />
-                  {comment.likes > 0 ? comment.likes : "Like"}
+                  <ThumbsUp
+                    className={`h-3 w-3 mr-1 ${comment.liked ? 'fill-current' : ''}`}
+                  />
+                  {comment.likes > 0 ? comment.likes : 'Like'}
                 </Button>
                 <Button variant="ghost" size="sm" className="text-xs">
                   Reply
@@ -134,7 +160,7 @@ const TaskComments = ({ taskId }: Props) => {
           </div>
         ))}
       </div>
-      
+
       <div className="border rounded-lg p-4">
         <div className="flex gap-3">
           <Avatar className="h-8 w-8">

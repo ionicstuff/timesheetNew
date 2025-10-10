@@ -1,13 +1,25 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { 
-  TrendingUp, 
-  Clock, 
-  Target, 
-  Award
-} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { TrendingUp, Clock, Target, Award } from 'lucide-react';
 
 const ProductivityInsights = () => {
   const taskData = [
@@ -29,28 +41,28 @@ const ProductivityInsights = () => {
   const insights = [
     {
       icon: <TrendingUp className="h-5 w-5 text-blue-500" />,
-      title: "Weekly Progress",
+      title: 'Weekly Progress',
       description: "You've completed 78% of your weekly goals",
-      change: "+12% from last week"
+      change: '+12% from last week',
     },
     {
       icon: <Clock className="h-5 w-5 text-yellow-500" />,
-      title: "Time Management",
-      description: "Average task completion time: 2.3 days",
-      change: "-0.5 days from last week"
+      title: 'Time Management',
+      description: 'Average task completion time: 2.3 days',
+      change: '-0.5 days from last week',
     },
     {
       icon: <Target className="h-5 w-5 text-green-500" />,
-      title: "Focus Areas",
-      description: "High priority tasks: 12 completed this week",
-      change: "+3 from last week"
+      title: 'Focus Areas',
+      description: 'High priority tasks: 12 completed this week',
+      change: '+3 from last week',
     },
     {
       icon: <Award className="h-5 w-5 text-purple-500" />,
-      title: "Achievements",
-      description: "3 milestones reached this month",
-      change: "New personal best!"
-    }
+      title: 'Achievements',
+      description: '3 milestones reached this month',
+      change: 'New personal best!',
+    },
   ];
 
   return (
@@ -79,7 +91,7 @@ const ProductivityInsights = () => {
               </ResponsiveContainer>
             </div>
           </div>
-          
+
           <div>
             <h3 className="font-medium mb-4">Project Progress</h3>
             <div className="h-64">
@@ -93,7 +105,9 @@ const ProductivityInsights = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                   >
                     <Cell key={`cell-0`} fill={projectData[0].color} />
                     <Cell key={`cell-1`} fill={projectData[1].color} />
@@ -105,7 +119,7 @@ const ProductivityInsights = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {insights.map((insight, index) => (
             <div key={index} className="border rounded-lg p-4">
@@ -113,7 +127,9 @@ const ProductivityInsights = () => {
                 {insight.icon}
                 <div>
                   <p className="font-medium">{insight.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{insight.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {insight.description}
+                  </p>
                   <p className="text-xs text-primary mt-1">{insight.change}</p>
                 </div>
               </div>

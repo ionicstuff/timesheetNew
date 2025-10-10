@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  FileText, 
-  CheckCircle, 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  FileText,
+  CheckCircle,
   Clock,
   User,
   Building2,
@@ -14,46 +20,64 @@ import {
   Send,
   Edit,
   MoreHorizontal,
-  Printer
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+  Printer,
+} from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const BillingDetail = () => {
-  const [invoiceStatus, setInvoiceStatus] = useState("sent");
+  const [invoiceStatus, setInvoiceStatus] = useState('sent');
 
   const invoice = {
-    id: "INV-001",
-    client: "Acme Corporation",
-    project: "Website Redesign",
+    id: 'INV-001',
+    client: 'Acme Corporation',
+    project: 'Website Redesign',
     amount: 25000,
-    status: "paid",
-    invoiceDate: "2023-10-15",
-    dueDate: "2023-11-15",
-    paymentDate: "2023-11-10",
-    notes: "Thank you for your business. Payment due within 30 days.",
+    status: 'paid',
+    invoiceDate: '2023-10-15',
+    dueDate: '2023-11-15',
+    paymentDate: '2023-11-10',
+    notes: 'Thank you for your business. Payment due within 30 days.',
     items: [
-      { id: 1, description: "Website Design", quantity: 1, rate: 15000, amount: 15000 },
-      { id: 2, description: "Frontend Development", quantity: 1, rate: 10000, amount: 10000 }
-    ]
+      {
+        id: 1,
+        description: 'Website Design',
+        quantity: 1,
+        rate: 15000,
+        amount: 15000,
+      },
+      {
+        id: 2,
+        description: 'Frontend Development',
+        quantity: 1,
+        rate: 10000,
+        amount: 10000,
+      },
+    ],
   };
 
   const client = {
-    name: "Acme Corporation",
-    contact: "John Smith",
-    email: "john@acme.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Business Ave, San Francisco, CA 94107"
+    name: 'Acme Corporation',
+    contact: 'John Smith',
+    email: 'john@acme.com',
+    phone: '+1 (555) 123-4567',
+    address: '123 Business Ave, San Francisco, CA 94107',
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "paid": return "bg-green-100 text-green-800";
-      case "pending": return "bg-blue-100 text-blue-800";
-      case "overdue": return "bg-red-100 text-red-800";
-      case "draft": return "bg-gray-100 text-gray-800";
-      case "sent": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-blue-100 text-blue-800';
+      case 'overdue':
+        return 'bg-red-100 text-red-800';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800';
+      case 'sent':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -107,7 +131,9 @@ const BillingDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle>Invoice Details</CardTitle>
-              <CardDescription>Invoice #{invoice.id} for {invoice.project}</CardDescription>
+              <CardDescription>
+                Invoice #{invoice.id} for {invoice.project}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg overflow-hidden">
@@ -117,18 +143,22 @@ const BillingDetail = () => {
                   <div className="col-span-2">Rate</div>
                   <div className="col-span-2">Amount</div>
                 </div>
-                
+
                 <div className="divide-y">
                   {invoice.items.map((item) => (
                     <div key={item.id} className="grid grid-cols-12 gap-2 p-3">
                       <div className="col-span-6">{item.description}</div>
                       <div className="col-span-2">{item.quantity}</div>
-                      <div className="col-span-2">{formatCurrency(item.rate)}</div>
-                      <div className="col-span-2">{formatCurrency(item.amount)}</div>
+                      <div className="col-span-2">
+                        {formatCurrency(item.rate)}
+                      </div>
+                      <div className="col-span-2">
+                        {formatCurrency(item.amount)}
+                      </div>
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="p-3 border-t">
                   <div className="flex justify-end">
                     <div className="w-64">
@@ -148,7 +178,7 @@ const BillingDetail = () => {
                   </div>
                 </div>
               </div>
-              
+
               {invoice.notes && (
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <h4 className="font-medium mb-2">Notes</h4>
@@ -157,11 +187,13 @@ const BillingDetail = () => {
               )}
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              <CardDescription>Record of payments for this invoice</CardDescription>
+              <CardDescription>
+                Record of payments for this invoice
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -177,9 +209,11 @@ const BillingDetail = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
-                    <div className="font-medium">{formatCurrency(invoice.amount)}</div>
+                    <div className="font-medium">
+                      {formatCurrency(invoice.amount)}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {new Date(invoice.paymentDate!).toLocaleDateString()}
                     </div>
@@ -189,7 +223,7 @@ const BillingDetail = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -205,10 +239,12 @@ const BillingDetail = () => {
                 </Avatar>
                 <div>
                   <div className="font-medium">{client.name}</div>
-                  <div className="text-sm text-muted-foreground">{client.contact}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {client.contact}
+                  </div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-start gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-muted-foreground mt-0.5" />
@@ -220,14 +256,17 @@ const BillingDetail = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Send className="h-4 w-4 text-muted-foreground" />
-                  <a href={`mailto:${client.email}`} className="hover:underline">
+                  <a
+                    href={`mailto:${client.email}`}
+                    className="hover:underline"
+                  >
                     {client.email}
                   </a>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Invoice Actions</CardTitle>
@@ -251,35 +290,37 @@ const BillingDetail = () => {
                   Delete Invoice
                 </Button>
               </div>
-              
+
               <div className="mt-6">
                 <h4 className="font-medium mb-2">Change Status</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    size="sm" 
-                    variant={invoiceStatus === "draft" ? "default" : "outline"}
-                    onClick={() => handleStatusChange("draft")}
+                  <Button
+                    size="sm"
+                    variant={invoiceStatus === 'draft' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange('draft')}
                   >
                     Draft
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant={invoiceStatus === "sent" ? "default" : "outline"}
-                    onClick={() => handleStatusChange("sent")}
+                  <Button
+                    size="sm"
+                    variant={invoiceStatus === 'sent' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange('sent')}
                   >
                     Sent
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant={invoiceStatus === "paid" ? "default" : "outline"}
-                    onClick={() => handleStatusChange("paid")}
+                  <Button
+                    size="sm"
+                    variant={invoiceStatus === 'paid' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange('paid')}
                   >
                     Paid
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant={invoiceStatus === "overdue" ? "default" : "outline"}
-                    onClick={() => handleStatusChange("overdue")}
+                  <Button
+                    size="sm"
+                    variant={
+                      invoiceStatus === 'overdue' ? 'default' : 'outline'
+                    }
+                    onClick={() => handleStatusChange('overdue')}
                   >
                     Overdue
                   </Button>
@@ -287,7 +328,7 @@ const BillingDetail = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Payment Timeline</CardTitle>
@@ -307,7 +348,7 @@ const BillingDetail = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
@@ -320,7 +361,7 @@ const BillingDetail = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className="h-2 w-2 rounded-full bg-green-500"></div>

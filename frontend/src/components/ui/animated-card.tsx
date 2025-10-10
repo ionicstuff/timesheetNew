@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const AnimatedCard = React.forwardRef<
   HTMLDivElement,
@@ -21,12 +21,12 @@ const AnimatedCard = React.forwardRef<
     whileHover={whileHover || { y: -5 }}
     whileTap={whileTap}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300",
+      'rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300',
       className
     )}
     {...props}
   />
 ));
-AnimatedCard.displayName = "AnimatedCard";
+AnimatedCard.displayName = 'AnimatedCard';
 
 export { AnimatedCard };

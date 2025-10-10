@@ -1,44 +1,44 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart3, 
-  Users, 
-  CheckCircle, 
-  Clock,
-  TrendingUp
-} from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { BarChart3, Users, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 const ProjectStats = () => {
   const stats = [
-    { 
-      title: "Completion Rate", 
-      value: "85%", 
+    {
+      title: 'Completion Rate',
+      value: '85%',
       icon: <TrendingUp className="h-4 w-4" />,
-      description: "+12% from last month",
-      progress: 85
+      description: '+12% from last month',
+      progress: 85,
     },
-    { 
-      title: "Team Productivity", 
-      value: "92%", 
+    {
+      title: 'Team Productivity',
+      value: '92%',
       icon: <Users className="h-4 w-4" />,
-      description: "Above average performance",
-      progress: 92
+      description: 'Above average performance',
+      progress: 92,
     },
-    { 
-      title: "On-time Delivery", 
-      value: "78%", 
+    {
+      title: 'On-time Delivery',
+      value: '78%',
       icon: <Clock className="h-4 w-4" />,
-      description: "Meeting deadlines consistently",
-      progress: 78
+      description: 'Meeting deadlines consistently',
+      progress: 78,
     },
-    { 
-      title: "Quality Score", 
-      value: "95%", 
+    {
+      title: 'Quality Score',
+      value: '95%',
       icon: <CheckCircle className="h-4 w-4" />,
-      description: "High quality deliverables",
-      progress: 95
+      description: 'High quality deliverables',
+      progress: 95,
     },
   ];
 

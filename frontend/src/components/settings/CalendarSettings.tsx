@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Calendar,
-  Link,
-  CheckCircle,
-  AlertCircle
-} from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { calendarService } from "@/lib/calendarIntegrations";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Link, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { calendarService } from '@/lib/calendarIntegrations';
 
 const CalendarSettings = () => {
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -26,16 +27,16 @@ const CalendarSettings = () => {
       if (result.success) {
         setGoogleConnected(true);
         toast({
-          title: "Google Calendar Connected",
-          description: "Successfully connected to your Google Calendar"
+          title: 'Google Calendar Connected',
+          description: 'Successfully connected to your Google Calendar',
         });
       }
     } catch (error) {
       console.error('Google Calendar connection failed:', error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to Google Calendar",
-        variant: "destructive"
+        title: 'Connection Failed',
+        description: 'Failed to connect to Google Calendar',
+        variant: 'destructive',
       });
     }
   };
@@ -46,16 +47,16 @@ const CalendarSettings = () => {
       if (result.success) {
         setOutlookConnected(true);
         toast({
-          title: "Outlook Calendar Connected",
-          description: "Successfully connected to your Outlook Calendar"
+          title: 'Outlook Calendar Connected',
+          description: 'Successfully connected to your Outlook Calendar',
         });
       }
     } catch (error) {
       console.error('Outlook Calendar connection failed:', error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to Outlook Calendar",
-        variant: "destructive"
+        title: 'Connection Failed',
+        description: 'Failed to connect to Outlook Calendar',
+        variant: 'destructive',
       });
     }
   };
@@ -63,10 +64,10 @@ const CalendarSettings = () => {
   const toggleSync = () => {
     setSyncEnabled(!syncEnabled);
     toast({
-      title: syncEnabled ? "Sync Disabled" : "Sync Enabled",
-      description: syncEnabled 
-        ? "Calendar synchronization has been disabled" 
-        : "Calendar synchronization has been enabled"
+      title: syncEnabled ? 'Sync Disabled' : 'Sync Enabled',
+      description: syncEnabled
+        ? 'Calendar synchronization has been disabled'
+        : 'Calendar synchronization has been enabled',
     });
   };
 
@@ -93,9 +94,9 @@ const CalendarSettings = () => {
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={handleGoogleConnect}
-              variant={googleConnected ? "outline" : "default"}
+              variant={googleConnected ? 'outline' : 'default'}
               disabled={googleConnected}
             >
               {googleConnected ? (
@@ -111,7 +112,7 @@ const CalendarSettings = () => {
               )}
             </Button>
           </div>
-          
+
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -124,9 +125,9 @@ const CalendarSettings = () => {
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={handleOutlookConnect}
-              variant={outlookConnected ? "outline" : "default"}
+              variant={outlookConnected ? 'outline' : 'default'}
               disabled={outlookConnected}
             >
               {outlookConnected ? (
@@ -142,7 +143,7 @@ const CalendarSettings = () => {
               )}
             </Button>
           </div>
-          
+
           <div className="border-t pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
@@ -163,19 +164,21 @@ const CalendarSettings = () => {
               />
             </div>
           </div>
-          
+
           {googleConnected || outlookConnected ? (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-start gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                 <div>
-                  <p className="font-medium text-green-800">Calendars Connected</p>
+                  <p className="font-medium text-green-800">
+                    Calendars Connected
+                  </p>
                   <p className="text-sm text-green-700 mt-1">
                     {googleConnected && outlookConnected
-                      ? "Both Google Calendar and Outlook are connected and ready to sync."
+                      ? 'Both Google Calendar and Outlook are connected and ready to sync.'
                       : googleConnected
-                      ? "Google Calendar is connected and ready to sync."
-                      : "Outlook Calendar is connected and ready to sync."}
+                        ? 'Google Calendar is connected and ready to sync.'
+                        : 'Outlook Calendar is connected and ready to sync.'}
                   </p>
                 </div>
               </div>
@@ -185,9 +188,12 @@ const CalendarSettings = () => {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                 <div>
-                  <p className="font-medium text-yellow-800">No Calendars Connected</p>
+                  <p className="font-medium text-yellow-800">
+                    No Calendars Connected
+                  </p>
                   <p className="text-sm text-yellow-700 mt-1">
-                    Connect at least one calendar service to enable synchronization.
+                    Connect at least one calendar service to enable
+                    synchronization.
                   </p>
                 </div>
               </div>

@@ -1,23 +1,23 @@
-const path = require('path');
+const path = require("path");
 // Ensure env is loaded from backend/.env
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-const db = require('../config/database');
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+const db = require("../config/database");
 
 async function run(filename) {
   try {
-    const migrationsDir = path.join(__dirname, '..', 'migrations');
+    const migrationsDir = path.join(__dirname, "..", "migrations");
     const fullPath = path.join(migrationsDir, filename);
-    console.log('Running migration', filename);
+    console.log("Running migration", filename);
     const migration = require(fullPath);
-    if (migration && typeof migration.up === 'function') {
+    if (migration && typeof migration.up === "function") {
       await db.authenticate();
-      await migration.up(db.getQueryInterface(), require('sequelize'));
-      console.log('Migration applied:', filename);
+      await migration.up(db.getQueryInterface(), require("sequelize"));
+      console.log("Migration applied:", filename);
     } else {
-      console.error('Migration file not found or invalid:', filename);
+      console.error("Migration file not found or invalid:", filename);
     }
   } catch (err) {
-    console.error('Migration failed', err);
+    console.error("Migration failed", err);
     process.exitCode = 1;
   } finally {
     await db.close();
@@ -26,7 +26,7 @@ async function run(filename) {
 
 const fname = process.argv[2];
 if (!fname) {
-  console.error('Usage: node runOneMigration.js <migration-filename.js>');
+  console.error("Usage: node runOneMigration.js <migration-filename.js>");
   process.exit(1);
 }
-run(fname).then(()=>process.exit(0));
+run(fname).then(() => process.exit(0));

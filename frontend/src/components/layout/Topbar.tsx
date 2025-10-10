@@ -1,12 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  Settings,
-  LogOut
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Settings, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +11,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import GlobalSearch from "./GlobalSearch";
-import NotificationBadge from "./NotificationBadge";
-import QuickCreate from "./QuickCreate";
-import TimesheetClockButton from "@/components/timesheet/TimesheetClockButton";
-import { useTimesheet } from "../../contexts/TimesheetContext";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import GlobalSearch from './GlobalSearch';
+import NotificationBadge from './NotificationBadge';
+import QuickCreate from './QuickCreate';
+import TimesheetClockButton from '@/components/timesheet/TimesheetClockButton';
+import { useTimesheet } from '../../contexts/TimesheetContext';
 
 const Topbar = () => {
   const [user, setUser] = useState<any>(null);
@@ -28,16 +25,16 @@ const Topbar = () => {
   const { status: clockStatus } = useTimesheet();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
   };
 
   return (
@@ -50,22 +47,42 @@ const Topbar = () => {
       <div className="flex items-center gap-2">
         <TimesheetClockButton />
         <NotificationBadge />
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profilePictureUrl || "https://github.com/shadcn.png"} alt="User avatar" />
-                <AvatarFallback>{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
+                <AvatarImage
+                  src={
+                    user?.profilePictureUrl || 'https://github.com/shadcn.png'
+                  }
+                  alt="User avatar"
+                />
+                <AvatarFallback>
+                  {user?.firstName?.[0]}
+                  {user?.lastName?.[0]}
+                </AvatarFallback>
               </Avatar>
               <span
                 className={`inline-block h-2 w-2 rounded-full ${
-                  clockStatus === 'clocked_in' ? 'bg-green-500' : clockStatus === 'clocked_out' ? 'bg-red-500' : 'bg-gray-400'
+                  clockStatus === 'clocked_in'
+                    ? 'bg-green-500'
+                    : clockStatus === 'clocked_out'
+                      ? 'bg-red-500'
+                      : 'bg-gray-400'
                 }`}
-                title={clockStatus === 'clocked_in' ? 'Clocked In' : clockStatus === 'clocked_out' ? 'Clocked Out' : 'Not Clocked In'}
+                title={
+                  clockStatus === 'clocked_in'
+                    ? 'Clocked In'
+                    : clockStatus === 'clocked_out'
+                      ? 'Clocked Out'
+                      : 'Not Clocked In'
+                }
                 aria-label={clockStatus}
               />
-              <span className="text-sm">{user ? `${user.firstName} ${user.lastName}` : "Loading..."}</span>
+              <span className="text-sm">
+                {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

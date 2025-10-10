@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import Modal from "@/components/ui/Modal";
-import ProjectForm from "@/components/projects/ProjectForm";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import ProjectForm from '@/components/projects/ProjectForm';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateProjectButtonProps {
   onCreated?: () => void;
@@ -17,7 +17,7 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
 
   const handleSubmit = async (data: any) => {
     try {
-      const token = localStorage.getItem("token") || "";
+      const token = localStorage.getItem('token') || '';
 
       // Map UI form data to backend payload
       const payload: any = {
@@ -28,7 +28,9 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
         managerId: data.managerId ? Number(data.managerId) : undefined,
         startDate: data.startDate || undefined,
         endDate: data.endDate || undefined,
-        estimatedTime: data.estimatedTime ? Number(data.estimatedTime) : undefined,
+        estimatedTime: data.estimatedTime
+          ? Number(data.estimatedTime)
+          : undefined,
         isActive: typeof data.isActive === 'boolean' ? data.isActive : true,
       };
 
@@ -36,7 +38,7 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -48,12 +50,18 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
 
       toast({
         title: 'Project created',
-        description: 'Your project has been created successfully.'
+        description: 'Your project has been created successfully.',
       });
       setIsOpen(false);
-      try { onCreated && onCreated(); } catch {}
+      try {
+        onCreated && onCreated();
+      } catch {}
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to create project', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: e.message || 'Failed to create project',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -63,16 +71,16 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
         <Plus className="mr-2 h-4 w-4" />
         New Project
       </Button>
-      
+
       <Modal
         open={isOpen}
         onOpenChange={setIsOpen}
         title="Create New Project"
         size="xl"
       >
-        <ProjectForm 
-          onSubmit={handleSubmit} 
-          onCancel={() => setIsOpen(false)} 
+        <ProjectForm
+          onSubmit={handleSubmit}
+          onCancel={() => setIsOpen(false)}
         />
       </Modal>
     </>

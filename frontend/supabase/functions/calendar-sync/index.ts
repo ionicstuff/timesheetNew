@@ -1,5 +1,5 @@
 // Import the Supabase client
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Initialize Supabase client
@@ -82,9 +82,11 @@ serve(async (_req) => {
           title: task.title,
           description: task.description || '',
           start_time: task.due_date,
-          end_time: new Date(new Date(task.due_date).getTime() + 3600000).toISOString(), // +1 hour
+          end_time: new Date(
+            new Date(task.due_date).getTime() + 3600000
+          ).toISOString(), // +1 hour
           calendar_type: connection.calendar_type,
-          external_id: existingEvent?.external_id
+          external_id: existingEvent?.external_id,
         };
 
         // In a real implementation, we would:
@@ -94,22 +96,25 @@ serve(async (_req) => {
 
         // For now, we'll simulate the sync
         const externalId = `ext_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Save to our database
         const { error: saveError } = await supabase
           .from('calendar_events')
-          .upsert({
-            task_id: task.id,
-            user_id: userId,
-            calendar_type: connection.calendar_type,
-            external_id: externalId,
-            title: event.title,
-            start_time: event.start_time,
-            end_time: event.end_time,
-            last_synced: new Date().toISOString()
-          }, {
-            onConflict: 'task_id,calendar_type'
-          });
+          .upsert(
+            {
+              task_id: task.id,
+              user_id: userId,
+              calendar_type: connection.calendar_type,
+              external_id: externalId,
+              title: event.title,
+              start_time: event.start_time,
+              end_time: event.end_time,
+              last_synced: new Date().toISOString(),
+            },
+            {
+              onConflict: 'task_id,calendar_type',
+            }
+          );
 
         if (saveError) {
           console.error('Error saving calendar event:', saveError);
@@ -121,17 +126,17 @@ serve(async (_req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: 'Calendar sync completed successfully',
         events_synced: syncedEvents.length,
-        events: syncedEvents
+        events: syncedEvents,
       }),
       { headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { 'Content-Type': 'application/json' }, status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
 });

@@ -1,11 +1,11 @@
-const { Op } = require('sequelize');
-const sequelize = require('../config/database');
-const { Timesheet, TimesheetEntry, Project } = require('../models');
-const TaskTimeLog = require('../models/TaskTimeLog');
+const { Op } = require("sequelize");
+const sequelize = require("../config/database");
+const { Timesheet, TimesheetEntry, Project } = require("../models");
+const TaskTimeLog = require("../models/TaskTimeLog");
 
 function getTodayDate() {
   // Keep consistent with other routes using UTC date partitioning
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 function startOfUtcDay(dateStr) {
@@ -20,12 +20,19 @@ function startOfNextUtcDay(dateStr) {
 
 async function ensureTimesheet(userId, date, t) {
   // If a header exists and is submitted, skip any auto-fill
-  const existing = await Timesheet.findOne({ where: { userId, date }, transaction: t });
+  const existing = await Timesheet.findOne({
+    where: { userId, date },
+    transaction: t,
+  });
   if (existing) {
-    if (existing.status === 'submitted') return { header: existing, skip: true };
+    if (existing.status === "submitted")
+      return { header: existing, skip: true };
     return { header: existing, skip: false };
   }
-  const header = await Timesheet.create({ userId, date, status: 'pending' }, { transaction: t });
+  const header = await Timesheet.create(
+    { userId, date, status: "pending" },
+    { transaction: t },
+  );
   return { header, skip: false };
 }
 
@@ -50,12 +57,15 @@ async function upsertFromTaskCompletion(task, user, t) {
     where: {
       taskId: task.id,
       userId: user.id,
-      endAt: { [Op.gte]: start, [Op.lt]: end }
+      endAt: { [Op.gte]: start, [Op.lt]: end },
     },
-    transaction: t
+    transaction: t,
   });
 
-  const totalSeconds = logs.reduce((sum, l) => sum + (l.durationSeconds || 0), 0);
+  const totalSeconds = logs.reduce(
+    (sum, l) => sum + (l.durationSeconds || 0),
+    0,
+  );
   const minutes = Math.max(0, Math.floor(totalSeconds / 60));
 
   if (minutes <= 0) {
@@ -70,7 +80,7 @@ async function upsertFromTaskCompletion(task, user, t) {
   // Upsert entry per (timesheetId, taskId)
   let entry = await TimesheetEntry.findOne({
     where: { timesheetId: header.id, taskId: task.id },
-    transaction: t
+    transaction: t,
   });
 
   if (entry) {
@@ -82,16 +92,19 @@ async function upsertFromTaskCompletion(task, user, t) {
 
   // Create new entry
   const billable = await defaultBillable(task.projectId, t);
-  entry = await TimesheetEntry.create({
-    timesheetId: header.id,
-    projectId: task.projectId,
-    taskId: task.id,
-    minutes,
-    isBillable: billable,
-    description: null,
-    startedAt: null,
-    endedAt: null
-  }, { transaction: t });
+  entry = await TimesheetEntry.create(
+    {
+      timesheetId: header.id,
+      projectId: task.projectId,
+      taskId: task.id,
+      minutes,
+      isBillable: billable,
+      description: null,
+      startedAt: null,
+      endedAt: null,
+    },
+    { transaction: t },
+  );
 
   return entry;
 }
@@ -99,4 +112,3 @@ async function upsertFromTaskCompletion(task, user, t) {
 module.exports = {
   upsertFromTaskCompletion,
 };
-

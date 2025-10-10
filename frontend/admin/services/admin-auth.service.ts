@@ -8,8 +8,8 @@ const adminApi = axios.create({
   baseURL: API_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Add token to requests if available
@@ -28,11 +28,11 @@ adminApi.interceptors.request.use(
 
 const login = async (email: string, password: string) => {
   const response = await adminApi.post('/auth/login', { email, password });
-  
+
   if (response.data.token) {
     localStorage.setItem('adminToken', response.data.token);
   }
-  
+
   return response.data;
 };
 
@@ -47,6 +47,5 @@ const isLoggedIn = (): boolean => {
 export const adminAuthService = {
   login,
   logout,
-  isLoggedIn
+  isLoggedIn,
 };
-

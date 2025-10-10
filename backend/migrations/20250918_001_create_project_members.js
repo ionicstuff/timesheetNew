@@ -54,7 +54,10 @@ module.exports = {
 
     await queryInterface.addIndex("project_members", ["project_id"]);
     await queryInterface.addIndex("project_members", ["user_id"]);
-    await queryInterface.addIndex("project_members", ["project_id", "project_role"]);
+    await queryInterface.addIndex("project_members", [
+      "project_id",
+      "project_role",
+    ]);
   },
 
   down: async (queryInterface, Sequelize) => {

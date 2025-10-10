@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface CustomField {
   id: string;
   name: string;
-  type: "text" | "number" | "date" | "select";
+  type: 'text' | 'number' | 'date' | 'select';
   value: string;
   options?: string[];
 }
@@ -27,12 +27,15 @@ interface ProjectCustomFieldsProps {
   onCustomFieldsChange: (fields: CustomField[]) => void;
 }
 
-const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCustomFieldsProps) => {
+const ProjectCustomFields = ({
+  customFields,
+  onCustomFieldsChange,
+}: ProjectCustomFieldsProps) => {
   const [newField, setNewField] = useState({
-    name: "",
-    type: "text" as "text" | "number" | "date" | "select",
-    value: "",
-    options: [""]
+    name: '',
+    type: 'text' as 'text' | 'number' | 'date' | 'select',
+    value: '',
+    options: [''],
   });
 
   const addField = () => {
@@ -42,26 +45,28 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
         name: newField.name,
         type: newField.type,
         value: newField.value,
-        ...(newField.type === "select" && { options: newField.options.filter(opt => opt.trim()) })
+        ...(newField.type === 'select' && {
+          options: newField.options.filter((opt) => opt.trim()),
+        }),
       };
-      
+
       onCustomFieldsChange([...customFields, field]);
       setNewField({
-        name: "",
-        type: "text",
-        value: "",
-        options: [""]
+        name: '',
+        type: 'text',
+        value: '',
+        options: [''],
       });
     }
   };
 
   const removeField = (id: string) => {
-    onCustomFieldsChange(customFields.filter(field => field.id !== id));
+    onCustomFieldsChange(customFields.filter((field) => field.id !== id));
   };
 
   const updateFieldValue = (id: string, value: string) => {
     onCustomFieldsChange(
-      customFields.map(field => 
+      customFields.map((field) =>
         field.id === id ? { ...field, value } : field
       )
     );
@@ -70,7 +75,7 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
   const addOption = () => {
     setNewField({
       ...newField,
-      options: [...(newField.options || []), ""]
+      options: [...(newField.options || []), ''],
     });
   };
 
@@ -90,39 +95,43 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Custom Fields</h3>
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setNewField({
-            name: "",
-            type: "text",
-            value: "",
-            options: [""]
-          })}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            setNewField({
+              name: '',
+              type: 'text',
+              value: '',
+              options: [''],
+            })
+          }
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Field
         </Button>
       </div>
-      
-      {newField.name !== "" && (
+
+      {newField.name !== '' && (
         <div className="border rounded-lg p-4 space-y-3">
           <div>
             <Label htmlFor="field-name">Field Name</Label>
             <Input
               id="field-name"
               value={newField.name}
-              onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+              onChange={(e) =>
+                setNewField({ ...newField, name: e.target.value })
+              }
               placeholder="e.g., Budget, Client Type"
             />
           </div>
-          
+
           <div>
             <Label htmlFor="field-type">Field Type</Label>
-            <Select 
-              value={newField.type} 
-              onValueChange={(value: "text" | "number" | "date" | "select") => 
+            <Select
+              value={newField.type}
+              onValueChange={(value: 'text' | 'number' | 'date' | 'select') =>
                 setNewField({ ...newField, type: value })
               }
             >
@@ -137,8 +146,8 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
               </SelectContent>
             </Select>
           </div>
-          
-          {newField.type === "select" && (
+
+          {newField.type === 'select' && (
             <div>
               <Label>Options</Label>
               <div className="space-y-2">
@@ -149,9 +158,9 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
                       onChange={(e) => updateOption(index, e.target.value)}
                       placeholder={`Option ${index + 1}`}
                     />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       size="icon"
                       onClick={() => removeOption(index)}
                     >
@@ -159,10 +168,10 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
                     </Button>
                   </div>
                 ))}
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={addOption}
                 >
                   + Add Option
@@ -170,17 +179,19 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
               </div>
             </div>
           )}
-          
+
           <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setNewField({
-                name: "",
-                type: "text",
-                value: "",
-                options: [""]
-              })}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setNewField({
+                  name: '',
+                  type: 'text',
+                  value: '',
+                  options: [''],
+                })
+              }
             >
               Cancel
             </Button>
@@ -190,16 +201,19 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
           </div>
         </div>
       )}
-      
+
       {customFields.length > 0 && (
         <div className="space-y-3">
           {customFields.map((field) => (
-            <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div
+              key={field.id}
+              className="flex items-center justify-between p-3 border rounded-lg"
+            >
               <div className="flex-1">
                 <Label className="text-sm font-medium">{field.name}</Label>
-                {field.type === "select" ? (
-                  <Select 
-                    value={field.value} 
+                {field.type === 'select' ? (
+                  <Select
+                    value={field.value}
                     onValueChange={(value) => updateFieldValue(field.id, value)}
                   >
                     <SelectTrigger className="mt-1">
@@ -222,9 +236,9 @@ const ProjectCustomFields = ({ customFields, onCustomFieldsChange }: ProjectCust
                   />
                 )}
               </div>
-              <Button 
-                type="button" 
-                variant="ghost" 
+              <Button
+                type="button"
+                variant="ghost"
                 size="icon"
                 onClick={() => removeField(field.id)}
               >

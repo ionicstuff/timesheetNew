@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Send, 
-  Download, 
-  Edit, 
-  Trash2, 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Send,
+  Download,
+  Edit,
+  Trash2,
   MoreHorizontal,
   Printer,
-  Mail
-} from "lucide-react";
+  Mail,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceActionsProps {
   invoiceId: string;
@@ -27,40 +27,40 @@ interface InvoiceActionsProps {
   onDelete: () => void;
 }
 
-const InvoiceActions = ({ 
-  invoiceId, 
-  status, 
+const InvoiceActions = ({
+  invoiceId,
+  status,
   onStatusChange,
   onEdit,
-  onDelete
+  onDelete,
 }: InvoiceActionsProps) => {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSendInvoice = () => {
     toast({
-      title: "Invoice Sent",
+      title: 'Invoice Sent',
       description: `Invoice ${invoiceId} has been sent to the client.`,
     });
   };
 
   const handleDownloadPDF = () => {
     toast({
-      title: "Downloading PDF",
+      title: 'Downloading PDF',
       description: `Preparing invoice ${invoiceId} for download...`,
     });
   };
 
   const handlePrint = () => {
     toast({
-      title: "Printing Invoice",
+      title: 'Printing Invoice',
       description: `Preparing invoice ${invoiceId} for printing...`,
     });
   };
 
   const handleEmail = () => {
     toast({
-      title: "Email Sent",
+      title: 'Email Sent',
       description: `Invoice ${invoiceId} has been emailed to the client.`,
     });
   };
@@ -72,7 +72,7 @@ const InvoiceActions = ({
       onDelete();
       setIsDeleting(false);
       toast({
-        title: "Invoice Deleted",
+        title: 'Invoice Deleted',
         description: `Invoice ${invoiceId} has been permanently deleted.`,
       });
     }, 500);
@@ -80,15 +80,15 @@ const InvoiceActions = ({
 
   return (
     <div className="flex items-center gap-2">
-      <Button 
-        size="sm" 
+      <Button
+        size="sm"
         onClick={handleSendInvoice}
-        disabled={status === "paid" || status === "sent"}
+        disabled={status === 'paid' || status === 'sent'}
       >
         <Send className="h-4 w-4 mr-2" />
         Send
       </Button>
-      
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon">
@@ -112,13 +112,13 @@ const InvoiceActions = ({
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={handleDelete}
             disabled={isDeleting}
             className="text-red-600"
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

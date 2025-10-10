@@ -1,0 +1,4 @@
+id,title,description,priority,severity,status,module,file_hint,steps_to_repro,expected,actual,owner,tags,environment,commit
+BUG-001,,"Messages and sidebar links point to current page, not correct URL",High,Critical,Unconfirmed,Navigation/Sidebar,,"Click Messages nav, click project/folder links in sidebar",Navigates to correct page,Links stay on current page,,,,
+BUG-002,,Timer state not persisting across pages,Medium,High,Confirmed,Time Tracking,,"Start timer, navigate to Dashboard",Timer continues running,Timer resets to Start button,,,,
+BUG-003,,Timer doesn't increment after starting,Medium,High,Unconfirmed,Dashboard,,Start timer from Dashboard,Timer counts up in seconds,Timer stays at 00:00:00,,,,

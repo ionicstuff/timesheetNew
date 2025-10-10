@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Clock, LogIn, LogOut, Loader2 } from 'lucide-react';
 
 // Shows a top-bar button to Clock In / Clock Out
 // Uses backend endpoints:
@@ -13,13 +13,17 @@ import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
 
 const TimesheetClockButton = () => {
   const { toast } = useToast();
-  const [status, setStatus] = useState<'loading'|'not_clocked_in'|'clocked_in'|'clocked_out'>('loading');
+  const [status, setStatus] = useState<
+    'loading' | 'not_clocked_in' | 'clocked_in' | 'clocked_out'
+  >('loading');
   const [busy, setBusy] = useState(false);
 
   const loadStatus = async () => {
     try {
       const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/timesheet/status', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/timesheet/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error('Failed to fetch status');
       const json = await res.json();
       setStatus(json?.data?.status || 'not_clocked_in');
@@ -28,13 +32,22 @@ const TimesheetClockButton = () => {
     }
   };
 
-  useEffect(() => { loadStatus(); }, []);
+  useEffect(() => {
+    loadStatus();
+  }, []);
 
   const clockIn = async () => {
     try {
       setBusy(true);
       const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/timesheet/clockin', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: '{}' });
+      const res = await fetch('/api/timesheet/clockin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: '{}',
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Clock in failed');
@@ -42,7 +55,11 @@ const TimesheetClockButton = () => {
       setStatus('clocked_in');
       toast({ title: 'Clocked in' });
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Clock in failed', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: e.message || 'Clock in failed',
+        variant: 'destructive',
+      });
     } finally {
       setBusy(false);
     }
@@ -52,7 +69,14 @@ const TimesheetClockButton = () => {
     try {
       setBusy(true);
       const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/timesheet/clockout', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: '{}' });
+      const res = await fetch('/api/timesheet/clockout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: '{}',
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Clock out failed');
@@ -60,16 +84,26 @@ const TimesheetClockButton = () => {
       setStatus('clocked_out');
       toast({ title: 'Clocked out' });
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Clock out failed', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: e.message || 'Clock out failed',
+        variant: 'destructive',
+      });
     } finally {
       setBusy(false);
     }
   };
 
   const Indicator = () => (
-    <span className={`inline-block h-2 w-2 rounded-full mr-2 ${
-      status === 'clocked_in' ? 'bg-green-500' : status === 'clocked_out' ? 'bg-red-500' : 'bg-gray-400'
-    }`} />
+    <span
+      className={`inline-block h-2 w-2 rounded-full mr-2 ${
+        status === 'clocked_in'
+          ? 'bg-green-500'
+          : status === 'clocked_out'
+            ? 'bg-red-500'
+            : 'bg-gray-400'
+      }`}
+    />
   );
 
   if (status === 'loading') {
@@ -84,7 +118,7 @@ const TimesheetClockButton = () => {
   const isIn = status === 'clocked_in';
 
   return (
-    <Button 
+    <Button
       variant={isIn ? 'destructive' : 'default'}
       size="sm"
       onClick={() => (isIn ? clockOut() : clockIn())}

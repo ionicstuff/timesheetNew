@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 const {
@@ -15,11 +15,11 @@ const {
   createUserValidation,
   updateUserValidation,
   userIdValidation,
-  hierarchyValidation
-} = require('../controllers/userController');
+  hierarchyValidation,
+} = require("../controllers/userController");
 
-const { authMiddleware } = require('../middleware/auth');
-const authorizeRoles = require('../middleware/authorizeRoles');
+const { authMiddleware } = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authorizeRoles");
 
 // Apply authentication middleware to all routes
 router.use(authMiddleware);
@@ -27,24 +27,21 @@ router.use(authMiddleware);
 // @route   GET /api/users
 // @desc    Get all users with filtering and pagination
 // @access  Private (HR, Admin, Manager)
-router.get('/', 
-  authorizeRoles('admin', 'hr', 'manager'), 
-  getAllUsers
-);
+router.get("/", authorizeRoles("admin", "hr", "manager"), getAllUsers);
 
 // Lightweight global search for quick-pick in project modal
-router.get('/search', async (req, res, next) => {
+router.get("/search", async (req, res, next) => {
   try {
     // Reuse controller filtering but force small page size and return minimal fields
-    req.query.page = req.query.page || '1';
-    req.query.limit = req.query.limit || '20';
-    req.query.search = req.query.query || req.query.search || '';
+    req.query.page = req.query.page || "1";
+    req.query.limit = req.query.limit || "20";
+    req.query.search = req.query.query || req.query.search || "";
     // call getAllUsers and then map minimal shape
     const _res = {
-      json(payload){
-        try{
-          const users = (payload?.data?.users) || [];
-          const minimal = users.map(u=>({
+      json(payload) {
+        try {
+          const users = payload?.data?.users || [];
+          const minimal = users.map((u) => ({
             id: u.id,
             firstName: u.firstName,
             lastName: u.lastName,
@@ -52,9 +49,11 @@ router.get('/search', async (req, res, next) => {
             department: u.department,
             designation: u.designation,
           }));
-          res.json({ success:true, data:minimal });
-        }catch(e){ next(e); }
-      }
+          res.json({ success: true, data: minimal });
+        } catch (e) {
+          next(e);
+        }
+      },
     };
     await getAllUsers(req, _res);
   } catch (e) {
@@ -65,76 +64,70 @@ router.get('/search', async (req, res, next) => {
 // @route   GET /api/users/stats
 // @desc    Get user statistics and dashboard data
 // @access  Private (HR, Admin, Manager)
-router.get('/stats', 
-  authorizeRoles('admin', 'hr', 'manager'), 
-  getUserStats
-);
+router.get("/stats", authorizeRoles("admin", "hr", "manager"), getUserStats);
 
 // @route   GET /api/users/profile
 // @desc    Get current user's complete profile information
 // @access  Private (All authenticated users)
-router.get('/profile', 
-  getUserProfile
-);
+router.get("/profile", getUserProfile);
 
 // @route   GET /api/users/team
 // @desc    Get team members for current user (manager/account manager)
 // @access  Private (Manager, Account Manager, Admin)
-router.get('/team', 
-  authorizeRoles('admin', 'account manager', 'project manager'),
-  getTeamMembers
+router.get(
+  "/team",
+  authorizeRoles("admin", "account manager", "project manager"),
+  getTeamMembers,
 );
 
 // @route   GET /api/users/:managerId/team
 // @desc    Get team members by manager ID (for admin/hr to view any manager's team)
 // @access  Private (HR, Admin)
-router.get('/:managerId/team', 
-  authorizeRoles('admin', 'hr'),
+router.get(
+  "/:managerId/team",
+  authorizeRoles("admin", "hr"),
   userIdValidation,
-  getTeamMembersByManagerId
+  getTeamMembersByManagerId,
 );
 
 // @route   GET /api/users/:userId
 // @desc    Get user by ID with detailed information
 // @access  Private (HR, Admin, Manager, or own profile)
-router.get('/:userId', 
-  userIdValidation,
-  getUserById
-);
+router.get("/:userId", userIdValidation, getUserById);
 
 // @route   POST /api/users
 // @desc    Create new user
 // @access  Private (HR, Admin)
-router.post('/', 
-  authorizeRoles('admin', 'hr'),
+router.post(
+  "/",
+  authorizeRoles("admin", "hr"),
   createUserValidation,
-  createUser
+  createUser,
 );
 
 // @route   PUT /api/users/:userId
 // @desc    Update user information
 // @access  Private (HR, Admin, or own profile)
-router.put('/:userId', 
-  updateUserValidation,
-  updateUser
-);
+router.put("/:userId", updateUserValidation, updateUser);
 
 // @route   PUT /api/users/:userId/hierarchy
 // @desc    Update user hierarchy (assign/change manager)
 // @access  Private (HR, Admin)
-router.put('/:userId/hierarchy', 
-  authorizeRoles('admin', 'hr'),
+router.put(
+  "/:userId/hierarchy",
+  authorizeRoles("admin", "hr"),
   hierarchyValidation,
-  updateUserHierarchy
+  updateUserHierarchy,
 );
 
 // @route   DELETE /api/users/:userId
 // @desc    Deactivate user (soft delete)
 // @access  Private (HR, Admin)
-router.delete('/:userId', 
-  authorizeRoles('admin', 'hr'),
+router.delete(
+  "/:userId",
+  authorizeRoles("admin", "hr"),
   userIdValidation,
-  deactivateUser
+  deactivateUser,
 );
 
 module.exports = router;

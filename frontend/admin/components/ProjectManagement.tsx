@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, createProject, updateProject, deleteProject, getClients, getUsers } from '../services/admin-api.service';
+import {
+  getProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  getClients,
+  getUsers,
+} from '../services/admin-api.service';
 import '../styles/AdminManagement.css';
 
 interface Project {
@@ -46,7 +53,7 @@ const ProjectManagement: React.FC = () => {
     managerId: '',
     startDate: '',
     endDate: '',
-    isActive: true
+    isActive: true,
   });
 
   useEffect(() => {
@@ -58,7 +65,7 @@ const ProjectManagement: React.FC = () => {
       const [projectsData, clientsData, usersData] = await Promise.all([
         getProjects(),
         getClients(),
-        getUsers()
+        getUsers(),
       ]);
       setProjects(projectsData);
       setClients(clientsData);
@@ -94,7 +101,7 @@ const ProjectManagement: React.FC = () => {
       managerId: project.manager.id,
       startDate: project.startDate ? project.startDate.split('T')[0] : '',
       endDate: project.endDate ? project.endDate.split('T')[0] : '',
-      isActive: project.isActive
+      isActive: project.isActive,
     });
     setShowModal(true);
   };
@@ -118,17 +125,22 @@ const ProjectManagement: React.FC = () => {
       managerId: '',
       startDate: '',
       endDate: '',
-      isActive: true
+      isActive: true,
     });
     setEditingProject(null);
     setShowModal(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]:
+        type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -164,32 +176,38 @@ const ProjectManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {projects.map(project => (
+            {projects.map((project) => (
               <tr key={project.id}>
                 <td>
                   <div>
                     <strong>{project.name}</strong>
-                    <div className="project-description">{project.description}</div>
+                    <div className="project-description">
+                      {project.description}
+                    </div>
                   </div>
                 </td>
                 <td>{project.client.name}</td>
-                <td>{project.manager.firstName} {project.manager.lastName}</td>
+                <td>
+                  {project.manager.firstName} {project.manager.lastName}
+                </td>
                 <td>{formatDate(project.startDate)}</td>
                 <td>{formatDate(project.endDate)}</td>
                 <td>
-                  <span className={`status-badge ${project.isActive ? 'active' : 'inactive'}`}>
+                  <span
+                    className={`status-badge ${project.isActive ? 'active' : 'inactive'}`}
+                  >
                     {project.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td>
-                  <button 
-                    className="btn btn-sm btn-secondary" 
+                  <button
+                    className="btn btn-sm btn-secondary"
                     onClick={() => handleEdit(project)}
                   >
                     Edit
                   </button>
-                  <button 
-                    className="btn btn-sm btn-danger" 
+                  <button
+                    className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(project.id)}
                   >
                     Delete
@@ -206,7 +224,9 @@ const ProjectManagement: React.FC = () => {
           <div className="modal">
             <div className="modal-header">
               <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
-              <button className="modal-close" onClick={resetForm}>×</button>
+              <button className="modal-close" onClick={resetForm}>
+                ×
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
@@ -229,7 +249,7 @@ const ProjectManagement: React.FC = () => {
                     required
                   >
                     <option value="">Select Client</option>
-                    {clients.map(client => (
+                    {clients.map((client) => (
                       <option key={client.id} value={client.id}>
                         {client.name}
                       </option>
@@ -245,7 +265,7 @@ const ProjectManagement: React.FC = () => {
                     required
                   >
                     <option value="">Select Manager</option>
-                    {users.map(user => (
+                    {users.map((user) => (
                       <option key={user.id} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
@@ -292,7 +312,11 @@ const ProjectManagement: React.FC = () => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={resetForm}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReactNode } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   description: string;
   icon: ReactNode;
-  trend?: "up" | "down";
+  trend?: 'up' | 'down';
   trendValue?: string;
 }
 
-const StatsCard = ({ 
-  title, 
-  value, 
-  description, 
+const StatsCard = ({
+  title,
+  value,
+  description,
   icon,
   trend,
-  trendValue
+  trendValue,
 }: StatsCardProps) => {
   return (
     <Card>
@@ -31,7 +31,9 @@ const StatsCard = ({
         <p className="text-xs text-muted-foreground">
           {description}
           {trend && trendValue && (
-            <span className={`ml-1 ${trend === "up" ? "text-green-600" : "text-red-600"}`}>
+            <span
+              className={`ml-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}
+            >
               {trendValue}
             </span>
           )}

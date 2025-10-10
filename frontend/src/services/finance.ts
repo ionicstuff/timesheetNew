@@ -1,6 +1,6 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
-export type InvoiceStatus = "generated" | "approved" | "sent";
+export type InvoiceStatus = 'generated' | 'approved' | 'sent';
 
 export interface InvoiceRow {
   id: number;
@@ -9,7 +9,7 @@ export interface InvoiceRow {
   version: number;
   status: InvoiceStatus;
   issueDate: string; // yyyy-mm-dd
-  dueDate: string;   // yyyy-mm-dd
+  dueDate: string; // yyyy-mm-dd
   subtotal: number;
   total: number;
   currency: string;
@@ -29,16 +29,16 @@ export interface ReadyProjectRow {
 }
 
 function authHeaders(): HeadersInit {
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem('token') || '';
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
 }
 
 function toNumber(n: any): number {
-  const num = typeof n === "number" ? n : parseFloat(String(n ?? 0));
+  const num = typeof n === 'number' ? n : parseFloat(String(n ?? 0));
   return Number.isFinite(num) ? num : 0;
 }
 
@@ -54,7 +54,7 @@ function adaptInvoiceRow(row: any): InvoiceRow {
     dueDate: row.due_date ?? row.dueDate,
     subtotal: toNumber(row.subtotal),
     total: toNumber(row.total),
-    currency: row.currency ?? "USD",
+    currency: row.currency ?? 'USD',
     notes: row.notes ?? null,
     pdfPath: row.pdf_path ?? row.pdfPath ?? null,
     projectName: row.project_name ?? row.projectName,
@@ -63,31 +63,54 @@ function adaptInvoiceRow(row: any): InvoiceRow {
 }
 
 export async function getReadyProjects(): Promise<ReadyProjectRow[]> {
-  const res = await fetch(`/api/finance/ready-projects`, { headers: authHeaders() });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || "Failed to load ready projects");
+  const res = await fetch(`/api/finance/ready-projects`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.message ||
+        'Failed to load ready projects'
+    );
   const json = await res.json();
-  const list = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+  const list = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json)
+      ? json
+      : [];
   return list as ReadyProjectRow[];
 }
 
-export async function listInvoices(params?: { status?: InvoiceStatus }): Promise<InvoiceRow[]> {
+export async function listInvoices(params?: {
+  status?: InvoiceStatus;
+}): Promise<InvoiceRow[]> {
   const q = new URLSearchParams();
-  if (params?.status) q.set("status", params.status);
-  const url = `/api/finance/invoices${q.toString() ? `?${q.toString()}` : ""}`;
+  if (params?.status) q.set('status', params.status);
+  const url = `/api/finance/invoices${q.toString() ? `?${q.toString()}` : ''}`;
   const res = await fetch(url, { headers: authHeaders() });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || "Failed to load invoices");
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.message || 'Failed to load invoices'
+    );
   const json = await res.json();
-  const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+  const rows = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json)
+      ? json
+      : [];
   return (rows as any[]).map(adaptInvoiceRow);
 }
 
 export async function generateInvoice(projectId: number) {
   const res = await fetch(`/api/finance/projects/${projectId}/invoice`, {
-    method: "POST",
+    method: 'POST',
     headers: authHeaders(),
-    body: "{}",
+    body: '{}',
   });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || "Failed to generate invoice");
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.message ||
+        'Failed to generate invoice'
+    );
   const json = await res.json();
   // backend returns { invoice: { id, pdfUrl, ... } }
   return json;
@@ -95,21 +118,28 @@ export async function generateInvoice(projectId: number) {
 
 export async function approveInvoice(id: number) {
   const res = await fetch(`/api/finance/invoices/${id}/approve`, {
-    method: "POST",
+    method: 'POST',
     headers: authHeaders(),
-    body: "{}",
+    body: '{}',
   });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || "Failed to approve invoice");
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.message ||
+        'Failed to approve invoice'
+    );
   return res.json();
 }
 
 export async function sendInvoice(id: number) {
   const res = await fetch(`/api/finance/invoices/${id}/send`, {
-    method: "POST",
+    method: 'POST',
     headers: authHeaders(),
-    body: "{}",
+    body: '{}',
   });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.message || "Failed to send invoice");
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.message || 'Failed to send invoice'
+    );
   return res.json();
 }
 
@@ -119,6 +149,6 @@ export function getInvoicePdfUrl(id: number) {
 
 // Optional: a helper to invalidate related queries
 export function invalidateFinanceQueries(queryClient: QueryClient) {
-  queryClient.invalidateQueries({ queryKey: ["invoices"] });
-  queryClient.invalidateQueries({ queryKey: ["ready-projects"] });
+  queryClient.invalidateQueries({ queryKey: ['invoices'] });
+  queryClient.invalidateQueries({ queryKey: ['ready-projects'] });
 }

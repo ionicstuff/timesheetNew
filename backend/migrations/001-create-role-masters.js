@@ -1,67 +1,67 @@
-'use strict';
+"use strict";
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('role_masters', {
+    await queryInterface.createTable("role_masters", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       role_code: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        unique: true
+        unique: true,
       },
       role_name: {
         type: Sequelize.STRING(100),
-        allowNull: false
+        allowNull: false,
       },
       description: {
         type: Sequelize.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       level: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 1,
-        comment: 'Hierarchy level: 1=highest (Director), 10=lowest'
+        comment: "Hierarchy level: 1=highest (Director), 10=lowest",
       },
       can_manage_users: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       can_manage_projects: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       can_view_reports: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_active: {
         type: Sequelize.BOOLEAN,
-        defaultValue: true
+        defaultValue: true,
       },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+      },
     });
 
     // Add indexes
-    await queryInterface.addIndex('role_masters', ['role_code']);
-    await queryInterface.addIndex('role_masters', ['level']);
+    await queryInterface.addIndex("role_masters", ["role_code"]);
+    await queryInterface.addIndex("role_masters", ["level"]);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('role_masters');
-  }
+    await queryInterface.dropTable("role_masters");
+  },
 };

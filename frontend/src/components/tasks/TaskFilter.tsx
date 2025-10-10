@@ -1,35 +1,35 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Filter } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 // Shared type used by page and filter
 export interface TaskFilters {
   priority: string[];
   status: string[];
   assignee: string[];
-  dueDate: "all" | "today" | "week" | "month";
+  dueDate: 'all' | 'today' | 'week' | 'month';
 }
 
 interface TaskFilterProps {
-  filters: TaskFilters;                                 // <-- accept filters from parent
-  onFilterChange: (filters: TaskFilters) => void;       // <-- notify parent on Apply/Reset
+  filters: TaskFilters; // <-- accept filters from parent
+  onFilterChange: (filters: TaskFilters) => void; // <-- notify parent on Apply/Reset
 }
 
 const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
@@ -44,28 +44,28 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
   }, [filters]);
 
   const togglePriority = (priority: string) => {
-    setLocalFilters(prev => ({
+    setLocalFilters((prev) => ({
       ...prev,
       priority: prev.priority.includes(priority)
-        ? prev.priority.filter(p => p !== priority)
+        ? prev.priority.filter((p) => p !== priority)
         : [...prev.priority, priority],
     }));
   };
 
   const toggleStatus = (status: string) => {
-    setLocalFilters(prev => ({
+    setLocalFilters((prev) => ({
       ...prev,
       status: prev.status.includes(status)
-        ? prev.status.filter(s => s !== status)
+        ? prev.status.filter((s) => s !== status)
         : [...prev.status, status],
     }));
   };
 
   const toggleAssignee = (assignee: string) => {
-    setLocalFilters(prev => ({
+    setLocalFilters((prev) => ({
       ...prev,
       assignee: prev.assignee.includes(assignee)
-        ? prev.assignee.filter(a => a !== assignee)
+        ? prev.assignee.filter((a) => a !== assignee)
         : [...prev.assignee, assignee],
     }));
   };
@@ -80,7 +80,7 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
       priority: [],
       status: [],
       assignee: [],
-      dueDate: "all",
+      dueDate: 'all',
     };
     setLocalFilters(reset);
     onFilterChange(reset);
@@ -88,32 +88,36 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
 
   // NOTE: values here should match what your backend expects
   const priorities = [
-    { value: "High", label: "High", color: "bg-red-100 text-red-800" },
-    { value: "Medium", label: "Medium", color: "bg-yellow-100 text-yellow-800" },
-    { value: "Low", label: "Low", color: "bg-green-100 text-green-800" },
+    { value: 'High', label: 'High', color: 'bg-red-100 text-red-800' },
+    {
+      value: 'Medium',
+      label: 'Medium',
+      color: 'bg-yellow-100 text-yellow-800',
+    },
+    { value: 'Low', label: 'Low', color: 'bg-green-100 text-green-800' },
   ];
 
   // Map these to your backend statuses if needed
   const statuses = [
-    { value: "pending", label: "Pending" },
-    { value: "in_progress", label: "In Progress" },
-    { value: "paused", label: "Paused" },
-    { value: "completed", label: "Completed" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: 'pending', label: 'Pending' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'paused', label: 'Paused' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   // Static placeholder list — replace with real users if desired
   const assignees = [
-    { value: "alex", label: "Alex Johnson" },
-    { value: "sam", label: "Sam Smith" },
-    { value: "taylor", label: "Taylor Brown" },
+    { value: 'alex', label: 'Alex Johnson' },
+    { value: 'sam', label: 'Sam Smith' },
+    { value: 'taylor', label: 'Taylor Brown' },
   ];
 
   const dueDates = [
-    { value: "all", label: "All Due Dates" },
-    { value: "today", label: "Today" },
-    { value: "week", label: "This Week" },
-    { value: "month", label: "This Month" },
+    { value: 'all', label: 'All Due Dates' },
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' },
   ];
 
   return (
@@ -125,7 +129,7 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
           {(localFilters.priority.length > 0 ||
             localFilters.status.length > 0 ||
             localFilters.assignee.length > 0 ||
-            localFilters.dueDate !== "all") && (
+            localFilters.dueDate !== 'all') && (
             <span className="ml-2 h-1.5 w-1.5 rounded-full bg-primary"></span>
           )}
         </Button>
@@ -142,7 +146,7 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
           <div>
             <Label className="text-xs font-semibold">Priority</Label>
             <div className="mt-2 space-y-2">
-              {priorities.map(priority => (
+              {priorities.map((priority) => (
                 <div key={priority.value} className="flex items-center">
                   <Checkbox
                     id={`priority-${priority.value}`}
@@ -153,7 +157,9 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
                     htmlFor={`priority-${priority.value}`}
                     className="ml-2 text-sm flex items-center"
                   >
-                    <span className={`text-xs px-2 py-1 rounded-full mr-2 ${priority.color}`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full mr-2 ${priority.color}`}
+                    >
                       {priority.label}
                     </span>
                   </Label>
@@ -165,14 +171,17 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
           <div>
             <Label className="text-xs font-semibold">Status</Label>
             <div className="mt-2 space-y-2">
-              {statuses.map(status => (
+              {statuses.map((status) => (
                 <div key={status.value} className="flex items-center">
                   <Checkbox
                     id={`status-${status.value}`}
                     checked={localFilters.status.includes(status.value)}
                     onCheckedChange={() => toggleStatus(status.value)}
                   />
-                  <Label htmlFor={`status-${status.value}`} className="ml-2 text-sm">
+                  <Label
+                    htmlFor={`status-${status.value}`}
+                    className="ml-2 text-sm"
+                  >
                     {status.label}
                   </Label>
                 </div>
@@ -183,14 +192,17 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
           <div>
             <Label className="text-xs font-semibold">Assignee</Label>
             <div className="mt-2 space-y-2">
-              {assignees.map(assignee => (
+              {assignees.map((assignee) => (
                 <div key={assignee.value} className="flex items-center">
                   <Checkbox
                     id={`assignee-${assignee.value}`}
                     checked={localFilters.assignee.includes(assignee.value)}
                     onCheckedChange={() => toggleAssignee(assignee.value)}
                   />
-                  <Label htmlFor={`assignee-${assignee.value}`} className="ml-2 text-sm">
+                  <Label
+                    htmlFor={`assignee-${assignee.value}`}
+                    className="ml-2 text-sm"
+                  >
                     {assignee.label}
                   </Label>
                 </div>
@@ -203,15 +215,15 @@ const TaskFilter = ({ filters, onFilterChange }: TaskFilterProps) => {
             <div className="mt-2">
               <Select
                 value={localFilters.dueDate}
-                onValueChange={(value: "all" | "today" | "week" | "month") =>
-                  setLocalFilters(prev => ({ ...prev, dueDate: value }))
+                onValueChange={(value: 'all' | 'today' | 'week' | 'month') =>
+                  setLocalFilters((prev) => ({ ...prev, dueDate: value }))
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select due date" />
                 </SelectTrigger>
                 <SelectContent>
-                  {dueDates.map(date => (
+                  {dueDates.map((date) => (
                     <SelectItem key={date.value} value={date.value}>
                       {date.label}
                     </SelectItem>

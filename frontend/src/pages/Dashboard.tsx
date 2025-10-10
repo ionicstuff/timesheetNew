@@ -1,28 +1,39 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  TrendingUp
-} from "lucide-react";
-import StatsCard from "@/components/dashboard/StatsCard";
-import TaskList from "@/components/tasks/TaskList";
-import CreateTaskButton from "@/components/tasks/CreateTaskButton";
-import TaskSchedulerWidget from "@/components/dashboard/TaskSchedulerWidget";
-import ProductivityInsights from "@/components/dashboard/ProductivityInsights";
-import QuickActions from "@/components/dashboard/QuickActions";
-import RecentActivity from "@/components/dashboard/RecentActivity";
-import GoalTracker from "@/components/dashboard/GoalTracker";
-import ClientCompletionQueue from "@/components/dashboard/ClientCompletionQueue";
+import { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  TrendingUp,
+} from 'lucide-react';
+import StatsCard from '@/components/dashboard/StatsCard';
+import TaskList from '@/components/tasks/TaskList';
+import CreateTaskButton from '@/components/tasks/CreateTaskButton';
+import TaskSchedulerWidget from '@/components/dashboard/TaskSchedulerWidget';
+import ProductivityInsights from '@/components/dashboard/ProductivityInsights';
+import QuickActions from '@/components/dashboard/QuickActions';
+import RecentActivity from '@/components/dashboard/RecentActivity';
+import GoalTracker from '@/components/dashboard/GoalTracker';
+import ClientCompletionQueue from '@/components/dashboard/ClientCompletionQueue';
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, overdue: 0, productivity: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    overdue: 0,
+    productivity: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,15 +42,20 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         if (!token) {
-          throw new Error("Authentication token not found.");
+          throw new Error('Authentication token not found.');
         }
         // Use absolute backend URL in dev to avoid proxy mismatch
-        const headers = { "Authorization": `Bearer ${token}` } as Record<string,string>;
+        const headers = { Authorization: `Bearer ${token}` } as Record<
+          string,
+          string
+        >;
         const [statsRes, tasksRes] = await Promise.all([
           fetch(`/api/tasks/stats`, { headers }),
-          fetch(`/api/tasks/my-tasks?upcomingWithinDays=3&limit=5`, { headers })
+          fetch(`/api/tasks/my-tasks?upcomingWithinDays=3&limit=5`, {
+            headers,
+          }),
         ]);
 
         if (!statsRes.ok) {
@@ -64,12 +80,21 @@ const Dashboard = () => {
         setTasks(fetchedTasks);
 
         // Use server-side stats for totals/pending/overdue; compute productivity from task list
-        const assigned = statsData?.assigned || { total: 0, pending: 0, overdue: 0 };
-        const totalTasks = Array.isArray(fetchedTasks) ? fetchedTasks.length : 0;
-        const completedTasks = Array.isArray(fetchedTasks)
-          ? fetchedTasks.filter((t: any) => String(t?.status || '').toLowerCase() === 'completed').length
+        const assigned = statsData?.assigned || {
+          total: 0,
+          pending: 0,
+          overdue: 0,
+        };
+        const totalTasks = Array.isArray(fetchedTasks)
+          ? fetchedTasks.length
           : 0;
-        const productivity = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        const completedTasks = Array.isArray(fetchedTasks)
+          ? fetchedTasks.filter(
+              (t: any) => String(t?.status || '').toLowerCase() === 'completed'
+            ).length
+          : 0;
+        const productivity =
+          totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
         setStats({
           total: Number(assigned.total) || 0,
@@ -78,7 +103,7 @@ const Dashboard = () => {
           productivity,
         });
       } catch (err: any) {
-        console.error("Error fetching task stats:", err);
+        console.error('Error fetching task stats:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -144,19 +169,40 @@ const Dashboard = () => {
                 <CardTitle>Upcoming Tasks</CardTitle>
                 <CardDescription>Your tasks due soon</CardDescription>
               </div>
-              <a href="/tasks" className="text-sm text-blue-600 hover:underline">View all</a>
+              <a
+                href="/tasks"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                View all
+              </a>
             </div>
           </CardHeader>
           <CardContent>
-            <TaskList tasks={tasks.slice(0, 5).map((t: any) => ({
-              id: t.id,
-              title: t.name || t.title || 'Untitled Task',
-              project: typeof t.project === 'string' ? t.project : (t.project?.projectName || t.projectName || `Project #${t.projectId ?? ''}`),
-              dueDate: t.sprintEndDate ? new Date(t.sprintEndDate).toLocaleDateString() : (t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'),
-              priority: (['High','Medium','Low'].includes(String(t.priority))) ? t.priority : 'Medium',
-              completed: String(t.status || '').toLowerCase() === 'completed',
-              assignedTo: t.assignee ? `${t.assignee.firstName ?? ''} ${t.assignee.lastName ?? ''}`.trim() || t.assignee.email : t.assignedTo
-            }))} />
+            <TaskList
+              tasks={tasks.slice(0, 5).map((t: any) => ({
+                id: t.id,
+                title: t.name || t.title || 'Untitled Task',
+                project:
+                  typeof t.project === 'string'
+                    ? t.project
+                    : t.project?.projectName ||
+                      t.projectName ||
+                      `Project #${t.projectId ?? ''}`,
+                dueDate: t.sprintEndDate
+                  ? new Date(t.sprintEndDate).toLocaleDateString()
+                  : t.dueDate
+                    ? new Date(t.dueDate).toLocaleDateString()
+                    : 'No due date',
+                priority: ['High', 'Medium', 'Low'].includes(String(t.priority))
+                  ? t.priority
+                  : 'Medium',
+                completed: String(t.status || '').toLowerCase() === 'completed',
+                assignedTo: t.assignee
+                  ? `${t.assignee.firstName ?? ''} ${t.assignee.lastName ?? ''}`.trim() ||
+                    t.assignee.email
+                  : t.assignedTo,
+              }))}
+            />
           </CardContent>
         </Card>
 
@@ -182,7 +228,9 @@ const Dashboard = () => {
             <div className="text-center">
               <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 font-medium">No events scheduled</h3>
-              <p className="text-sm text-muted-foreground">Your calendar is empty for the next 7 days</p>
+              <p className="text-sm text-muted-foreground">
+                Your calendar is empty for the next 7 days
+              </p>
               <Button className="mt-4">Schedule Event</Button>
             </div>
           </div>

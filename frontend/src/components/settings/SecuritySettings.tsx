@@ -1,68 +1,63 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { 
-  Key, 
-  Shield,
-  Smartphone,
-  LogOut
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Key, Shield, Smartphone, LogOut } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const SecuritySettings = () => {
   const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: ""
+    current: '',
+    new: '',
+    confirm: '',
   });
-  
+
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const { toast } = useToast();
 
   const handlePasswordChange = () => {
     if (passwords.new !== passwords.confirm) {
       toast({
-        title: "Password mismatch",
-        description: "New password and confirmation do not match.",
-        variant: "destructive"
+        title: 'Password mismatch',
+        description: 'New password and confirmation do not match.',
+        variant: 'destructive',
       });
       return;
     }
-    
+
     if (passwords.new.length < 8) {
       toast({
-        title: "Weak password",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive"
+        title: 'Weak password',
+        description: 'Password must be at least 8 characters long.',
+        variant: 'destructive',
       });
       return;
     }
-    
-    console.log("Changing password:", passwords);
+
+    console.log('Changing password:', passwords);
     // In a real app, you would save this to your database
     toast({
-      title: "Password updated",
-      description: "Your password has been changed successfully."
+      title: 'Password updated',
+      description: 'Your password has been changed successfully.',
     });
-    
+
     setPasswords({
-      current: "",
-      new: "",
-      confirm: ""
+      current: '',
+      new: '',
+      confirm: '',
     });
   };
 
   const handleEnableTwoFactor = () => {
     setTwoFactorEnabled(!twoFactorEnabled);
     toast({
-      title: twoFactorEnabled ? "2FA disabled" : "2FA enabled",
-      description: twoFactorEnabled 
-        ? "Two-factor authentication has been disabled." 
-        : "Two-factor authentication has been enabled."
+      title: twoFactorEnabled ? '2FA disabled' : '2FA enabled',
+      description: twoFactorEnabled
+        ? 'Two-factor authentication has been disabled.'
+        : 'Two-factor authentication has been enabled.',
     });
   };
 
@@ -74,7 +69,7 @@ const SecuritySettings = () => {
           Manage your account security and authentication
         </p>
       </div>
-      
+
       <div className="border rounded-lg p-6">
         <div className="space-y-6">
           <div>
@@ -86,7 +81,12 @@ const SecuritySettings = () => {
                   id="current-password"
                   type="password"
                   value={passwords.current}
-                  onChange={(e) => setPasswords(prev => ({ ...prev, current: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswords((prev) => ({
+                      ...prev,
+                      current: e.target.value,
+                    }))
+                  }
                 />
               </div>
               <div>
@@ -95,7 +95,9 @@ const SecuritySettings = () => {
                   id="new-password"
                   type="password"
                   value={passwords.new}
-                  onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswords((prev) => ({ ...prev, new: e.target.value }))
+                  }
                 />
               </div>
               <div>
@@ -104,7 +106,12 @@ const SecuritySettings = () => {
                   id="confirm-password"
                   type="password"
                   value={passwords.confirm}
-                  onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswords((prev) => ({
+                      ...prev,
+                      confirm: e.target.value,
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -115,7 +122,7 @@ const SecuritySettings = () => {
               </Button>
             </div>
           </div>
-          
+
           <div className="border-t pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
@@ -136,7 +143,7 @@ const SecuritySettings = () => {
               />
             </div>
           </div>
-          
+
           <div className="border-t pt-6">
             <h4 className="font-medium mb-4">Active Sessions</h4>
             <div className="space-y-3">
@@ -147,7 +154,9 @@ const SecuritySettings = () => {
                     Chrome on Windows • Current device
                   </p>
                 </div>
-                <Button variant="outline" size="sm">Current</Button>
+                <Button variant="outline" size="sm">
+                  Current
+                </Button>
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>

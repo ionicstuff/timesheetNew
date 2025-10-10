@@ -3,12 +3,15 @@
 This document describes the User Management API endpoints for team management, user CRUD operations, and organizational hierarchy management.
 
 ## Base URL
+
 ```
 http://localhost:5000/api/users
 ```
 
 ## Authentication
+
 All endpoints require authentication via Bearer token in the Authorization header:
+
 ```
 Authorization: Bearer <your-jwt-token>
 ```
@@ -16,6 +19,7 @@ Authorization: Bearer <your-jwt-token>
 ## Endpoints
 
 ### 1. Get All Users
+
 **GET** `/api/users`
 
 Retrieve all users with filtering, pagination, and sorting capabilities.
@@ -23,6 +27,7 @@ Retrieve all users with filtering, pagination, and sorting capabilities.
 **Access:** Admin, HR, Manager
 
 **Query Parameters:**
+
 - `page` (number, optional): Page number (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 - `search` (string, optional): Search in name, email, or employee ID
@@ -33,11 +38,13 @@ Retrieve all users with filtering, pagination, and sorting capabilities.
 - `sortOrder` (string, optional): "ASC" or "DESC" (default: "ASC")
 
 **Example Request:**
+
 ```bash
 GET /api/users?page=1&limit=10&search=john&department=Engineering&sortBy=firstName&sortOrder=ASC
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -72,6 +79,7 @@ GET /api/users?page=1&limit=10&search=john&department=Engineering&sortBy=firstNa
 ```
 
 ### 2. Get User Statistics
+
 **GET** `/api/users/stats`
 
 Get user statistics and dashboard data.
@@ -79,6 +87,7 @@ Get user statistics and dashboard data.
 **Access:** Admin, HR, Manager
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -96,6 +105,7 @@ Get user statistics and dashboard data.
 ```
 
 ### 3. Get Team Members
+
 **GET** `/api/users/team`
 
 Get team members for the authenticated user (manager/account manager).
@@ -103,6 +113,7 @@ Get team members for the authenticated user (manager/account manager).
 **Access:** Any authenticated user
 
 **Query Parameters:**
+
 - `includeSubordinates` (boolean, optional): Include all subordinates recursively
 - `page` (number, optional): Page number (default: 1)
 - `limit` (number, optional): Items per page (default: 20)
@@ -111,11 +122,13 @@ Get team members for the authenticated user (manager/account manager).
 - `sortOrder` (string, optional): "ASC" or "DESC" (default: "ASC")
 
 **Example Request:**
+
 ```bash
 GET /api/users/team?includeSubordinates=true&page=1&limit=20
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -150,6 +163,7 @@ GET /api/users/team?includeSubordinates=true&page=1&limit=20
 ```
 
 ### 4. Get User by ID
+
 **GET** `/api/users/:userId`
 
 Get detailed information about a specific user.
@@ -157,9 +171,11 @@ Get detailed information about a specific user.
 **Access:** Admin, HR, Manager, or own profile
 
 **Path Parameters:**
+
 - `userId` (number): User ID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -210,6 +226,7 @@ Get detailed information about a specific user.
 ```
 
 ### 5. Create User
+
 **POST** `/api/users`
 
 Create a new user.
@@ -217,6 +234,7 @@ Create a new user.
 **Access:** Admin, HR
 
 **Request Body:**
+
 ```json
 {
   "employeeId": "EMP002",
@@ -235,6 +253,7 @@ Create a new user.
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -254,6 +273,7 @@ Create a new user.
 ```
 
 ### 6. Update User
+
 **PUT** `/api/users/:userId`
 
 Update user information.
@@ -261,9 +281,11 @@ Update user information.
 **Access:** Admin, HR, or own profile
 
 **Path Parameters:**
+
 - `userId` (number): User ID
 
 **Request Body (all fields optional):**
+
 ```json
 {
   "firstName": "Jane",
@@ -279,6 +301,7 @@ Update user information.
 ```
 
 ### 7. Update User Hierarchy
+
 **PUT** `/api/users/:userId/hierarchy`
 
 Update user's position in organizational hierarchy.
@@ -286,9 +309,11 @@ Update user's position in organizational hierarchy.
 **Access:** Admin, HR
 
 **Path Parameters:**
+
 - `userId` (number): User ID
 
 **Request Body:**
+
 ```json
 {
   "parentUserId": 8,
@@ -298,6 +323,7 @@ Update user's position in organizational hierarchy.
 ```
 
 ### 8. Deactivate User
+
 **DELETE** `/api/users/:userId`
 
 Deactivate a user (soft delete).
@@ -305,9 +331,11 @@ Deactivate a user (soft delete).
 **Access:** Admin, HR
 
 **Path Parameters:**
+
 - `userId` (number): User ID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -333,6 +361,7 @@ All endpoints return consistent error responses:
 ```
 
 ### Common HTTP Status Codes:
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request (validation errors)
@@ -346,16 +375,19 @@ All endpoints return consistent error responses:
 The system supports organizational hierarchy through the UserHierarchy model:
 
 ### Hierarchy Levels:
+
 - `1` - Top level (Directors, VPs)
 - `2-3` - Middle management (Account Managers, Project Managers)
 - `4-7` - Individual contributors (Developers, Analysts)
 
 ### Relationship Types:
+
 - `direct_report` - Direct reporting relationship
 - `indirect_report` - Indirect reporting (skip-level)
 - `matrix_report` - Matrix/dotted line reporting
 
 ### Team Management Features:
+
 - **Direct Reports**: Get immediate subordinates
 - **Recursive Hierarchy**: Get all subordinates at any level
 - **Account Manager Teams**: Special handling for client-focused teams
@@ -364,34 +396,41 @@ The system supports organizational hierarchy through the UserHierarchy model:
 ## Examples for Account Managers
 
 ### Get My Team (Direct Reports Only):
+
 ```bash
 GET /api/users/team
 ```
 
 ### Get My Extended Team (All Subordinates):
+
 ```bash
 GET /api/users/team?includeSubordinates=true
 ```
 
 ### Search Within My Team:
+
 ```bash
 GET /api/users/team?search=john&includeSubordinates=true
 ```
 
 ### Get Team Statistics:
+
 ```bash
 GET /api/users/stats
 ```
+
 This returns your team size and other relevant metrics.
 
 ## Testing
 
 Run the provided test script to verify all endpoints:
+
 ```bash
 node test-user-api.js
 ```
 
 The test script will:
+
 1. Authenticate with admin credentials
 2. Test all user management endpoints
 3. Create a test user and verify all operations

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 interface DocumentFormProps {
   onSubmit: (data: any) => void;
@@ -19,11 +19,17 @@ interface DocumentFormProps {
   initialData?: any;
 }
 
-const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) => {
-  const [name, setName] = useState(initialData?.name || "");
-  const [description, setDescription] = useState(initialData?.description || "");
-  const [type, setType] = useState(initialData?.type || "doc");
-  const [folder, setFolder] = useState(initialData?.folder || "");
+const DocumentForm = ({
+  onSubmit,
+  onCancel,
+  initialData,
+}: DocumentFormProps) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [description, setDescription] = useState(
+    initialData?.description || ''
+  );
+  const [type, setType] = useState(initialData?.type || 'doc');
+  const [folder, setFolder] = useState(initialData?.folder || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,23 +37,23 @@ const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) =>
       name,
       description,
       type,
-      folder
+      folder,
     });
   };
 
   const documentTypes = [
-    { value: "doc", label: "Document" },
-    { value: "sheet", label: "Spreadsheet" },
-    { value: "slide", label: "Presentation" },
-    { value: "pdf", label: "PDF" },
-    { value: "txt", label: "Text File" },
+    { value: 'doc', label: 'Document' },
+    { value: 'sheet', label: 'Spreadsheet' },
+    { value: 'slide', label: 'Presentation' },
+    { value: 'pdf', label: 'PDF' },
+    { value: 'txt', label: 'Text File' },
   ];
 
   const folders = [
-    { value: "design", label: "Design Assets" },
-    { value: "research", label: "Research" },
-    { value: "client", label: "Client Docs" },
-    { value: "finance", label: "Financial" },
+    { value: 'design', label: 'Design Assets' },
+    { value: 'research', label: 'Research' },
+    { value: 'client', label: 'Client Docs' },
+    { value: 'finance', label: 'Financial' },
   ];
 
   return (
@@ -62,7 +68,7 @@ const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) =>
           required
         />
       </div>
-      
+
       <div>
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -73,7 +79,7 @@ const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) =>
           rows={3}
         />
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="type">Document Type</Label>
@@ -90,7 +96,7 @@ const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) =>
             </SelectContent>
           </Select>
         </div>
-        
+
         <div>
           <Label htmlFor="folder">Folder</Label>
           <Select value={folder} onValueChange={setFolder}>
@@ -108,13 +114,13 @@ const DocumentForm = ({ onSubmit, onCancel, initialData }: DocumentFormProps) =>
           </Select>
         </div>
       </div>
-      
+
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">
-          {initialData ? "Update Document" : "Create Document"}
+          {initialData ? 'Update Document' : 'Create Document'}
         </Button>
       </div>
     </form>

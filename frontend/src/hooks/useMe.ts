@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem('token') || '';
@@ -14,6 +14,6 @@ export function useMe() {
       const res = await fetch('/api/auth/me', { headers: authHeaders() });
       if (!res.ok) throw new Error('Failed to load current user');
       return res.json();
-    }
+    },
   });
 }

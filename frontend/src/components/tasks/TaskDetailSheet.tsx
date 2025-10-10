@@ -1,19 +1,25 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet-custom";
-import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  Flag, 
-  User, 
+import { useState } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet-custom';
+import { Button } from '@/components/ui/button';
+import {
+  Calendar,
+  Flag,
+  User,
   MessageSquare,
   Paperclip,
-  Check
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+  Check,
+} from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskDetailSheetProps {
   open: boolean;
@@ -21,28 +27,36 @@ interface TaskDetailSheetProps {
   task: any;
 }
 
-const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => {
-  const [comment, setComment] = useState("");
+const TaskDetailSheet = ({
+  open,
+  onOpenChange,
+  task,
+}: TaskDetailSheetProps) => {
+  const [comment, setComment] = useState('');
   const { toast } = useToast();
 
   const handleAddComment = () => {
     if (comment.trim()) {
-      console.log("Adding comment:", comment);
+      console.log('Adding comment:', comment);
       // In a real app, you would save this to your database
       toast({
-        title: "Comment added",
-        description: "Your comment has been added to the task."
+        title: 'Comment added',
+        description: 'Your comment has been added to the task.',
       });
-      setComment("");
+      setComment('');
     }
   };
 
   const getPriorityColor = () => {
     switch (task.priority) {
-      case "High": return "bg-red-100 text-red-800";
-      case "Medium": return "bg-yellow-100 text-yellow-800";
-      case "Low": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'High':
+        return 'bg-red-100 text-red-800';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -56,7 +70,9 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
         <div className="space-y-6 mt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor()}`}>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${getPriorityColor()}`}
+              >
                 {task.priority} Priority
               </span>
               <div className="flex items-center text-sm text-muted-foreground">
@@ -73,7 +89,7 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
           <div>
             <h3 className="font-medium mb-2">Description</h3>
             <p className="text-muted-foreground">
-              {task.description || "No description provided."}
+              {task.description || 'No description provided.'}
             </p>
           </div>
 
@@ -83,7 +99,10 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
               {task.assignedTo ? (
                 <Avatar className="border-2 border-background">
                   <AvatarFallback>
-                    {task.assignedTo.split(' ').map((n: string) => n[0]).join('')}
+                    {task.assignedTo
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')}
                   </AvatarFallback>
                 </Avatar>
               ) : (
@@ -116,7 +135,8 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
                   <div className="bg-muted rounded-lg p-3">
                     <div className="font-medium text-sm">John Doe</div>
                     <p className="text-sm mt-1">
-                      This task is almost complete. Just need to review the final design.
+                      This task is almost complete. Just need to review the
+                      final design.
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
@@ -125,7 +145,7 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 flex gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>ME</AvatarFallback>
@@ -138,8 +158,8 @@ const TaskDetailSheet = ({ open, onOpenChange, task }: TaskDetailSheetProps) => 
                   rows={3}
                 />
                 <div className="flex justify-end">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={handleAddComment}
                     disabled={!comment.trim()}
                   >

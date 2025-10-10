@@ -1,16 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Search
-} from "lucide-react";
-import TaskList from "@/components/tasks/TaskList";
-import CreateTaskButton from "@/components/tasks/CreateTaskButton";
-import TaskFilter from "@/components/tasks/TaskFilter";
-import TaskPriorityChart from "@/components/tasks/TaskPriorityChart";
-import axios from "axios";
-import { useToast } from "@/components/ui/use-toast";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import TaskList from '@/components/tasks/TaskList';
+import CreateTaskButton from '@/components/tasks/CreateTaskButton';
+import TaskFilter from '@/components/tasks/TaskFilter';
+import TaskPriorityChart from '@/components/tasks/TaskPriorityChart';
+import axios from 'axios';
+import { useToast } from '@/components/ui/use-toast';
 
 // Define the Task interface based on our backend model
 interface Task {
@@ -45,20 +43,24 @@ const mapTaskForUI = (task: Task) => {
     id: task.id,
     title: task.name,
     project: task.project?.projectName || `Project ${task.projectId}`,
-    dueDate: task.sprintEndDate ? new Date(task.sprintEndDate).toLocaleDateString() : 'No due date',
+    dueDate: task.sprintEndDate
+      ? new Date(task.sprintEndDate).toLocaleDateString()
+      : 'No due date',
     priority: task.priority || 'Medium', // Default to 'Medium' if not provided by backend
     completed: task.status === 'completed',
-    assignedTo: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : undefined
+    assignedTo: task.assignee
+      ? `${task.assignee.firstName} ${task.assignee.lastName}`
+      : undefined,
   };
 };
 
 const Tasks = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     priority: [] as string[],
     status: [] as string[],
     assignee: [] as string[],
-    dueDate: "all" as "all" | "today" | "week" | "month"
+    dueDate: 'all' as 'all' | 'today' | 'week' | 'month',
   });
   const [tasks, setTasks] = useState<ReturnType<typeof mapTaskForUI>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,13 +71,19 @@ const Tasks = () => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         if (!token) {
-          throw new Error("Authentication token not found.");
+          throw new Error('Authentication token not found.');
         }
 
-        const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
-        const apiUrl = baseUrl.includes('localhost') ? 'http://localhost:3000' : '';
+        const baseUrl =
+          (typeof window !== 'undefined' &&
+            window.location &&
+            window.location.origin) ||
+          '';
+        const apiUrl = baseUrl.includes('localhost')
+          ? 'http://localhost:3000'
+          : '';
 
         const queryParams = new URLSearchParams();
         if (searchTerm) {
@@ -101,20 +109,20 @@ const Tasks = () => {
 
         const response = await axios.get(url, {
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
-          withCredentials: true
+          withCredentials: true,
         });
-        
+
         // Map the tasks to our UI format
         const mappedTasks = response.data.map(mapTaskForUI);
         setTasks(mappedTasks);
       } catch (error: any) {
         console.error('Error fetching tasks:', error);
         toast({
-          title: "Error",
-          description: `Failed to fetch tasks: ${error.message || error}. Please try again later.`, 
-          variant: "destructive"
+          title: 'Error',
+          description: `Failed to fetch tasks: ${error.message || error}. Please try again later.`,
+          variant: 'destructive',
         });
         setTasks([]); // Clear tasks on error
       } finally {
@@ -138,7 +146,9 @@ const Tasks = () => {
         <CreateTaskButton />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6"> {/* Container for search and filter */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {' '}
+        {/* Container for search and filter */}
         <div className="relative flex-1 flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-md shadow flex-nowrap">
           <Search className="h-5 w-5 text-gray-500" />
           <input
@@ -148,24 +158,29 @@ const Tasks = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button variant="outline" size="sm">Search</Button>
+          <Button variant="outline" size="sm">
+            Search
+          </Button>
         </div>
         {/* TaskFilter will now be alongside the search bar */}
         <TaskFilter filters={filters} onFilterChange={handleFilterChange} />
       </div>
 
       {/* The rest of the content, now without the extra grid wrapper for TaskFilter */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> {/* Adjusted grid for remaining content */}
-        <div className="lg:col-span-3 space-y-6"> {/* Main content area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {' '}
+        {/* Adjusted grid for remaining content */}
+        <div className="lg:col-span-3 space-y-6">
+          {' '}
+          {/* Main content area */}
           <TaskPriorityChart tasks={filteredTasks} />
           {/* Empty state */}
-{!loading && filteredTasks.length === 0 && (
-  <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
-    No tasks found. Try clearing filters or creating a new task.
-  </div>
-)}
-<TaskList tasks={filteredTasks} />
-
+          {!loading && filteredTasks.length === 0 && (
+            <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
+              No tasks found. Try clearing filters or creating a new task.
+            </div>
+          )}
+          <TaskList tasks={filteredTasks} />
         </div>
       </div>
     </div>

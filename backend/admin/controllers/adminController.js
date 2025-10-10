@@ -1,9 +1,9 @@
-const { Sequelize } = require('sequelize');
-const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const { Sequelize } = require("sequelize");
+const bcrypt = require("bcryptjs");
+require("dotenv").config();
 
 // Use the shared Sequelize instance which already handles SSL in production
-const sequelize = require('../../config/database');
+const sequelize = require("../../config/database");
 
 // ====================
 // DASHBOARD STATS
@@ -11,11 +11,21 @@ const sequelize = require('../../config/database');
 const getDashboardStats = async (req, res) => {
   try {
     // Get counts using raw SQL queries
-    const [totalUsersResult] = await sequelize.query('SELECT COUNT(*) as count FROM users');
-    const [totalRolesResult] = await sequelize.query('SELECT COUNT(*) as count FROM role_masters');
-    const [totalClientsResult] = await sequelize.query('SELECT COUNT(*) as count FROM clients');
-    const [totalProjectsResult] = await sequelize.query('SELECT COUNT(*) as count FROM projects');
-    const [activeUsersResult] = await sequelize.query('SELECT COUNT(*) as count FROM users WHERE is_active = true');
+    const [totalUsersResult] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM users",
+    );
+    const [totalRolesResult] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM role_masters",
+    );
+    const [totalClientsResult] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM clients",
+    );
+    const [totalProjectsResult] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM projects",
+    );
+    const [activeUsersResult] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM users WHERE is_active = true",
+    );
 
     const totalUsers = parseInt(totalUsersResult[0].count);
     const activeUsers = parseInt(activeUsersResult[0].count);
@@ -26,13 +36,18 @@ const getDashboardStats = async (req, res) => {
       totalClients: parseInt(totalClientsResult[0].count),
       totalProjects: parseInt(totalProjectsResult[0].count),
       activeUsers,
-      inactiveUsers: totalUsers - activeUsers
+      inactiveUsers: totalUsers - activeUsers,
     };
 
     res.json(stats);
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
+    console.error("Error fetching dashboard stats:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error fetching dashboard stats",
+        error: error.message,
+      });
   }
 };
 
@@ -60,82 +75,131 @@ const getRoles = async (req, res) => {
 
     res.json(roles);
   } catch (error) {
-    console.error('Error fetching roles:', error);
-    res.status(500).json({ message: 'Error fetching roles', error: error.message });
+    console.error("Error fetching roles:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching roles", error: error.message });
   }
 };
 
 const createRole = async (req, res) => {
   try {
-    const { name, description, level, canManageUsers, canManageProjects, canViewReports } = req.body;
-    
+    const {
+      name,
+      description,
+      level,
+      canManageUsers,
+      canManageProjects,
+      canViewReports,
+    } = req.body;
+
     // Generate role code from name
-    const roleCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
-    
-    const [result] = await sequelize.query(`
+    const roleCode = name.toUpperCase().replace(/\s+/g, "_").substring(0, 20);
+
+    const [result] = await sequelize.query(
+      `
       INSERT INTO role_masters (role_code, role_name, description, level, can_manage_users, can_manage_projects, can_view_reports, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
       RETURNING *
-    `, {
-      bind: [roleCode, name, description, level, canManageUsers || false, canManageProjects || false, canViewReports || false]
-    });
+    `,
+      {
+        bind: [
+          roleCode,
+          name,
+          description,
+          level,
+          canManageUsers || false,
+          canManageProjects || false,
+          canViewReports || false,
+        ],
+      },
+    );
 
-    res.status(201).json({ message: 'Role created successfully', role: result[0] });
+    res
+      .status(201)
+      .json({ message: "Role created successfully", role: result[0] });
   } catch (error) {
-    console.error('Error creating role:', error);
-    res.status(500).json({ message: 'Error creating role', error: error.message });
+    console.error("Error creating role:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating role", error: error.message });
   }
 };
 
 const updateRole = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, level, canManageUsers, canManageProjects, canViewReports } = req.body;
+    const {
+      name,
+      description,
+      level,
+      canManageUsers,
+      canManageProjects,
+      canViewReports,
+    } = req.body;
 
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       UPDATE role_masters 
       SET role_name = $1, description = $2, level = $3, can_manage_users = $4, 
           can_manage_projects = $5, can_view_reports = $6, updated_at = NOW()
       WHERE id = $7
       RETURNING *
-    `, {
-      bind: [name, description, level, canManageUsers || false, canManageProjects || false, canViewReports || false, id]
-    });
+    `,
+      {
+        bind: [
+          name,
+          description,
+          level,
+          canManageUsers || false,
+          canManageProjects || false,
+          canViewReports || false,
+          id,
+        ],
+      },
+    );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Role not found' });
+      return res.status(404).json({ message: "Role not found" });
     }
 
-    res.json({ message: 'Role updated successfully' });
+    res.json({ message: "Role updated successfully" });
   } catch (error) {
-    console.error('Error updating role:', error);
-    res.status(500).json({ message: 'Error updating role', error: error.message });
+    console.error("Error updating role:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating role", error: error.message });
   }
 };
 
 const deleteRole = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Check if role is being used by any users
-    const [usersWithRole] = await sequelize.query('SELECT COUNT(*) as count FROM users WHERE role_id = $1', {
-      bind: [id]
-    });
+    const [usersWithRole] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM users WHERE role_id = $1",
+      {
+        bind: [id],
+      },
+    );
 
     if (parseInt(usersWithRole[0].count) > 0) {
-      return res.status(400).json({ 
-        message: `Cannot delete role. ${usersWithRole[0].count} users are assigned to this role.` 
+      return res.status(400).json({
+        message: `Cannot delete role. ${usersWithRole[0].count} users are assigned to this role.`,
       });
     }
 
-    await sequelize.query('DELETE FROM role_masters WHERE id = $1', {
-      bind: [id]
+    await sequelize.query("DELETE FROM role_masters WHERE id = $1", {
+      bind: [id],
     });
 
-    res.json({ message: 'Role deleted successfully' });
+    res.json({ message: "Role deleted successfully" });
   } catch (error) {
-    console.error('Error deleting role:', error);
-    res.status(500).json({ message: 'Error deleting role', error: error.message });
+    console.error("Error deleting role:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting role", error: error.message });
   }
 };
 
@@ -168,7 +232,7 @@ const getUsers = async (req, res) => {
     `);
 
     // Transform the data to match expected format
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user) => ({
       id: user.id,
       username: user.employee_id,
       email: user.email,
@@ -182,31 +246,51 @@ const getUsers = async (req, res) => {
       role: {
         id: user.role_id,
         name: user.role_name || user.legacy_role,
-        level: user.role_level || 1
+        level: user.role_level || 1,
       },
-      createdAt: user.created_at
+      createdAt: user.created_at,
     }));
 
     res.json(transformedUsers);
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    console.error("Error fetching users:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching users", error: error.message });
   }
 };
 
 const createUser = async (req, res) => {
   try {
-    const { employeeId, email, password, firstName, lastName, phone, department, designation, roleId, managerId } = req.body;
+    const {
+      employeeId,
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      department,
+      designation,
+      roleId,
+      managerId,
+    } = req.body;
 
     // Check if user already exists
-    const [existingUser] = await sequelize.query(`
+    const [existingUser] = await sequelize.query(
+      `
       SELECT id FROM users WHERE email = $1 OR employee_id = $2 LIMIT 1
-    `, {
-      bind: [email, employeeId]
-    });
+    `,
+      {
+        bind: [email, employeeId],
+      },
+    );
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: 'User already exists with this email or employee ID' });
+      return res
+        .status(400)
+        .json({
+          message: "User already exists with this email or employee ID",
+        });
     }
 
     // Hash password
@@ -214,13 +298,27 @@ const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       INSERT INTO users (employee_id, email, password_hash, first_name, last_name, phone, department, designation, role_id, is_active, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
       RETURNING *
-    `, {
-      bind: [employeeId, email, hashedPassword, firstName, lastName, phone, department, designation, parseInt(roleId), true]
-    });
+    `,
+      {
+        bind: [
+          employeeId,
+          email,
+          hashedPassword,
+          firstName,
+          lastName,
+          phone,
+          department,
+          designation,
+          parseInt(roleId),
+          true,
+        ],
+      },
+    );
 
     const newUser = result[0];
 
@@ -231,52 +329,84 @@ const createUser = async (req, res) => {
           `UPDATE user_hierarchies
              SET is_active = false, effective_to = NOW(), updated_at = NOW()
            WHERE user_id = $1 AND is_active = true`,
-          { bind: [newUser.id], transaction: t }
+          { bind: [newUser.id], transaction: t },
         );
         await sequelize.query(
           `INSERT INTO user_hierarchies (
              user_id, parent_user_id, hierarchy_level, relationship_type, effective_from, is_active, created_by, created_at, updated_at
            ) VALUES ($1, $2, 1, 'direct_report', NOW(), true, $3, NOW(), NOW())`,
-          { bind: [newUser.id, parseInt(managerId, 10), req.user?.id || null], transaction: t }
+          {
+            bind: [newUser.id, parseInt(managerId, 10), req.user?.id || null],
+            transaction: t,
+          },
         );
       });
     }
 
-    res.status(201).json({ message: 'User created successfully', user: newUser });
+    res
+      .status(201)
+      .json({ message: "User created successfully", user: newUser });
   } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ message: 'Error creating user', error: error.message });
+    console.error("Error creating user:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating user", error: error.message });
   }
 };
 
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { employeeId, email, firstName, lastName, phone, department, designation, roleId, isActive, managerId } = req.body;
+    const {
+      employeeId,
+      email,
+      firstName,
+      lastName,
+      phone,
+      department,
+      designation,
+      roleId,
+      isActive,
+      managerId,
+    } = req.body;
 
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       UPDATE users 
       SET employee_id = $1, email = $2, first_name = $3, last_name = $4, phone = $5, 
           department = $6, designation = $7, role_id = $8, is_active = $9, updated_at = NOW()
       WHERE id = $10
       RETURNING *
-    `, {
-      bind: [employeeId, email, firstName, lastName, phone, department, designation, roleId, isActive, id]
-    });
+    `,
+      {
+        bind: [
+          employeeId,
+          email,
+          firstName,
+          lastName,
+          phone,
+          department,
+          designation,
+          roleId,
+          isActive,
+          id,
+        ],
+      },
+    );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Upsert manager relationship if provided (or explicitly null to remove)
-    if (typeof managerId !== 'undefined') {
+    if (typeof managerId !== "undefined") {
       await sequelize.transaction(async (t) => {
         // Deactivate existing
         await sequelize.query(
           `UPDATE user_hierarchies
              SET is_active = false, effective_to = NOW(), updated_at = NOW()
            WHERE user_id = $1 AND is_active = true`,
-          { bind: [id], transaction: t }
+          { bind: [id], transaction: t },
         );
 
         if (managerId) {
@@ -284,38 +414,50 @@ const updateUser = async (req, res) => {
             `INSERT INTO user_hierarchies (
                user_id, parent_user_id, hierarchy_level, relationship_type, effective_from, is_active, created_by, created_at, updated_at
              ) VALUES ($1, $2, 1, 'direct_report', NOW(), true, $3, NOW(), NOW())`,
-            { bind: [parseInt(id, 10), parseInt(managerId, 10), req.user?.id || null], transaction: t }
+            {
+              bind: [
+                parseInt(id, 10),
+                parseInt(managerId, 10),
+                req.user?.id || null,
+              ],
+              transaction: t,
+            },
           );
         }
       });
     }
 
-    res.json({ message: 'User updated successfully' });
+    res.json({ message: "User updated successfully" });
   } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ message: 'Error updating user', error: error.message });
+    console.error("Error updating user:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating user", error: error.message });
   }
 };
 
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    await sequelize.query('DELETE FROM users WHERE id = $1', {
-      bind: [id]
+
+    await sequelize.query("DELETE FROM users WHERE id = $1", {
+      bind: [id],
     });
 
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).json({ message: 'Error deleting user', error: error.message });
+    console.error("Error deleting user:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
   }
 };
 
 const getUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const [users] = await sequelize.query(`
+    const [users] = await sequelize.query(
+      `
       SELECT 
         u.id,
         u.employee_id,
@@ -336,12 +478,14 @@ const getUser = async (req, res) => {
       FROM users u
       LEFT JOIN role_masters rm ON u.role_id = rm.id
       WHERE u.id = $1
-    `, {
-      bind: [id]
-    });
+    `,
+      {
+        bind: [id],
+      },
+    );
 
     if (users.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     const user = users[0];
@@ -359,15 +503,17 @@ const getUser = async (req, res) => {
       role: {
         id: user.role_id,
         name: user.role_name || user.legacy_role,
-        level: user.role_level || 1
+        level: user.role_level || 1,
       },
-      createdAt: user.created_at
+      createdAt: user.created_at,
     };
 
     res.json(transformedUser);
   } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ message: 'Error fetching user', error: error.message });
+    console.error("Error fetching user:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching user", error: error.message });
   }
 };
 
@@ -387,7 +533,7 @@ const getClients = async (req, res) => {
     `);
 
     // Transform data to match expected format
-    const transformedClients = clients.map(client => ({
+    const transformedClients = clients.map((client) => ({
       id: client.id,
       name: client.client_name,
       description: client.company_name,
@@ -395,88 +541,128 @@ const getClients = async (req, res) => {
       contactPhone: client.phone,
       address: client.address,
       isActive: client.is_active,
-      projects: Array.from({ length: parseInt(client.project_count) }, (_, i) => ({ id: i, name: `Project ${i + 1}` })),
-      createdAt: client.created_at
+      projects: Array.from(
+        { length: parseInt(client.project_count) },
+        (_, i) => ({ id: i, name: `Project ${i + 1}` }),
+      ),
+      createdAt: client.created_at,
     }));
 
     res.json(transformedClients);
   } catch (error) {
-    console.error('Error fetching clients:', error);
-    res.status(500).json({ message: 'Error fetching clients', error: error.message });
+    console.error("Error fetching clients:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching clients", error: error.message });
   }
 };
 
 const createClient = async (req, res) => {
   try {
-    const { name, description, contactEmail, contactPhone, address, isActive } = req.body;
-    
+    const { name, description, contactEmail, contactPhone, address, isActive } =
+      req.body;
+
     // Generate client code
-    const clientCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
-    
-    const [result] = await sequelize.query(`
+    const clientCode = name.toUpperCase().replace(/\s+/g, "_").substring(0, 20);
+
+    const [result] = await sequelize.query(
+      `
       INSERT INTO clients (client_code, client_name, company_name, email, phone, address, is_active, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
       RETURNING *
-    `, {
-      bind: [clientCode, name, description, contactEmail, contactPhone, address, isActive !== false]
-    });
+    `,
+      {
+        bind: [
+          clientCode,
+          name,
+          description,
+          contactEmail,
+          contactPhone,
+          address,
+          isActive !== false,
+        ],
+      },
+    );
 
-    res.status(201).json({ message: 'Client created successfully', client: result[0] });
+    res
+      .status(201)
+      .json({ message: "Client created successfully", client: result[0] });
   } catch (error) {
-    console.error('Error creating client:', error);
-    res.status(500).json({ message: 'Error creating client', error: error.message });
+    console.error("Error creating client:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating client", error: error.message });
   }
 };
 
 const updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, contactEmail, contactPhone, address, isActive } = req.body;
+    const { name, description, contactEmail, contactPhone, address, isActive } =
+      req.body;
 
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       UPDATE clients 
       SET client_name = $1, company_name = $2, email = $3, phone = $4, address = $5, 
           is_active = $6, updated_at = NOW()
       WHERE id = $7
       RETURNING *
-    `, {
-      bind: [name, description, contactEmail, contactPhone, address, isActive, id]
-    });
+    `,
+      {
+        bind: [
+          name,
+          description,
+          contactEmail,
+          contactPhone,
+          address,
+          isActive,
+          id,
+        ],
+      },
+    );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Client not found' });
+      return res.status(404).json({ message: "Client not found" });
     }
 
-    res.json({ message: 'Client updated successfully' });
+    res.json({ message: "Client updated successfully" });
   } catch (error) {
-    console.error('Error updating client:', error);
-    res.status(500).json({ message: 'Error updating client', error: error.message });
+    console.error("Error updating client:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating client", error: error.message });
   }
 };
 
 const deleteClient = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Check if client has projects
-    const [projects] = await sequelize.query('SELECT COUNT(*) as count FROM projects WHERE client_id = $1', {
-      bind: [id]
-    });
+    const [projects] = await sequelize.query(
+      "SELECT COUNT(*) as count FROM projects WHERE client_id = $1",
+      {
+        bind: [id],
+      },
+    );
 
     if (parseInt(projects[0].count) > 0) {
-      return res.status(400).json({ 
-        message: `Cannot delete client. ${projects[0].count} projects are associated with this client.` 
+      return res.status(400).json({
+        message: `Cannot delete client. ${projects[0].count} projects are associated with this client.`,
       });
     }
 
-    await sequelize.query('DELETE FROM clients WHERE id = $1', {
-      bind: [id]
+    await sequelize.query("DELETE FROM clients WHERE id = $1", {
+      bind: [id],
     });
 
-    res.json({ message: 'Client deleted successfully' });
+    res.json({ message: "Client deleted successfully" });
   } catch (error) {
-    console.error('Error deleting client:', error);
-    res.status(500).json({ message: 'Error deleting client', error: error.message });
+    console.error("Error deleting client:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting client", error: error.message });
   }
 };
 
@@ -498,7 +684,7 @@ const getProjects = async (req, res) => {
     `);
 
     // Transform data to match expected format
-    const transformedProjects = projects.map(project => ({
+    const transformedProjects = projects.map((project) => ({
       id: project.id,
       name: project.project_name,
       description: project.description,
@@ -507,83 +693,136 @@ const getProjects = async (req, res) => {
       isActive: project.is_active,
       client: {
         id: project.client_id,
-        name: project.client_name
+        name: project.client_name,
       },
       manager: {
         id: project.project_manager_id,
         firstName: project.manager_first_name,
-        lastName: project.manager_last_name
+        lastName: project.manager_last_name,
       },
-      createdAt: project.created_at
+      createdAt: project.created_at,
     }));
 
     res.json(transformedProjects);
   } catch (error) {
-    console.error('Error fetching projects:', error);
-    res.status(500).json({ message: 'Error fetching projects', error: error.message });
+    console.error("Error fetching projects:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching projects", error: error.message });
   }
 };
 
 const createProject = async (req, res) => {
   try {
-    const { name, description, clientId, managerId, startDate, endDate, isActive } = req.body;
-    
+    const {
+      name,
+      description,
+      clientId,
+      managerId,
+      startDate,
+      endDate,
+      isActive,
+    } = req.body;
+
     // Generate project code
-    const projectCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
-    
-    const [result] = await sequelize.query(`
+    const projectCode = name
+      .toUpperCase()
+      .replace(/\s+/g, "_")
+      .substring(0, 20);
+
+    const [result] = await sequelize.query(
+      `
       INSERT INTO projects (project_code, project_name, description, client_id, project_manager_id, start_date, end_date, is_active, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       RETURNING *
-    `, {
-      bind: [projectCode, name, description, clientId, managerId, startDate, endDate, isActive !== false]
-    });
+    `,
+      {
+        bind: [
+          projectCode,
+          name,
+          description,
+          clientId,
+          managerId,
+          startDate,
+          endDate,
+          isActive !== false,
+        ],
+      },
+    );
 
-    res.status(201).json({ message: 'Project created successfully', project: result[0] });
+    res
+      .status(201)
+      .json({ message: "Project created successfully", project: result[0] });
   } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(500).json({ message: 'Error creating project', error: error.message });
+    console.error("Error creating project:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating project", error: error.message });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, clientId, managerId, startDate, endDate, isActive } = req.body;
+    const {
+      name,
+      description,
+      clientId,
+      managerId,
+      startDate,
+      endDate,
+      isActive,
+    } = req.body;
 
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       UPDATE projects 
       SET project_name = $1, description = $2, client_id = $3, project_manager_id = $4, 
           start_date = $5, end_date = $6, is_active = $7, updated_at = NOW()
       WHERE id = $8
       RETURNING *
-    `, {
-      bind: [name, description, clientId, managerId, startDate, endDate, isActive, id]
-    });
+    `,
+      {
+        bind: [
+          name,
+          description,
+          clientId,
+          managerId,
+          startDate,
+          endDate,
+          isActive,
+          id,
+        ],
+      },
+    );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json({ message: 'Project updated successfully' });
+    res.json({ message: "Project updated successfully" });
   } catch (error) {
-    console.error('Error updating project:', error);
-    res.status(500).json({ message: 'Error updating project', error: error.message });
+    console.error("Error updating project:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating project", error: error.message });
   }
 };
 
 const deleteProject = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    await sequelize.query('DELETE FROM projects WHERE id = $1', {
-      bind: [id]
+
+    await sequelize.query("DELETE FROM projects WHERE id = $1", {
+      bind: [id],
     });
 
-    res.json({ message: 'Project deleted successfully' });
+    res.json({ message: "Project deleted successfully" });
   } catch (error) {
-    console.error('Error deleting project:', error);
-    res.status(500).json({ message: 'Error deleting project', error: error.message });
+    console.error("Error deleting project:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting project", error: error.message });
   }
 };
 
@@ -597,8 +836,10 @@ const getPermissions = async (req, res) => {
     `);
     res.json(permissions);
   } catch (error) {
-    console.error('Error fetching permissions:', error);
-    res.status(500).json({ message: 'Error fetching permissions', error: error.message });
+    console.error("Error fetching permissions:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching permissions", error: error.message });
   }
 };
 
@@ -609,8 +850,10 @@ const getModules = async (req, res) => {
     `);
     res.json(modules);
   } catch (error) {
-    console.error('Error fetching modules:', error);
-    res.status(500).json({ message: 'Error fetching modules', error: error.message });
+    console.error("Error fetching modules:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching modules", error: error.message });
   }
 };
 
@@ -626,35 +869,37 @@ const getDepartments = async (req, res) => {
       WHERE department IS NOT NULL AND department != '' 
       ORDER BY department ASC
     `);
-    
+
     // Add some common departments if none exist
     const commonDepartments = [
-      'Engineering',
-      'Sales',
-      'Marketing',
-      'Human Resources',
-      'Finance',
-      'Operations',
-      'Customer Support',
-      'Product Management',
-      'Quality Assurance',
-      'IT Support'
+      "Engineering",
+      "Sales",
+      "Marketing",
+      "Human Resources",
+      "Finance",
+      "Operations",
+      "Customer Support",
+      "Product Management",
+      "Quality Assurance",
+      "IT Support",
     ];
-    
-    const existingDepts = departments.map(d => d.name);
+
+    const existingDepts = departments.map((d) => d.name);
     const allDepartments = [...existingDepts];
-    
+
     // Add common departments that don't already exist
-    commonDepartments.forEach(dept => {
+    commonDepartments.forEach((dept) => {
       if (!existingDepts.includes(dept)) {
         allDepartments.push(dept);
       }
     });
-    
-    res.json(allDepartments.sort().map(name => ({ name })));
+
+    res.json(allDepartments.sort().map((name) => ({ name })));
   } catch (error) {
-    console.error('Error fetching departments:', error);
-    res.status(500).json({ message: 'Error fetching departments', error: error.message });
+    console.error("Error fetching departments:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching departments", error: error.message });
   }
 };
 
@@ -667,92 +912,94 @@ const getDesignations = async (req, res) => {
       WHERE designation IS NOT NULL AND designation != '' 
       ORDER BY designation ASC
     `);
-    
+
     // Add some common designations if none exist
     const commonDesignations = [
-      'Software Engineer',
-      'Senior Software Engineer',
-      'Lead Software Engineer',
-      'Principal Software Engineer',
-      'Frontend Developer',
-      'Backend Developer',
-      'Full Stack Developer',
-      'DevOps Engineer',
-      'QA Engineer',
-      'Product Manager',
-      'Project Manager',
-      'Business Analyst',
-      'UI/UX Designer',
-      'Data Analyst',
-      'Sales Executive',
-      'Marketing Specialist',
-      'HR Specialist',
-      'Finance Analyst',
-      'Operations Manager',
-      'Team Lead',
-      'Technical Lead',
-      'Architect',
-      'Consultant',
-      'Intern',
-      'Associate',
-      'Senior Associate',
-      'Manager',
-      'Senior Manager',
-      'Director',
-      'Vice President'
+      "Software Engineer",
+      "Senior Software Engineer",
+      "Lead Software Engineer",
+      "Principal Software Engineer",
+      "Frontend Developer",
+      "Backend Developer",
+      "Full Stack Developer",
+      "DevOps Engineer",
+      "QA Engineer",
+      "Product Manager",
+      "Project Manager",
+      "Business Analyst",
+      "UI/UX Designer",
+      "Data Analyst",
+      "Sales Executive",
+      "Marketing Specialist",
+      "HR Specialist",
+      "Finance Analyst",
+      "Operations Manager",
+      "Team Lead",
+      "Technical Lead",
+      "Architect",
+      "Consultant",
+      "Intern",
+      "Associate",
+      "Senior Associate",
+      "Manager",
+      "Senior Manager",
+      "Director",
+      "Vice President",
     ];
-    
-    const existingDesignations = designations.map(d => d.name);
+
+    const existingDesignations = designations.map((d) => d.name);
     const allDesignations = [...existingDesignations];
-    
+
     // Add common designations that don't already exist
-    commonDesignations.forEach(designation => {
+    commonDesignations.forEach((designation) => {
       if (!existingDesignations.includes(designation)) {
         allDesignations.push(designation);
       }
     });
-    
-    res.json(allDesignations.sort().map(name => ({ name })));
+
+    res.json(allDesignations.sort().map((name) => ({ name })));
   } catch (error) {
-    console.error('Error fetching designations:', error);
-    res.status(500).json({ message: 'Error fetching designations', error: error.message });
+    console.error("Error fetching designations:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching designations", error: error.message });
   }
 };
 
 module.exports = {
   // Dashboard
   getDashboardStats,
-  
+
   // Role management
   getRoles,
   createRole,
   updateRole,
   deleteRole,
-  
+
   // User management
   getUsers,
   getUser,
   createUser,
   updateUser,
   deleteUser,
-  
+
   // Permission and module management
   getPermissions,
   getModules,
-  
+
   // Client management
   getClients,
   createClient,
   updateClient,
   deleteClient,
-  
+
   // Project management
   getProjects,
   createProject,
   updateProject,
   deleteProject,
-  
+
   // Departments and designations
   getDepartments,
-  getDesignations
+  getDesignations,
 };

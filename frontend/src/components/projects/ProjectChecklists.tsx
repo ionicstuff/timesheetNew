@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical } from "lucide-react";
-import { 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 interface ChecklistItem {
   id: string;
@@ -28,33 +28,41 @@ interface ProjectChecklistsProps {
     items: ChecklistItem[];
   }>;
   teamMembers: Array<{ id: string; name: string }>;
-  onChecklistsChange: (checklists: Array<{
-    id: string;
-    name: string;
-    items: ChecklistItem[];
-  }>) => void;
+  onChecklistsChange: (
+    checklists: Array<{
+      id: string;
+      name: string;
+      items: ChecklistItem[];
+    }>
+  ) => void;
 }
 
-const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: ProjectChecklistsProps) => {
-  const [newChecklistName, setNewChecklistName] = useState("");
-  const [newItemText, setNewItemText] = useState("");
-  const [selectedChecklist, setSelectedChecklist] = useState<string | null>(null);
+const ProjectChecklists = ({
+  checklists,
+  teamMembers,
+  onChecklistsChange,
+}: ProjectChecklistsProps) => {
+  const [newChecklistName, setNewChecklistName] = useState('');
+  const [newItemText, setNewItemText] = useState('');
+  const [selectedChecklist, setSelectedChecklist] = useState<string | null>(
+    null
+  );
 
   const addChecklist = () => {
     if (newChecklistName.trim()) {
       const newChecklist = {
         id: Date.now().toString(),
         name: newChecklistName,
-        items: []
+        items: [],
       };
-      
+
       onChecklistsChange([...checklists, newChecklist]);
-      setNewChecklistName("");
+      setNewChecklistName('');
     }
   };
 
   const removeChecklist = (id: string) => {
-    onChecklistsChange(checklists.filter(checklist => checklist.id !== id));
+    onChecklistsChange(checklists.filter((checklist) => checklist.id !== id));
   };
 
   const addItem = () => {
@@ -62,26 +70,29 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
       const newItem: ChecklistItem = {
         id: Date.now().toString(),
         text: newItemText,
-        completed: false
+        completed: false,
       };
-      
+
       onChecklistsChange(
-        checklists.map(checklist => 
-          checklist.id === selectedChecklist 
-            ? { ...checklist, items: [...checklist.items, newItem] } 
+        checklists.map((checklist) =>
+          checklist.id === selectedChecklist
+            ? { ...checklist, items: [...checklist.items, newItem] }
             : checklist
         )
       );
-      
-      setNewItemText("");
+
+      setNewItemText('');
     }
   };
 
   const removeItem = (checklistId: string, itemId: string) => {
     onChecklistsChange(
-      checklists.map(checklist => 
-        checklist.id === checklistId 
-          ? { ...checklist, items: checklist.items.filter(item => item.id !== itemId) } 
+      checklists.map((checklist) =>
+        checklist.id === checklistId
+          ? {
+              ...checklist,
+              items: checklist.items.filter((item) => item.id !== itemId),
+            }
           : checklist
       )
     );
@@ -89,41 +100,43 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
 
   const toggleItem = (checklistId: string, itemId: string) => {
     onChecklistsChange(
-      checklists.map(checklist => 
-        checklist.id === checklistId 
-          ? { 
-              ...checklist, 
-              items: checklist.items.map(item => 
-                item.id === itemId 
-                  ? { ...item, completed: !item.completed } 
+      checklists.map((checklist) =>
+        checklist.id === checklistId
+          ? {
+              ...checklist,
+              items: checklist.items.map((item) =>
+                item.id === itemId
+                  ? { ...item, completed: !item.completed }
                   : item
-              ) 
-            } 
+              ),
+            }
           : checklist
       )
     );
   };
 
-  const assignItem = (checklistId: string, itemId: string, assigneeId: string) => {
+  const assignItem = (
+    checklistId: string,
+    itemId: string,
+    assigneeId: string
+  ) => {
     onChecklistsChange(
-      checklists.map(checklist => 
-        checklist.id === checklistId 
-          ? { 
-              ...checklist, 
-              items: checklist.items.map(item => 
-                item.id === itemId 
-                  ? { ...item, assignee: assigneeId } 
-                  : item
-              ) 
-            } 
+      checklists.map((checklist) =>
+        checklist.id === checklistId
+          ? {
+              ...checklist,
+              items: checklist.items.map((item) =>
+                item.id === itemId ? { ...item, assignee: assigneeId } : item
+              ),
+            }
           : checklist
       )
     );
   };
 
   const getAssigneeName = (assigneeId: string) => {
-    const member = teamMembers.find(m => m.id === assigneeId);
-    return member ? member.name : "Unassigned";
+    const member = teamMembers.find((m) => m.id === assigneeId);
+    return member ? member.name : 'Unassigned';
   };
 
   return (
@@ -137,9 +150,9 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
             placeholder="New checklist name"
             className="h-8 w-40"
           />
-          <Button 
-            type="button" 
-            size="sm" 
+          <Button
+            type="button"
+            size="sm"
             onClick={addChecklist}
             disabled={!newChecklistName.trim()}
           >
@@ -147,11 +160,13 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
           </Button>
         </div>
       </div>
-      
+
       {checklists.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <p>No checklists yet</p>
-          <p className="text-sm mt-1">Add a checklist to break down your project into tasks</p>
+          <p className="text-sm mt-1">
+            Add a checklist to break down your project into tasks
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -161,11 +176,12 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
                 <h4 className="font-medium">{checklist.name}</h4>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {checklist.items.filter(item => item.completed).length}/{checklist.items.length}
+                    {checklist.items.filter((item) => item.completed).length}/
+                    {checklist.items.length}
                   </Badge>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
+                  <Button
+                    type="button"
+                    variant="ghost"
                     size="icon"
                     onClick={() => removeChecklist(checklist.id)}
                   >
@@ -173,7 +189,7 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
                   </Button>
                 </div>
               </div>
-              
+
               <div className="p-3 space-y-2">
                 {checklist.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-2 group">
@@ -182,12 +198,16 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
                       checked={item.completed}
                       onCheckedChange={() => toggleItem(checklist.id, item.id)}
                     />
-                    <span className={`flex-1 ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                    <span
+                      className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}
+                    >
                       {item.text}
                     </span>
-                    <Select 
-                      value={item.assignee || ""} 
-                      onValueChange={(value) => assignItem(checklist.id, item.id, value)}
+                    <Select
+                      value={item.assignee || ''}
+                      onValueChange={(value) =>
+                        assignItem(checklist.id, item.id, value)
+                      }
                     >
                       <SelectTrigger className="h-7 w-28">
                         <SelectValue placeholder="Assign" />
@@ -201,9 +221,9 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
+                    <Button
+                      type="button"
+                      variant="ghost"
                       size="icon"
                       className="h-7 w-7 opacity-0 group-hover:opacity-100"
                       onClick={() => removeItem(checklist.id, item.id)}
@@ -212,18 +232,18 @@ const ProjectChecklists = ({ checklists, teamMembers, onChecklistsChange }: Proj
                     </Button>
                   </div>
                 ))}
-                
+
                 <div className="flex gap-2 pt-2">
                   <Input
                     value={newItemText}
                     onChange={(e) => setNewItemText(e.target.value)}
                     placeholder="Add an item"
                     className="h-8 flex-1"
-                    onKeyDown={(e) => e.key === "Enter" && addItem()}
+                    onKeyDown={(e) => e.key === 'Enter' && addItem()}
                   />
-                  <Button 
-                    type="button" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    size="sm"
                     onClick={addItem}
                     disabled={!newItemText.trim()}
                   >

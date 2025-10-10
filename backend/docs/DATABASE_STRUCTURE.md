@@ -9,13 +9,15 @@ This document describes the enhanced database structure that supports a comprehe
 ### Core Tables
 
 #### 1. Users (Enhanced)
+
 - **Purpose**: Store user account information
 - **New Fields**: `role_id` - Links to RoleMaster for detailed role management
-- **Key Features**: 
+- **Key Features**:
   - Maintains backward compatibility with existing `role` ENUM
   - Links to RoleMaster for enhanced role capabilities
 
 #### 2. Role Masters
+
 - **Purpose**: Define detailed company roles and hierarchy levels
 - **Table**: `role_masters`
 - **Key Fields**:
@@ -25,6 +27,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `can_manage_users`, `can_manage_projects`, `can_view_reports` - Role capabilities
 
 #### 3. Module Masters
+
 - **Purpose**: Define application modules and features
 - **Table**: `module_masters`
 - **Key Fields**:
@@ -35,6 +38,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `sort_order` - Display order
 
 #### 4. Permission Masters
+
 - **Purpose**: Define granular permissions for CRUD operations
 - **Table**: `permission_masters`
 - **Key Fields**:
@@ -44,6 +48,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `resource` - Resource type (timesheet, user, project, etc.)
 
 #### 5. Role Permissions
+
 - **Purpose**: Many-to-many mapping between roles and permissions
 - **Table**: `role_permissions`
 - **Key Fields**:
@@ -52,6 +57,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `granted_by`, `granted_at`, `expires_at` - Audit trail
 
 #### 6. User Hierarchies
+
 - **Purpose**: Define organizational reporting structure
 - **Table**: `user_hierarchies`
 - **Key Fields**:
@@ -61,6 +67,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `effective_from`, `effective_to` - Time-bound relationships
 
 #### 7. Clients
+
 - **Purpose**: Manage client information and relationships
 - **Table**: `clients`
 - **Key Fields**:
@@ -70,6 +77,7 @@ This document describes the enhanced database structure that supports a comprehe
   - `billing_type`, `hourly_rate` - Billing information
 
 #### 8. Projects
+
 - **Purpose**: Manage client projects and assignments
 - **Table**: `projects`
 - **Key Fields**:
@@ -83,6 +91,7 @@ This document describes the enhanced database structure that supports a comprehe
 ## Company Hierarchy Structure
 
 ### Role Hierarchy (by level)
+
 1. **Director (DIR)** - Level 1
    - Overall business direction and strategy
    - Full user and project management rights
@@ -127,6 +136,7 @@ This document describes the enhanced database structure that supports a comprehe
 ## Key Relationships
 
 ### User Management Hierarchy
+
 ```
 Director
 ├── Account Manager
@@ -140,6 +150,7 @@ Director
 ```
 
 ### Project Structure
+
 ```
 Client
 ├── Project 1 (Managed by Project Manager)
@@ -150,6 +161,7 @@ Client
 ## Permission System
 
 ### Module-Based Permissions
+
 - **Dashboard**: View access based on role
 - **Time Tracking**: Clock in/out, timesheet management
 - **User Management**: Create, read, update, delete users
@@ -159,7 +171,9 @@ Client
 - **Administration**: System settings and role management
 
 ### CRUD Operations
+
 Each module supports granular permissions:
+
 - **Create**: Add new records
 - **Read**: View existing records
 - **Update**: Modify existing records
@@ -171,18 +185,22 @@ Each module supports granular permissions:
 ## Migration and Setup
 
 ### Running Migrations
+
 ```bash
 node backend/scripts/runMigrations.js
 ```
 
 This will:
+
 1. Create all new tables with proper indexes
 2. Add foreign key constraints
 3. Populate initial data (roles, modules, permissions)
 4. Set up the complete hierarchy structure
 
 ### Initial Data
+
 The system comes pre-populated with:
+
 - 9 company roles with appropriate levels and permissions
 - 11 application modules (7 main + 4 sub-modules)
 - Basic permission structure for common operations
@@ -190,21 +208,25 @@ The system comes pre-populated with:
 ## Benefits
 
 ### Enhanced Security
+
 - Granular permission control at module and action level
 - Role-based access with inheritance
 - Time-bound permissions with expiration
 
 ### Organizational Structure
+
 - Clear hierarchy representation
 - Multiple reporting relationships (direct, indirect, matrix)
 - Historical tracking of organizational changes
 
 ### Client/Project Management
+
 - Dedicated client relationship management
 - Project tracking with budget and time controls
 - Flexible team assignments
 
 ### Scalability
+
 - Modular permission system
 - Easy addition of new roles and modules
 - Support for complex organizational structures
@@ -212,39 +234,46 @@ The system comes pre-populated with:
 ## Usage Examples
 
 ### Checking User Permissions
+
 ```javascript
 // Get user with role and permissions
 const user = await User.findByPk(userId, {
-  include: [{
-    model: RoleMaster,
-    as: 'roleMaster',
-    include: [{
-      model: PermissionMaster,
-      as: 'permissions',
-      through: { attributes: ['isGranted'] }
-    }]
-  }]
+  include: [
+    {
+      model: RoleMaster,
+      as: "roleMaster",
+      include: [
+        {
+          model: PermissionMaster,
+          as: "permissions",
+          through: { attributes: ["isGranted"] },
+        },
+      ],
+    },
+  ],
 });
 ```
 
 ### Getting User Hierarchy
+
 ```javascript
 // Get direct reports
 const directReports = await UserHierarchy.findAll({
   where: { parentUserId: managerId, isActive: true },
-  include: [{ model: User, as: 'user' }]
+  include: [{ model: User, as: "user" }],
 });
 ```
 
 ### Project Assignment
+
 ```javascript
 // Get projects managed by user
 const projects = await Project.findAll({
   where: { projectManagerId: userId },
   include: [
-    { model: Client, as: 'client' },
-    { model: User, as: 'projectManager' }
-  ]
+    { model: Client, as: "client" },
+    { model: User, as: "projectManager" },
+  ],
 });
 ```
 

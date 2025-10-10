@@ -37,7 +37,11 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("project_messages", ["project_id", "created_at"], { name: "idx_project_messages_project_time" });
+    await queryInterface.addIndex(
+      "project_messages",
+      ["project_id", "created_at"],
+      { name: "idx_project_messages_project_time" },
+    );
   },
 
   down: async (queryInterface, Sequelize) => {

@@ -1,12 +1,12 @@
-const sequelize = require('../config/database');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const sequelize = require("../config/database");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../uploads/projects');
+    const uploadPath = path.join(__dirname, "../uploads/projects");
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
@@ -15,28 +15,33 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     // Generate unique filename with timestamp
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+    );
+  },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: function (req, file, cb) {
     // Accept only specific file types
     const allowedTypes = /pdf|doc|docx|zip|jpg|jpeg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Only PDF, DOC, DOCX, ZIP, and image files are allowed'));
+      cb(new Error("Only PDF, DOC, DOCX, ZIP, and image files are allowed"));
     }
-  }
+  },
 });
 
 // Get all projects
@@ -46,28 +51,29 @@ const getProjects = async (req, res) => {
     // ----- query params -----
     const {
       q,
-      status,          // "active" | "completed" | "on-hold" | comma list
-      clientId,        // numeric
-      managerId,       // numeric
+      status, // "active" | "completed" | "on-hold" | comma list
+      clientId, // numeric
+      managerId, // numeric
       limit = 20,
       offset = 0,
-      sortBy = 'name', // one of: name | endDate | status | createdAt | tasksCount | membersCount | progress
-      sortDir = 'ASC', // ASC | DESC
+      sortBy = "name", // one of: name | endDate | status | createdAt | tasksCount | membersCount | progress
+      sortDir = "ASC", // ASC | DESC
     } = req.query;
 
     // ----- guards to prevent SQL injection via ORDER BY -----
     const sortKeyMap = {
-      name: 'p.project_name',
-      endDate: 'p.end_date',
-      status: 'p.status',
-      createdAt: 'p.created_at',
-      tasksCount: 'tasks_count',
-      membersCount: 'members_count',
+      name: "p.project_name",
+      endDate: "p.end_date",
+      status: "p.status",
+      createdAt: "p.created_at",
+      tasksCount: "tasks_count",
+      membersCount: "members_count",
       // pseudo "progress": completed/total based on your aliases -> order by (tasks_count - open_tasks_count) / NULLIF(tasks_count,0)
-      progress: '(COALESCE(tasks_count,0) - COALESCE(open_tasks_count,0))::float / NULLIF(COALESCE(tasks_count,0),0)',
+      progress:
+        "(COALESCE(tasks_count,0) - COALESCE(open_tasks_count,0))::float / NULLIF(COALESCE(tasks_count,0),0)",
     };
-    const orderCol = sortKeyMap[sortBy] || 'p.project_name';
-    const orderDir = String(sortDir).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    const orderCol = sortKeyMap[sortBy] || "p.project_name";
+    const orderDir = String(sortDir).toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     // ----- dynamic where -----
     const whereParts = [];
@@ -75,30 +81,44 @@ const getProjects = async (req, res) => {
     let i = 1;
 
     if (q) {
-      whereParts.push(`(p.project_name ILIKE $${i} OR p.description ILIKE $${i})`);
-      binds.push(`%${q}%`); i++;
+      whereParts.push(
+        `(p.project_name ILIKE $${i} OR p.description ILIKE $${i})`,
+      );
+      binds.push(`%${q}%`);
+      i++;
     }
 
     if (status) {
-      const list = status.split(',').map(s => s.trim()).filter(Boolean);
+      const list = status
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (list.length) {
         whereParts.push(`p.status = ANY($${i}::text[])`);
-        binds.push(list); i++;
+        binds.push(list);
+        i++;
       }
     }
 
     if (clientId) {
-      whereParts.push(`p.client_id = $${i}`); binds.push(Number(clientId)); i++;
+      whereParts.push(`p.client_id = $${i}`);
+      binds.push(Number(clientId));
+      i++;
     }
 
     if (managerId) {
-      whereParts.push(`p.project_manager_id = $${i}`); binds.push(Number(managerId)); i++;
+      whereParts.push(`p.project_manager_id = $${i}`);
+      binds.push(Number(managerId));
+      i++;
     }
 
-    const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+    const whereSQL = whereParts.length
+      ? `WHERE ${whereParts.join(" AND ")}`
+      : "";
 
     // ----- SELECT with aggregates -----
-    const [projects] = await sequelize.query(`
+    const [projects] = await sequelize.query(
+      `
       SELECT 
         p.*,
         c.client_name,
@@ -163,11 +183,13 @@ const getProjects = async (req, res) => {
       ) mc ON mc.project_id = p.id
       ${whereSQL}
       ORDER BY ${orderCol} ${orderDir}
-      LIMIT $${i} OFFSET $${i+1}
-    `, { bind: [...binds, Number(limit), Number(offset)] });
+      LIMIT $${i} OFFSET $${i + 1}
+    `,
+      { bind: [...binds, Number(limit), Number(offset)] },
+    );
 
     // ----- transform to API response -----
-    const transformedProjects = projects.map(project => ({
+    const transformedProjects = projects.map((project) => ({
       id: project.id,
       name: project.project_name,
       description: project.description,
@@ -179,16 +201,23 @@ const getProjects = async (req, res) => {
         id: project.project_manager_id,
         firstName: project.manager_first_name,
         lastName: project.manager_last_name,
-        fullName: project.manager_first_name && project.manager_last_name
-          ? `${project.manager_first_name} ${project.manager_last_name}`
-          : null
+        fullName:
+          project.manager_first_name && project.manager_last_name
+            ? `${project.manager_first_name} ${project.manager_last_name}`
+            : null,
       },
       createdAt: project.created_at,
       tasksCount: Number(project.tasks_count) || 0,
       openTasksCount: Number(project.open_tasks_count) || 0,
       membersCount: Number(project.members_count) || 0,
-      allocatedHours: project.allocated_hours != null ? Number(project.allocated_hours) : null,
-      actualHours: project.actual_hours_calc != null ? Number(project.actual_hours_calc) : null,
+      allocatedHours:
+        project.allocated_hours != null
+          ? Number(project.allocated_hours)
+          : null,
+      actualHours:
+        project.actual_hours_calc != null
+          ? Number(project.actual_hours_calc)
+          : null,
       completedOnTime: !!project.completed_on_time,
       isDelayed: !!project.is_delayed,
       approachingDeadline: !!project.approaching_deadline,
@@ -198,17 +227,20 @@ const getProjects = async (req, res) => {
 
     return res.json(transformedProjects);
   } catch (error) {
-    console.error('Error fetching projects from the database:', error);
-    return res.status(500).json({ message: 'Error fetching projects', error: error.message });
+    console.error("Error fetching projects from the database:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching projects", error: error.message });
   }
-};;
+};
 
 // Get a single project
 const getProject = async (req, res) => {
   try {
     const { id } = req.params;
-    
-  const [projects] = await sequelize.query(`
+
+    const [projects] = await sequelize.query(
+      `
       SELECT 
         p.id,
         p.project_name,
@@ -245,45 +277,51 @@ const getProject = async (req, res) => {
       LEFT JOIN users us ON t.assigned_to = us.id
       LEFT JOIN project_attachments pa ON p.id = pa.project_id
       WHERE p.id = $1
-    `, {
-      bind: [id]
-    });
+    `,
+      {
+        bind: [id],
+      },
+    );
 
     if (projects.length === 0) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
     // Aggregate data from the result set
     const project = projects[0];
-    
+
     // Extract unique team members from tasks
     const teamMembers = [];
     const seenUsers = new Set();
-    
-    projects.forEach(p => {
-      if (p.assigned_to && p.assigned_first_name && !seenUsers.has(p.assigned_to)) {
+
+    projects.forEach((p) => {
+      if (
+        p.assigned_to &&
+        p.assigned_first_name &&
+        !seenUsers.has(p.assigned_to)
+      ) {
         teamMembers.push({
           taskName: p.task_name,
           assignedTo: {
             firstName: p.assigned_first_name,
             lastName: p.assigned_last_name,
-            department: p.department
-          }
+            department: p.department,
+          },
         });
         seenUsers.add(p.assigned_to);
       }
     });
-    
+
     // Extract unique documents
     const documents = [];
     const seenFiles = new Set();
-    
-    projects.forEach(p => {
+
+    projects.forEach((p) => {
       if (p.attachment_id && !seenFiles.has(p.attachment_id)) {
         documents.push({
           filename: p.filename,
           originalName: p.original_name,
-          filePath: p.file_path
+          filePath: p.file_path,
         });
         seenFiles.add(p.attachment_id);
       }
@@ -292,15 +330,16 @@ const getProject = async (req, res) => {
     // Extract unique tasks by task id to avoid duplicates from attachment joins
     const tasks = [];
     const seenTaskIds = new Set();
-    projects.forEach(p => {
+    projects.forEach((p) => {
       if (p.task_id && !seenTaskIds.has(p.task_id)) {
         tasks.push(p.task_name);
         seenTaskIds.add(p.task_id);
       }
     });
-    
+
     // Get additional project information including SPOC details
-    const [spocData] = await sequelize.query(`
+    const [spocData] = await sequelize.query(
+      `
       SELECT 
         s.name as spoc_name,
         s.email as spoc_email,
@@ -309,10 +348,12 @@ const getProject = async (req, res) => {
         s.department as spoc_department
       FROM spocs s
       WHERE s.id = (SELECT spoc_id FROM projects WHERE id = $1)
-    `, {
-      bind: [id]
-    });
-    
+    `,
+      {
+        bind: [id],
+      },
+    );
+
     const transformedProject = {
       id: project.id,
       name: project.project_name,
@@ -322,23 +363,27 @@ const getProject = async (req, res) => {
       isActive: project.is_active,
       client: {
         id: project.client_id,
-        name: project.client_name
+        name: project.client_name,
       },
       manager: {
         id: project.project_manager_id,
         firstName: project.manager_first_name,
         lastName: project.manager_last_name,
-        fullName: project.manager_first_name && project.manager_last_name 
-          ? `${project.manager_first_name} ${project.manager_last_name}` 
-          : null
+        fullName:
+          project.manager_first_name && project.manager_last_name
+            ? `${project.manager_first_name} ${project.manager_last_name}`
+            : null,
       },
-      spoc: spocData.length > 0 ? {
-        name: spocData[0].spoc_name,
-        email: spocData[0].spoc_email,
-        phone: spocData[0].spoc_phone,
-        designation: spocData[0].spoc_designation,
-        department: spocData[0].spoc_department
-      } : null,
+      spoc:
+        spocData.length > 0
+          ? {
+              name: spocData[0].spoc_name,
+              email: spocData[0].spoc_email,
+              phone: spocData[0].spoc_phone,
+              designation: spocData[0].spoc_designation,
+              department: spocData[0].spoc_department,
+            }
+          : null,
       teamMembers: teamMembers,
       tasks: tasks, // list of task names (deduped by task id)
       documents: documents,
@@ -349,69 +394,97 @@ const getProject = async (req, res) => {
       deliverables: project.deliverables,
       priority: project.priority,
       status: project.status,
-      clientLinks: project.client_links
+      clientLinks: project.client_links,
     };
 
     res.json(transformedProject);
   } catch (error) {
-    console.error('Error fetching project:', error);
-    res.status(500).json({ message: 'Error fetching project', error: error.message });
+    console.error("Error fetching project:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching project", error: error.message });
   }
 };
 // Create a new project
 const createProject = async (req, res) => {
   try {
-    const { name, description, clientId, spocId, managerId, startDate, endDate, briefReceivedOn, estimatedTime, isActive } = req.body;
-    
+    const {
+      name,
+      description,
+      clientId,
+      spocId,
+      managerId,
+      startDate,
+      endDate,
+      briefReceivedOn,
+      estimatedTime,
+      isActive,
+    } = req.body;
+
     // Validate required fields
     if (!name || !clientId || !spocId) {
-      return res.status(400).json({ message: 'Project name, client, and SPOC are required' });
+      return res
+        .status(400)
+        .json({ message: "Project name, client, and SPOC are required" });
     }
-    
+
     // Get current user info to check if they have Account Manager role
-    const [currentUser] = await sequelize.query(`
+    const [currentUser] = await sequelize.query(
+      `
       SELECT u.id, u.role_id, rm.role_code, rm.role_name 
       FROM users u
       LEFT JOIN role_masters rm ON u.role_id = rm.id
       WHERE u.id = $1
-    `, {
-      bind: [req.user.id]
-    });
-    
+    `,
+      {
+        bind: [req.user.id],
+      },
+    );
+
     // Auto-assign manager if creator is an Account Manager and no manager is explicitly provided
     let finalManagerId = managerId;
-    if (!managerId && currentUser[0] && currentUser[0].role_code === 'ACM') {
+    if (!managerId && currentUser[0] && currentUser[0].role_code === "ACM") {
       finalManagerId = req.user.id;
     }
-    
+
     // Generate project code
-    const projectCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
-    
-    const [result] = await sequelize.query(`
+    const projectCode = name
+      .toUpperCase()
+      .replace(/\s+/g, "_")
+      .substring(0, 20);
+
+    const [result] = await sequelize.query(
+      `
       INSERT INTO projects (project_code, project_name, description, client_id, spoc_id, project_manager_id, start_date, end_date, brief_received_on, estimated_time, is_active, created_by, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
       RETURNING *
-    `, {
-      bind: [
-        projectCode, 
-        name, 
-        description || null, 
-        clientId, 
-        spocId, 
-        finalManagerId || null, 
-        startDate || null, 
-        endDate || null, 
-        briefReceivedOn || null, 
-        estimatedTime || null, 
-        isActive !== false, 
-        req.user.id
-      ]
-    });
+    `,
+      {
+        bind: [
+          projectCode,
+          name,
+          description || null,
+          clientId,
+          spocId,
+          finalManagerId || null,
+          startDate || null,
+          endDate || null,
+          briefReceivedOn || null,
+          estimatedTime || null,
+          isActive !== false,
+          req.user.id,
+        ],
+      },
+    );
 
-    res.status(201).json({ message: 'Project created successfully', project: result[0] });
+    res
+      .status(201)
+      .json({ message: "Project created successfully", project: result[0] });
   } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(500).json({ message: 'Error creating project', error: error.message });
+    console.error("Error creating project:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating project", error: error.message });
   }
 };
 
@@ -419,26 +492,48 @@ const createProject = async (req, res) => {
 const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, clientId, managerId, startDate, endDate, isActive } = req.body;
+    const {
+      name,
+      description,
+      clientId,
+      managerId,
+      startDate,
+      endDate,
+      isActive,
+    } = req.body;
 
-    const [result] = await sequelize.query(`
+    const [result] = await sequelize.query(
+      `
       UPDATE projects 
       SET project_name = $1, description = $2, client_id = $3, project_manager_id = $4, 
           start_date = $5, end_date = $6, is_active = $7, updated_at = NOW()
       WHERE id = $8
       RETURNING *
-    `, {
-      bind: [name, description, clientId, managerId, startDate, endDate, isActive, id]
-    });
+    `,
+      {
+        bind: [
+          name,
+          description,
+          clientId,
+          managerId,
+          startDate,
+          endDate,
+          isActive,
+          id,
+        ],
+      },
+    );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json({ message: 'Project updated successfully' });
+    res.json({ message: "Project updated successfully" });
   } catch (error) {
-    console.error('Error updating project:', error);
-    res.status(500).json({ message: 'Error updating project', error: error.message });
+    console.error("Error updating project:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating project", error: error.message });
   }
 };
 
@@ -446,15 +541,17 @@ const updateProject = async (req, res) => {
 const deleteProject = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    await sequelize.query('DELETE FROM projects WHERE id = $1', {
-      bind: [id]
+
+    await sequelize.query("DELETE FROM projects WHERE id = $1", {
+      bind: [id],
     });
 
-    res.json({ message: 'Project deleted successfully' });
+    res.json({ message: "Project deleted successfully" });
   } catch (error) {
-    console.error('Error deleting project:', error);
-    res.status(500).json({ message: 'Error deleting project', error: error.message });
+    console.error("Error deleting project:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting project", error: error.message });
   }
 };
 
@@ -462,29 +559,51 @@ const deleteProject = async (req, res) => {
 const updateProjectDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const { teamNotes, objectives, deliverables, priority, status, clientLinks, managerId } = req.body;
+    const {
+      teamNotes,
+      objectives,
+      deliverables,
+      priority,
+      status,
+      clientLinks,
+      managerId,
+    } = req.body;
 
     // Check if user has permission to update project details (managers and admins only)
-    console.log('Debug: req.user.id =', req.user.id);
-    const [currentUser] = await sequelize.query(`
+    console.log("Debug: req.user.id =", req.user.id);
+    const [currentUser] = await sequelize.query(
+      `
       SELECT u.id, u.role_id, rm.role_code, rm.role_name 
       FROM users u
       LEFT JOIN role_masters rm ON u.role_id = rm.id
       WHERE u.id = $1
-    `, {
-      bind: [req.user.id]
-    });
+    `,
+      {
+        bind: [req.user.id],
+      },
+    );
 
-    console.log('Debug: currentUser =', currentUser);
-    console.log('Debug: currentUser[0].role_code =', currentUser[0]?.role_code);
-    console.log('Debug: role check result =', ['ACM', 'PM', 'ADM', 'ADMIN', 'DIR'].includes(currentUser[0]?.role_code));
+    console.log("Debug: currentUser =", currentUser);
+    console.log("Debug: currentUser[0].role_code =", currentUser[0]?.role_code);
+    console.log(
+      "Debug: role check result =",
+      ["ACM", "PM", "ADM", "ADMIN", "DIR"].includes(currentUser[0]?.role_code),
+    );
 
-    if (!currentUser[0] || !['ACM', 'PM', 'ADM', 'ADMIN', 'DIR'].includes(currentUser[0].role_code)) {
-      console.log('Debug: Permission denied for user:', currentUser[0]);
-      return res.status(403).json({ message: 'Only Account Managers, Project Managers, and Admins can update project details' });
+    if (
+      !currentUser[0] ||
+      !["ACM", "PM", "ADM", "ADMIN", "DIR"].includes(currentUser[0].role_code)
+    ) {
+      console.log("Debug: Permission denied for user:", currentUser[0]);
+      return res
+        .status(403)
+        .json({
+          message:
+            "Only Account Managers, Project Managers, and Admins can update project details",
+        });
     }
 
-    console.log('Debug: Permission granted for user:', currentUser[0]);
+    console.log("Debug: Permission granted for user:", currentUser[0]);
 
     // Build dynamic update query based on provided fields
     const updateFields = [];
@@ -534,7 +653,7 @@ const updateProjectDetails = async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-      return res.status(400).json({ message: 'No fields provided for update' });
+      return res.status(400).json({ message: "No fields provided for update" });
     }
 
     // Add updated_at and project id
@@ -543,23 +662,28 @@ const updateProjectDetails = async (req, res) => {
 
     const query = `
       UPDATE projects 
-      SET ${updateFields.join(', ')}
+      SET ${updateFields.join(", ")}
       WHERE id = $${bindIndex}
       RETURNING *
     `;
 
     const [result] = await sequelize.query(query, {
-      bind: bindValues
+      bind: bindValues,
     });
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json({ message: 'Project details updated successfully' });
+    res.json({ message: "Project details updated successfully" });
   } catch (error) {
-    console.error('Error updating project details:', error);
-    res.status(500).json({ message: 'Error updating project details', error: error.message });
+    console.error("Error updating project details:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error updating project details",
+        error: error.message,
+      });
   }
 };
 
@@ -576,8 +700,10 @@ const getManagers = async (req, res) => {
 
     res.json(managers);
   } catch (error) {
-    console.error('Error fetching managers:', error);
-    res.status(500).json({ message: 'Error fetching managers', error: error.message });
+    console.error("Error fetching managers:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching managers", error: error.message });
   }
 };
 
@@ -602,8 +728,10 @@ const getUsers = async (req, res) => {
 
     res.json(users);
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    console.error("Error fetching users:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching users", error: error.message });
   }
 };
 
@@ -611,7 +739,7 @@ const getUsers = async (req, res) => {
 const uploadProjectFiles = async (req, res) => {
   upload.any()(req, res, async (err) => {
     if (err) {
-      console.error('Error during file upload:', err);
+      console.error("Error during file upload:", err);
       return res.status(400).json({ message: err.message });
     }
 
@@ -619,34 +747,46 @@ const uploadProjectFiles = async (req, res) => {
 
     const files = req.files;
     if (!files || files.length === 0) {
-      return res.status(400).json({ message: 'No files uploaded' });
+      return res.status(400).json({ message: "No files uploaded" });
     }
 
     try {
-      const uploadedFiles = await Promise.all(files.map(async (file) => {
-        const filePath = path.join('uploads/projects', file.filename);
-        const [insertedFile] = await sequelize.query(`
+      const uploadedFiles = await Promise.all(
+        files.map(async (file) => {
+          const filePath = path.join("uploads/projects", file.filename);
+          const [insertedFile] = await sequelize.query(
+            `
           INSERT INTO project_attachments (project_id, filename, original_name, file_type, file_size, file_path, uploaded_by)
           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
-        `, {
-          bind: [
-            projectId,
-            file.filename,
-            file.originalname,
-            'reference',  // Assume 'reference' as default type for simplicity
-            file.size,
-            filePath,
-            req.user ? req.user.id : null
-          ]
+        `,
+            {
+              bind: [
+                projectId,
+                file.filename,
+                file.originalname,
+                "reference", // Assume 'reference' as default type for simplicity
+                file.size,
+                filePath,
+                req.user ? req.user.id : null,
+              ],
+            },
+          );
+
+          return insertedFile[0];
+        }),
+      );
+
+      res
+        .status(201)
+        .json({
+          message: "Files uploaded successfully",
+          attachments: uploadedFiles,
         });
-
-        return insertedFile[0];
-      }));
-
-      res.status(201).json({ message: 'Files uploaded successfully', attachments: uploadedFiles });
     } catch (error) {
-      console.error('Error saving file information to database:', error);
-      res.status(500).json({ message: 'Error uploading files', error: error.message });
+      console.error("Error saving file information to database:", error);
+      res
+        .status(500)
+        .json({ message: "Error uploading files", error: error.message });
     }
   });
 };
@@ -655,24 +795,29 @@ const uploadProjectFiles = async (req, res) => {
 const getProjectFiles = async (req, res) => {
   try {
     const { id: projectId } = req.params;
-    const [files] = await sequelize.query(`
+    const [files] = await sequelize.query(
+      `
       SELECT id, filename, original_name, file_type, file_size, file_path, created_at as uploaded_at
       FROM project_attachments
       WHERE project_id = $1
       ORDER BY created_at DESC
-    `, {
-      bind: [projectId]
-    });
+    `,
+      {
+        bind: [projectId],
+      },
+    );
 
     res.json(files);
   } catch (error) {
-    console.error('Error fetching project files:', error);
-    res.status(500).json({ message: 'Error fetching files', error: error.message });
+    console.error("Error fetching project files:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching files", error: error.message });
   }
 };
 
-const { Project, Task, Client } = require('../models');
-const emailService = require('../services/emailService');
+const { Project, Task, Client } = require("../models");
+const emailService = require("../services/emailService");
 
 const closeProject = async (req, res) => {
   try {
@@ -681,36 +826,58 @@ const closeProject = async (req, res) => {
 
     // Ensure project exists
     const project = await Project.findByPk(id);
-    if (!project) return res.status(404).json({ message: 'Project not found' });
+    if (!project) return res.status(404).json({ message: "Project not found" });
 
     // Ensure the actor is the assigned Project Manager OR the Client's Account Manager
-    const client = project.clientId ? await Client.findByPk(project.clientId) : null;
-    const isAssignedPM = project.projectManagerId && project.projectManagerId === req.user.id;
-    const isAssignedAM = client?.accountManagerId && client.accountManagerId === req.user.id;
+    const client = project.clientId
+      ? await Client.findByPk(project.clientId)
+      : null;
+    const isAssignedPM =
+      project.projectManagerId && project.projectManagerId === req.user.id;
+    const isAssignedAM =
+      client?.accountManagerId && client.accountManagerId === req.user.id;
     if (!isAssignedPM && !isAssignedAM) {
-      return res.status(403).json({ message: 'Only the assigned Project Manager or Account Manager can close this project' });
+      return res
+        .status(403)
+        .json({
+          message:
+            "Only the assigned Project Manager or Account Manager can close this project",
+        });
     }
 
     // Require all tasks to be completed and no running timers
-    const { Op } = require('sequelize');
-    const openCount = await Task.count({ where: { projectId: id, status: { [Op.ne]: 'completed' } } });
-    const runningCount = await Task.count({ where: { projectId: id, activeTimerStartedAt: { [Op.ne]: null } } });
+    const { Op } = require("sequelize");
+    const openCount = await Task.count({
+      where: { projectId: id, status: { [Op.ne]: "completed" } },
+    });
+    const runningCount = await Task.count({
+      where: { projectId: id, activeTimerStartedAt: { [Op.ne]: null } },
+    });
     if (openCount > 0 || runningCount > 0) {
-      return res.status(400).json({ message: 'Cannot close project until all tasks are completed and no timers are running' });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Cannot close project until all tasks are completed and no timers are running",
+        });
     }
 
-    project.status = 'completed';
+    project.status = "completed";
     project.closedAt = new Date();
     project.closedByUserId = req.user.id;
     project.closedReason = reason || project.closedReason;
     await project.save();
 
-    void emailService.sendProjectClosedEmail(project, req.user, reason).catch(() => {});
+    void emailService
+      .sendProjectClosedEmail(project, req.user, reason)
+      .catch(() => {});
 
-    res.json({ message: 'Project closed successfully', project });
+    res.json({ message: "Project closed successfully", project });
   } catch (error) {
-    console.error('Error closing project:', error);
-    res.status(500).json({ message: 'Error closing project', error: error.message });
+    console.error("Error closing project:", error);
+    res
+      .status(500)
+      .json({ message: "Error closing project", error: error.message });
   }
 };
 
@@ -720,7 +887,8 @@ const getProjectPerformance = async (req, res) => {
     const { id } = req.params;
 
     // Fetch project basic info and allocation fields
-    const [projects] = await sequelize.query(`
+    const [projects] = await sequelize.query(
+      `
       SELECT 
         p.id,
         p.project_name,
@@ -728,44 +896,58 @@ const getProjectPerformance = async (req, res) => {
         p.estimated_hours
       FROM projects p
       WHERE p.id = $1
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
 
     if (!projects || projects.length === 0) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
     const project = projects[0];
 
     // Sum timesheet minutes for this project
-    const [tsRows] = await sequelize.query(`
+    const [tsRows] = await sequelize.query(
+      `
       SELECT COALESCE(SUM(minutes), 0) AS total_minutes
       FROM timesheet_entries
       WHERE project_id = $1
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
     const timesheetMinutes = Number(tsRows?.[0]?.total_minutes || 0);
 
     // Sum task tracked seconds for this project (from task timers)
-    const [timerRows] = await sequelize.query(`
+    const [timerRows] = await sequelize.query(
+      `
       SELECT COALESCE(SUM(total_tracked_seconds), 0) AS total_seconds
       FROM tasks
       WHERE project_id = $1
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
     const taskSeconds = Number(timerRows?.[0]?.total_seconds || 0);
 
     // Sum tasks' estimated_time as a potential fallback allocation
-    const [taskEstRows] = await sequelize.query(`
+    const [taskEstRows] = await sequelize.query(
+      `
       SELECT COALESCE(SUM(estimated_time), 0) AS sum_est_hours
       FROM tasks
       WHERE project_id = $1
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
     const tasksEstimatedHours = Number(taskEstRows?.[0]?.sum_est_hours || 0);
 
     // Count tasks
-    const [taskCountRows] = await sequelize.query(`
+    const [taskCountRows] = await sequelize.query(
+      `
       SELECT COUNT(*)::int AS cnt
       FROM tasks
       WHERE project_id = $1
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
     const tasksCount = Number(taskCountRows?.[0]?.cnt || 0);
 
     const timesheetHours = timesheetMinutes / 60.0;
@@ -787,8 +969,8 @@ const getProjectPerformance = async (req, res) => {
 
     if (allocatedHours == null) {
       return res.status(422).json({
-        message: 'Allocated hours not set for this project',
-        hint: 'Set projects.estimated_time (preferred) or provide per-task estimated_time values.',
+        message: "Allocated hours not set for this project",
+        hint: "Set projects.estimated_time (preferred) or provide per-task estimated_time values.",
         metrics: {
           projectId: project.id,
           projectName: project.project_name,
@@ -796,14 +978,15 @@ const getProjectPerformance = async (req, res) => {
           timesheetHours: Number(timesheetHours.toFixed(2)),
           taskTimerHours: Number(taskTimerHours.toFixed(2)),
           tasksEstimatedHours: Number(tasksEstimatedHours.toFixed(2)),
-          tasksCount
-        }
+          tasksCount,
+        },
       });
     }
 
     const varianceHours = actualHours - allocatedHours; // >0 means overrun, <0 under budget
-    const performanceRatio = allocatedHours > 0 ? actualHours / allocatedHours : null;
-    const status = actualHours <= allocatedHours ? 'good' : 'bad';
+    const performanceRatio =
+      allocatedHours > 0 ? actualHours / allocatedHours : null;
+    const status = actualHours <= allocatedHours ? "good" : "bad";
 
     return res.json({
       projectId: project.id,
@@ -811,18 +994,24 @@ const getProjectPerformance = async (req, res) => {
       allocatedHours: Number(allocatedHours.toFixed(2)),
       actualHours: Number(actualHours.toFixed(2)),
       varianceHours: Number(varianceHours.toFixed(2)),
-      performanceRatio: performanceRatio != null ? Number(performanceRatio.toFixed(4)) : null,
+      performanceRatio:
+        performanceRatio != null ? Number(performanceRatio.toFixed(4)) : null,
       status,
       tasksCount,
       breakdown: {
         timesheetHours: Number(timesheetHours.toFixed(2)),
         taskTimerHours: Number(taskTimerHours.toFixed(2)),
-        tasksEstimatedHours: Number(tasksEstimatedHours.toFixed(2))
-      }
+        tasksEstimatedHours: Number(tasksEstimatedHours.toFixed(2)),
+      },
     });
   } catch (error) {
-    console.error('Error calculating project performance:', error);
-    return res.status(500).json({ message: 'Error calculating project performance', error: error.message });
+    console.error("Error calculating project performance:", error);
+    return res
+      .status(500)
+      .json({
+        message: "Error calculating project performance",
+        error: error.message,
+      });
   }
 };
 
@@ -832,10 +1021,11 @@ const getMyProjects = async (req, res) => {
     const userId = req.user?.id || req.user?.userId; // supports both auth middlewares
 
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const [rows] = await sequelize.query(`
+    const [rows] = await sequelize.query(
+      `
       SELECT DISTINCT p.id, p.project_name
       FROM projects p
       WHERE p.created_by = $1
@@ -845,17 +1035,23 @@ const getMyProjects = async (req, res) => {
               WHERE t.project_id = p.id AND t.assigned_to = $1
             )
       ORDER BY p.project_name ASC
-    `, { bind: [userId] });
+    `,
+      { bind: [userId] },
+    );
 
-    const projects = rows.map(r => ({ id: r.id, projectName: r.project_name, name: r.project_name }));
+    const projects = rows.map((r) => ({
+      id: r.id,
+      projectName: r.project_name,
+      name: r.project_name,
+    }));
     return res.json(projects);
   } catch (error) {
-    console.error('Error fetching my projects:', error);
-    return res.status(500).json({ message: 'Error fetching my projects', error: error.message });
+    console.error("Error fetching my projects:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching my projects", error: error.message });
   }
 };
-
-
 
 // List all clients for dropdowns
 const getClients = async (req, res) => {
@@ -865,14 +1061,18 @@ const getClients = async (req, res) => {
       FROM clients
       ORDER BY client_name ASC
     `);
-    const clients = rows.map(r => ({ id: r.id, name: r.client_name
-  , getClients,
-  getClientSpocs
-}));
+    const clients = rows.map((r) => ({
+      id: r.id,
+      name: r.client_name,
+      getClients,
+      getClientSpocs,
+    }));
     return res.json(clients);
   } catch (error) {
-    console.error('Error fetching clients:', error);
-    return res.status(500).json({ message: 'Error fetching clients', error: error.message });
+    console.error("Error fetching clients:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching clients", error: error.message });
   }
 };
 
@@ -880,26 +1080,31 @@ const getClients = async (req, res) => {
 const getClientSpocs = async (req, res) => {
   try {
     const { id } = req.params; // client id
-    const [rows] = await sequelize.query(`
+    const [rows] = await sequelize.query(
+      `
       SELECT id, name, email, phone, designation, department
       FROM spocs
       WHERE client_id = $1
       ORDER BY name ASC
-    `, { bind: [id] });
+    `,
+      { bind: [id] },
+    );
 
-    const spocs = rows.map(r => ({
+    const spocs = rows.map((r) => ({
       id: r.id,
       name: r.name,
       email: r.email,
       phone: r.phone,
       designation: r.designation,
-      department: r.department
+      department: r.department,
     }));
 
     return res.json(spocs);
   } catch (error) {
-    console.error('Error fetching client SPOCs:', error);
-    return res.status(500).json({ message: 'Error fetching SPOCs', error: error.message });
+    console.error("Error fetching client SPOCs:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching SPOCs", error: error.message });
   }
 };
 
@@ -919,5 +1124,5 @@ module.exports = {
   getProjectPerformance,
   getMyProjects,
   getClients,
-  getClientSpocs
+  getClientSpocs,
 };
