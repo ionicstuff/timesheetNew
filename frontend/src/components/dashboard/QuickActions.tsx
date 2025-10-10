@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -16,8 +17,23 @@ import {
   MessageSquare,
   BarChart3,
 } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import EventForm from '@/components/calendar/EventForm';
+import { useToast } from '@/hooks/use-toast';
 
 const QuickActions = () => {
+  const [eventOpen, setEventOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleEventSubmit = (data: any) => {
+    console.log('Event data:', data);
+    toast({
+      title: 'Event created',
+      description: 'Your event has been created successfully.',
+    });
+    setEventOpen(false);
+  };
+
   const actions = [
     {
       title: 'Create Task',
@@ -31,7 +47,7 @@ const QuickActions = () => {
       description: 'Plan a meeting or event',
       icon: <Calendar className="h-5 w-5" />,
       color: 'bg-green-500',
-      onClick: () => console.log('Schedule event'),
+      onClick: () => setEventOpen(true),
     },
     {
       title: 'New Document',
@@ -88,6 +104,10 @@ const QuickActions = () => {
             </Button>
           ))}
         </div>
+
+        <Modal open={eventOpen} onOpenChange={setEventOpen} title="Create New Event" size="lg">
+          <EventForm onSubmit={handleEventSubmit} onCancel={() => setEventOpen(false)} />
+        </Modal>
       </CardContent>
     </Card>
   );
