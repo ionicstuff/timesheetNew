@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Search,
@@ -9,20 +8,18 @@ import {
   CheckCircle,
   LayoutGrid,
   Users,
-  Calendar,
 } from 'lucide-react';
 import TaskCard from '@/components/tasks/TaskCard';
 import ProjectCard from '@/components/projects/ProjectCard';
 import DocumentCard from '@/components/documents/DocumentCard';
 import TeamMemberCard from '@/components/team/TeamMemberCard';
 import { Input } from '@/components/ui/input';
+import { useSearch } from '@/contexts/SearchContext';
 
 const SearchResults = () => {
-  // In a real app, you would get search params from the URL
-  // For now, we'll simulate search results
-  const [searchTerm, setSearchTerm] = useState('design');
+  const { searchTerm, setSearchTerm } = useSearch();
 
-  // Simulated search results
+  // Simulated source data (now includes Research folder and User Research doc)
   const tasks = [
     {
       id: 1,
@@ -68,6 +65,15 @@ const SearchResults = () => {
       items: 8,
       isFolder: true,
     },
+    { id: 3, name: 'User Research', type: 'doc', updatedAt: '1 week ago' },
+    {
+      id: 4,
+      name: 'Research',
+      type: 'folder',
+      updatedAt: '1 week ago',
+      items: 8,
+      isFolder: true,
+    },
   ];
 
   const teamMembers = [
@@ -89,17 +95,59 @@ const SearchResults = () => {
     },
   ];
 
+  const term = (searchTerm || '').trim().toLowerCase();
+
+  const tasksFiltered = useMemo(
+    () =>
+      tasks.filter(
+        (t) =>
+          !term ||
+          t.title.toLowerCase().includes(term) ||
+          (t.project || '').toLowerCase().includes(term)
+      ),
+    [term]
+  );
+
+  const projectsFiltered = useMemo(
+    () =>
+      projects.filter(
+        (p) =>
+          !term ||
+          p.name.toLowerCase().includes(term) ||
+          p.description.toLowerCase().includes(term)
+      ),
+    [term]
+  );
+
+  const documentsFiltered = useMemo(
+    () =>
+      documents.filter((d) => !term || d.name.toLowerCase().includes(term)),
+    [term]
+  );
+
+  const membersFiltered = useMemo(
+    () =>
+      teamMembers.filter(
+        (m) =>
+          !term ||
+          m.name.toLowerCase().includes(term) ||
+          (m.role || '').toLowerCase().includes(term)
+      ),
+    [term]
+  );
+
+  const totalCount =
+    tasksFiltered.length +
+    projectsFiltered.length +
+    documentsFiltered.length +
+    membersFiltered.length;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Search Results</h1>
         <p className="text-muted-foreground">
-          Found{' '}
-          {tasks.length +
-            projects.length +
-            documents.length +
-            teamMembers.length}{' '}
-          results for "{searchTerm}"
+          Found {totalCount} results for "{searchTerm}"
         </p>
       </div>
 
@@ -114,7 +162,7 @@ const SearchResults = () => {
         />
       </div>
 
-      {tasks.length > 0 && (
+      {tasksFiltered.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="h-5 w-5 text-muted-foreground" />
@@ -124,7 +172,7 @@ const SearchResults = () => {
             </span>
           </div>
           <div className="space-y-3">
-            {tasks.map((task) => (
+            {tasksFiltered.map((task) => (
               <TaskCard
                 key={task.id}
                 id={task.id}
@@ -141,7 +189,7 @@ const SearchResults = () => {
         </div>
       )}
 
-      {projects.length > 0 && (
+      {projectsFiltered.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <LayoutGrid className="h-5 w-5 text-muted-foreground" />
@@ -151,7 +199,7 @@ const SearchResults = () => {
             </span>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
+            {projectsFiltered.map((project) => (
               <ProjectCard
                 key={project.id}
                 id={project.id}
@@ -170,7 +218,7 @@ const SearchResults = () => {
         </div>
       )}
 
-      {documents.length > 0 && (
+      {documentsFiltered.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <FileText className="h-5 w-5 text-muted-foreground" />
@@ -180,7 +228,7 @@ const SearchResults = () => {
             </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {documents.map((doc) => (
+            {documentsFiltered.map((doc) => (
               <DocumentCard
                 key={doc.id}
                 id={doc.id}
@@ -195,7 +243,7 @@ const SearchResults = () => {
         </div>
       )}
 
-      {teamMembers.length > 0 && (
+      {membersFiltered.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-muted-foreground" />
@@ -205,7 +253,7 @@ const SearchResults = () => {
             </span>
           </div>
           <div className="space-y-3">
-            {teamMembers.map((member) => (
+            {membersFiltered.map((member) => (
               <TeamMemberCard
                 key={member.id}
                 id={member.id}
@@ -220,10 +268,7 @@ const SearchResults = () => {
         </div>
       )}
 
-      {tasks.length === 0 &&
-        projects.length === 0 &&
-        documents.length === 0 &&
-        teamMembers.length === 0 && (
+      {totalCount === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-1">No results found</h3>

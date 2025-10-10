@@ -5,11 +5,13 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSearch } from '@/contexts/SearchContext';
+import { useNavigate } from 'react-router-dom';
 
 const GlobalSearch = () => {
   const { searchTerm, setSearchTerm } = useSearch();
   const [isOpen, setIsOpen] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLocalSearchTerm(searchTerm);
@@ -17,8 +19,11 @@ const GlobalSearch = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchTerm(localSearchTerm);
+    const term = (localSearchTerm || '').trim();
+    setSearchTerm(term);
     setIsOpen(false);
+    // Navigate to the dedicated results page
+    navigate('/search');
   };
 
   const clearSearch = () => {
