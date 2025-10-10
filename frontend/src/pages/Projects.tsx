@@ -207,6 +207,30 @@ const Projects = () => {
     }
   };
 
+  const duplicateProject = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/projects/${id}/duplicate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to duplicate project');
+      }
+      const json = await res.json().catch(() => ({}));
+      const newId = json?.project?.id || 'new';
+      toast({ title: 'Duplicated', description: `Project duplicated as #${newId}.` });
+      setReloadTick((x) => x + 1);
+    } catch (e: any) {
+      toast({
+        title: 'Duplicate failed',
+        description: e.message || 'Request failed',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -277,6 +301,7 @@ const Projects = () => {
               dueDate={project.dueDate}
               membersList={project.membersList}
               onArchive={archiveProject}
+              onDuplicate={duplicateProject}
             />
           ))}
         </div>
@@ -377,6 +402,9 @@ const Projects = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>Share</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateProject(project.id)}>
+                          Duplicate
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             project.status === 'completed'

@@ -1009,6 +1009,72 @@ const getClientSpocs = async (req, res) => {
   }
 };
 
+// Duplicate a project (basic: copy project row and tasks)
+const duplicateProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Load base project
+    const base = await Project.findByPk(id);
+    if (!base) return res.status(404).json({ message: 'Source project not found' });
+
+    // Generate new project code and name
+    const baseName = base.projectName || base.project_name || 'Project';
+    const newName = `${baseName} (Copy)`;
+    const codeSeed = newName.toUpperCase().replace(/\s+/g, '_').substring(0, 16);
+    const projectCode = `${codeSeed}_${Date.now().toString().slice(-4)}`; // simple uniqueness
+
+    // Create the new project (using raw SQL similar to createProject for consistency)
+    const [result] = await sequelize.query(
+      `
+      INSERT INTO projects (project_code, project_name, description, client_id, spoc_id, project_manager_id, start_date, end_date, brief_received_on, estimated_time, is_active, created_by, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, $7, $8, $9, $10, NOW(), NOW())
+      RETURNING *
+    `,
+      {
+        bind: [
+          projectCode,
+          newName,
+          base.description || null,
+          base.clientId || base.client_id || null,
+          base.spocId || base.spoc_id || null,
+          base.projectManagerId || base.project_manager_id || null,
+          base.briefReceivedOn || base.brief_received_on || null,
+          base.estimatedTime || base.estimated_time || 0,
+          true,
+          req.user?.id || null,
+        ],
+      },
+    );
+
+    const newProject = result?.[0];
+    if (!newProject) return res.status(500).json({ message: 'Failed to create duplicate project' });
+
+    // Copy tasks
+    const srcTasks = await Task.findAll({ where: { projectId: base.id } });
+    for (const t of srcTasks) {
+      await Task.create({
+        projectId: newProject.id,
+        name: t.name,
+        description: t.description,
+        assignedTo: t.assignedTo,
+        estimatedTime: t.estimatedTime ?? 0,
+        status: 'pending',
+        acceptanceStatus: 'pending',
+        priority: t.priority || 'Medium',
+        sprintStartDate: t.sprintStartDate || null,
+        sprintEndDate: t.sprintEndDate || null,
+        createdBy: req.user?.id || null,
+      });
+    }
+
+    return res.status(201).json({ message: 'Project duplicated', project: { id: newProject.id } });
+  } catch (error) {
+    console.error('Error duplicating project:', error);
+    return res.status(500).json({ message: 'Failed to duplicate project', error: error.message });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
@@ -1026,4 +1092,5 @@ module.exports = {
   getMyProjects,
   getClients,
   getClientSpocs,
+  duplicateProject,
 };

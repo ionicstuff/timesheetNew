@@ -25,6 +25,7 @@ interface ProjectCardProps {
   dueDate: string;
   membersList?: string[];
   onArchive?: (id: number) => void;
+  onDuplicate?: (id: number) => void;
 }
 
 const ProjectCard = ({
@@ -70,6 +71,9 @@ const ProjectCard = ({
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem>Share</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+              Duplicate
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (status === 'completed') {
