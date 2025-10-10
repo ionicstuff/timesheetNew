@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Square, Clock, Search, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,11 @@ const TimeTracker = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Interval and time bookkeeping (StrictMode-safe)
+  const intervalRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+  const offsetRef = useRef(0);
+
   // Mock tasks data
   const tasks: Task[] = [
     { id: 1, title: 'Design homepage', project: 'Website Redesign' },
@@ -46,28 +51,67 @@ const TimeTracker = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle timer logic
+  // Handle timer logic (StrictMode-safe and resilient to re-renders)
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
     if (isTracking) {
-      interval = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
+      // Initialize start time on first start or after resume
+      if (startRef.current == null) {
+        startRef.current = Date.now();
+      }
+      // Create interval once
+      if (intervalRef.current == null) {
+        intervalRef.current = window.setInterval(() => {
+          const start = startRef.current ?? Date.now();
+          const elapsedMs = offsetRef.current + (Date.now() - start);
+          setElapsedTime(Math.floor(elapsedMs / 1000));
+        }, 1000);
+      }
+    } else {
+      // When not tracking, ensure interval is cleared
+      if (intervalRef.current != null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
+    // Cleanup on unmount or dependency change
     return () => {
-      if (interval) clearInterval(interval);
+      if (intervalRef.current != null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, [isTracking]);
 
   const toggleTracking = () => {
-    setIsTracking(!isTracking);
+    setIsTracking((prev) => {
+      const next = !prev;
+      if (next) {
+        // Starting/resuming
+        if (startRef.current == null) {
+          startRef.current = Date.now();
+        }
+      } else {
+        // Pausing: accumulate elapsed offset
+        if (startRef.current != null) {
+          offsetRef.current += Date.now() - startRef.current;
+          startRef.current = null;
+        }
+      }
+      return next;
+    });
   };
 
   const stopTracking = () => {
     setIsTracking(false);
     setElapsedTime(0);
+    // Reset bookkeeping
+    startRef.current = null;
+    offsetRef.current = 0;
+    if (intervalRef.current != null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const selectTask = (task: Task) => {
