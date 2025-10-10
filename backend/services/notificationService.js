@@ -54,6 +54,18 @@ function buildPayload(type, ctx = {}) {
         body: `${ctx.taskName || 'Task'} is now ${ctx.status || 'updated'}`,
         link: `/tasks/${ctx.taskId || ''}`,
       };
+    case NotificationTypes.TASK_DUE_SOON:
+      return {
+        title: 'Task due soon',
+        body: `${ctx.taskName || 'Task'} is due ${ctx.dueAt ? 'by ' + new Date(ctx.dueAt).toLocaleString() : 'soon'}`,
+        link: `/tasks/${ctx.taskId || ''}`,
+      };
+    case NotificationTypes.TASK_OVERDUE:
+      return {
+        title: 'Task overdue',
+        body: `${ctx.taskName || 'Task'} is overdue${ctx.dueAt ? ' (was due ' + new Date(ctx.dueAt).toLocaleString() + ')' : ''}`,
+        link: `/tasks/${ctx.taskId || ''}`,
+      };
     case NotificationTypes.TASK_ACCEPTED:
       return {
         title: 'Task accepted',
