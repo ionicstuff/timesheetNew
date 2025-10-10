@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const PermissionMaster = sequelize.define(
-  "PermissionMaster",
+  'PermissionMaster',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -13,7 +13,7 @@ const PermissionMaster = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
-      field: "permission_code",
+      field: 'permission_code',
       validate: {
         notEmpty: true,
       },
@@ -21,7 +21,7 @@ const PermissionMaster = sequelize.define(
     permissionName: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: "permission_name",
+      field: 'permission_name',
       validate: {
         notEmpty: true,
       },
@@ -33,22 +33,14 @@ const PermissionMaster = sequelize.define(
     moduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "module_id",
+      field: 'module_id',
       references: {
-        model: "module_masters",
-        key: "id",
+        model: 'module_masters',
+        key: 'id',
       },
     },
     action: {
-      type: DataTypes.ENUM(
-        "create",
-        "read",
-        "update",
-        "delete",
-        "import",
-        "export",
-        "approve",
-      ),
+      type: DataTypes.ENUM('create', 'read', 'update', 'delete', 'import', 'export', 'approve'),
       allowNull: false,
       validate: {
         notEmpty: true,
@@ -57,37 +49,36 @@ const PermissionMaster = sequelize.define(
     resource: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      comment:
-        "Resource this permission applies to (e.g., timesheet, user, project)",
+      comment: 'Resource this permission applies to (e.g., timesheet, user, project)',
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
+      field: 'is_active',
     },
   },
   {
-    tableName: "permission_masters",
+    tableName: 'permission_masters',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
-        fields: ["permission_code"],
+        fields: ['permission_code'],
       },
       {
-        fields: ["module_id"],
+        fields: ['module_id'],
       },
       {
-        fields: ["action"],
+        fields: ['action'],
       },
       {
-        fields: ["resource"],
+        fields: ['resource'],
       },
       {
         unique: true,
-        fields: ["module_id", "action", "resource"],
+        fields: ['module_id', 'action', 'resource'],
       },
     ],
   },

@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const InvoiceRevision = sequelize.define(
-  "InvoiceRevision",
+  'InvoiceRevision',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,7 +12,7 @@ const InvoiceRevision = sequelize.define(
     invoiceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "invoice_id",
+      field: 'invoice_id',
     },
     version: {
       type: DataTypes.INTEGER,
@@ -21,19 +21,19 @@ const InvoiceRevision = sequelize.define(
     pdfPath: {
       type: DataTypes.STRING(500),
       allowNull: false,
-      field: "pdf_path",
+      field: 'pdf_path',
     },
     createdByUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "created_by_user_id",
+      field: 'created_by_user_id',
     },
   },
   {
-    tableName: "invoice_revisions",
+    tableName: 'invoice_revisions',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
+    createdAt: 'created_at',
     updatedAt: false,
   },
 );

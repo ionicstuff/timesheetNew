@@ -1,9 +1,9 @@
-const { Sequelize } = require("sequelize");
-const bcrypt = require("bcryptjs");
-require("dotenv").config();
+const { Sequelize } = require('sequelize');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 // Use shared DB config (SSL, retries, logging already configured)
-const sequelize = require("../../config/database");
+const sequelize = require('../../config/database');
 
 // ====================
 // DASHBOARD STATS
@@ -11,20 +11,12 @@ const sequelize = require("../../config/database");
 const getDashboardStats = async (req, res) => {
   try {
     // Get counts using raw SQL queries
-    const [totalUsersResult] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM users",
-    );
-    const [totalRolesResult] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM role_masters",
-    );
-    const [totalClientsResult] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM clients",
-    );
-    const [totalProjectsResult] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM projects",
-    );
+    const [totalUsersResult] = await sequelize.query('SELECT COUNT(*) as count FROM users');
+    const [totalRolesResult] = await sequelize.query('SELECT COUNT(*) as count FROM role_masters');
+    const [totalClientsResult] = await sequelize.query('SELECT COUNT(*) as count FROM clients');
+    const [totalProjectsResult] = await sequelize.query('SELECT COUNT(*) as count FROM projects');
     const [activeUsersResult] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM users WHERE is_active = true",
+      'SELECT COUNT(*) as count FROM users WHERE is_active = true',
     );
 
     const totalUsers = parseInt(totalUsersResult[0].count);
@@ -41,9 +33,9 @@ const getDashboardStats = async (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    console.error('Error fetching dashboard stats:', error);
     res.status(500).json({
-      message: "Error fetching dashboard stats",
+      message: 'Error fetching dashboard stats',
       error: error.message,
     });
   }
@@ -73,26 +65,18 @@ const getRoles = async (req, res) => {
 
     res.json(roles);
   } catch (error) {
-    console.error("Error fetching roles:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching roles", error: error.message });
+    console.error('Error fetching roles:', error);
+    res.status(500).json({ message: 'Error fetching roles', error: error.message });
   }
 };
 
 const createRole = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      level,
-      canManageUsers,
-      canManageProjects,
-      canViewReports,
-    } = req.body;
+    const { name, description, level, canManageUsers, canManageProjects, canViewReports } =
+      req.body;
 
     // Generate role code from name
-    const roleCode = name.toUpperCase().replace(/\s+/g, "_").substring(0, 20);
+    const roleCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
 
     const [result] = await sequelize.query(
       `
@@ -113,28 +97,18 @@ const createRole = async (req, res) => {
       },
     );
 
-    res
-      .status(201)
-      .json({ message: "Role created successfully", role: result[0] });
+    res.status(201).json({ message: 'Role created successfully', role: result[0] });
   } catch (error) {
-    console.error("Error creating role:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating role", error: error.message });
+    console.error('Error creating role:', error);
+    res.status(500).json({ message: 'Error creating role', error: error.message });
   }
 };
 
 const updateRole = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      description,
-      level,
-      canManageUsers,
-      canManageProjects,
-      canViewReports,
-    } = req.body;
+    const { name, description, level, canManageUsers, canManageProjects, canViewReports } =
+      req.body;
 
     const [result] = await sequelize.query(
       `
@@ -158,15 +132,13 @@ const updateRole = async (req, res) => {
     );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "Role not found" });
+      return res.status(404).json({ message: 'Role not found' });
     }
 
-    res.json({ message: "Role updated successfully" });
+    res.json({ message: 'Role updated successfully' });
   } catch (error) {
-    console.error("Error updating role:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating role", error: error.message });
+    console.error('Error updating role:', error);
+    res.status(500).json({ message: 'Error updating role', error: error.message });
   }
 };
 
@@ -176,7 +148,7 @@ const deleteRole = async (req, res) => {
 
     // Check if role is being used by any users
     const [usersWithRole] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM users WHERE role_id = $1",
+      'SELECT COUNT(*) as count FROM users WHERE role_id = $1',
       {
         bind: [id],
       },
@@ -188,16 +160,14 @@ const deleteRole = async (req, res) => {
       });
     }
 
-    await sequelize.query("DELETE FROM role_masters WHERE id = $1", {
+    await sequelize.query('DELETE FROM role_masters WHERE id = $1', {
       bind: [id],
     });
 
-    res.json({ message: "Role deleted successfully" });
+    res.json({ message: 'Role deleted successfully' });
   } catch (error) {
-    console.error("Error deleting role:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting role", error: error.message });
+    console.error('Error deleting role:', error);
+    res.status(500).json({ message: 'Error deleting role', error: error.message });
   }
 };
 
@@ -251,10 +221,8 @@ const getUsers = async (req, res) => {
 
     res.json(transformedUsers);
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching users", error: error.message });
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users', error: error.message });
   }
 };
 
@@ -285,7 +253,7 @@ const createUser = async (req, res) => {
 
     if (existingUser.length > 0) {
       return res.status(400).json({
-        message: "User already exists with this email or employee ID",
+        message: 'User already exists with this email or employee ID',
       });
     }
 
@@ -337,14 +305,10 @@ const createUser = async (req, res) => {
       });
     }
 
-    res
-      .status(201)
-      .json({ message: "User created successfully", user: newUser });
+    res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
-    console.error("Error creating user:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating user", error: error.message });
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Error creating user', error: error.message });
   }
 };
 
@@ -389,10 +353,10 @@ const updateUser = async (req, res) => {
     );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    if (typeof managerId !== "undefined") {
+    if (typeof managerId !== 'undefined') {
       await sequelize.transaction(async (t) => {
         await sequelize.query(
           `UPDATE user_hierarchies
@@ -406,11 +370,7 @@ const updateUser = async (req, res) => {
                user_id, parent_user_id, hierarchy_level, relationship_type, effective_from, is_active, created_by, created_at, updated_at
              ) VALUES ($1, $2, 1, 'direct_report', NOW(), true, $3, NOW(), NOW())`,
             {
-              bind: [
-                parseInt(id, 10),
-                parseInt(managerId, 10),
-                req.user?.id || null,
-              ],
+              bind: [parseInt(id, 10), parseInt(managerId, 10), req.user?.id || null],
               transaction: t,
             },
           );
@@ -418,12 +378,10 @@ const updateUser = async (req, res) => {
       });
     }
 
-    res.json({ message: "User updated successfully" });
+    res.json({ message: 'User updated successfully' });
   } catch (error) {
-    console.error("Error updating user:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating user", error: error.message });
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Error updating user', error: error.message });
   }
 };
 
@@ -431,16 +389,14 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await sequelize.query("DELETE FROM users WHERE id = $1", {
+    await sequelize.query('DELETE FROM users WHERE id = $1', {
       bind: [id],
     });
 
-    res.json({ message: "User deleted successfully" });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting user", error: error.message });
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Error deleting user', error: error.message });
   }
 };
 
@@ -468,29 +424,26 @@ const getClients = async (req, res) => {
       contactPhone: client.phone,
       address: client.address,
       isActive: client.is_active,
-      projects: Array.from(
-        { length: parseInt(client.project_count) },
-        (_, i) => ({ id: i, name: `Project ${i + 1}` }),
-      ),
+      projects: Array.from({ length: parseInt(client.project_count) }, (_, i) => ({
+        id: i,
+        name: `Project ${i + 1}`,
+      })),
       createdAt: client.created_at,
     }));
 
     res.json(transformedClients);
   } catch (error) {
-    console.error("Error fetching clients:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching clients", error: error.message });
+    console.error('Error fetching clients:', error);
+    res.status(500).json({ message: 'Error fetching clients', error: error.message });
   }
 };
 
 const createClient = async (req, res) => {
   try {
-    const { name, description, contactEmail, contactPhone, address, isActive } =
-      req.body;
+    const { name, description, contactEmail, contactPhone, address, isActive } = req.body;
 
     // Generate client code
-    const clientCode = name.toUpperCase().replace(/\s+/g, "_").substring(0, 20);
+    const clientCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
 
     const [result] = await sequelize.query(
       `
@@ -511,22 +464,17 @@ const createClient = async (req, res) => {
       },
     );
 
-    res
-      .status(201)
-      .json({ message: "Client created successfully", client: result[0] });
+    res.status(201).json({ message: 'Client created successfully', client: result[0] });
   } catch (error) {
-    console.error("Error creating client:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating client", error: error.message });
+    console.error('Error creating client:', error);
+    res.status(500).json({ message: 'Error creating client', error: error.message });
   }
 };
 
 const updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, contactEmail, contactPhone, address, isActive } =
-      req.body;
+    const { name, description, contactEmail, contactPhone, address, isActive } = req.body;
 
     const [result] = await sequelize.query(
       `
@@ -537,28 +485,18 @@ const updateClient = async (req, res) => {
       RETURNING *
     `,
       {
-        bind: [
-          name,
-          description,
-          contactEmail,
-          contactPhone,
-          address,
-          isActive,
-          id,
-        ],
+        bind: [name, description, contactEmail, contactPhone, address, isActive, id],
       },
     );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "Client not found" });
+      return res.status(404).json({ message: 'Client not found' });
     }
 
-    res.json({ message: "Client updated successfully" });
+    res.json({ message: 'Client updated successfully' });
   } catch (error) {
-    console.error("Error updating client:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating client", error: error.message });
+    console.error('Error updating client:', error);
+    res.status(500).json({ message: 'Error updating client', error: error.message });
   }
 };
 
@@ -568,7 +506,7 @@ const deleteClient = async (req, res) => {
 
     // Check if client has projects
     const [projects] = await sequelize.query(
-      "SELECT COUNT(*) as count FROM projects WHERE client_id = $1",
+      'SELECT COUNT(*) as count FROM projects WHERE client_id = $1',
       {
         bind: [id],
       },
@@ -580,16 +518,14 @@ const deleteClient = async (req, res) => {
       });
     }
 
-    await sequelize.query("DELETE FROM clients WHERE id = $1", {
+    await sequelize.query('DELETE FROM clients WHERE id = $1', {
       bind: [id],
     });
 
-    res.json({ message: "Client deleted successfully" });
+    res.json({ message: 'Client deleted successfully' });
   } catch (error) {
-    console.error("Error deleting client:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting client", error: error.message });
+    console.error('Error deleting client:', error);
+    res.status(500).json({ message: 'Error deleting client', error: error.message });
   }
 };
 
@@ -632,30 +568,17 @@ const getProjects = async (req, res) => {
 
     res.json(transformedProjects);
   } catch (error) {
-    console.error("Error fetching projects:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching projects", error: error.message });
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Error fetching projects', error: error.message });
   }
 };
 
 const createProject = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      clientId,
-      managerId,
-      startDate,
-      endDate,
-      isActive,
-    } = req.body;
+    const { name, description, clientId, managerId, startDate, endDate, isActive } = req.body;
 
     // Generate project code
-    const projectCode = name
-      .toUpperCase()
-      .replace(/\s+/g, "_")
-      .substring(0, 20);
+    const projectCode = name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
 
     const [result] = await sequelize.query(
       `
@@ -677,29 +600,17 @@ const createProject = async (req, res) => {
       },
     );
 
-    res
-      .status(201)
-      .json({ message: "Project created successfully", project: result[0] });
+    res.status(201).json({ message: 'Project created successfully', project: result[0] });
   } catch (error) {
-    console.error("Error creating project:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating project", error: error.message });
+    console.error('Error creating project:', error);
+    res.status(500).json({ message: 'Error creating project', error: error.message });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      description,
-      clientId,
-      managerId,
-      startDate,
-      endDate,
-      isActive,
-    } = req.body;
+    const { name, description, clientId, managerId, startDate, endDate, isActive } = req.body;
 
     const [result] = await sequelize.query(
       `
@@ -710,29 +621,18 @@ const updateProject = async (req, res) => {
       RETURNING *
     `,
       {
-        bind: [
-          name,
-          description,
-          clientId,
-          managerId,
-          startDate,
-          endDate,
-          isActive,
-          id,
-        ],
+        bind: [name, description, clientId, managerId, startDate, endDate, isActive, id],
       },
     );
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({ message: 'Project not found' });
     }
 
-    res.json({ message: "Project updated successfully" });
+    res.json({ message: 'Project updated successfully' });
   } catch (error) {
-    console.error("Error updating project:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating project", error: error.message });
+    console.error('Error updating project:', error);
+    res.status(500).json({ message: 'Error updating project', error: error.message });
   }
 };
 
@@ -740,16 +640,14 @@ const deleteProject = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await sequelize.query("DELETE FROM projects WHERE id = $1", {
+    await sequelize.query('DELETE FROM projects WHERE id = $1', {
       bind: [id],
     });
 
-    res.json({ message: "Project deleted successfully" });
+    res.json({ message: 'Project deleted successfully' });
   } catch (error) {
-    console.error("Error deleting project:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting project", error: error.message });
+    console.error('Error deleting project:', error);
+    res.status(500).json({ message: 'Error deleting project', error: error.message });
   }
 };
 
@@ -763,10 +661,8 @@ const getPermissions = async (req, res) => {
     `);
     res.json(permissions);
   } catch (error) {
-    console.error("Error fetching permissions:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching permissions", error: error.message });
+    console.error('Error fetching permissions:', error);
+    res.status(500).json({ message: 'Error fetching permissions', error: error.message });
   }
 };
 
@@ -777,10 +673,8 @@ const getModules = async (req, res) => {
     `);
     res.json(modules);
   } catch (error) {
-    console.error("Error fetching modules:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching modules", error: error.message });
+    console.error('Error fetching modules:', error);
+    res.status(500).json({ message: 'Error fetching modules', error: error.message });
   }
 };
 

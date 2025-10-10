@@ -1,18 +1,18 @@
-const jwt = require("jsonwebtoken");
-const sequelize = require("../../config/database");
-require("dotenv").config();
+const jwt = require('jsonwebtoken');
+const sequelize = require('../../config/database');
+require('dotenv').config();
 
 const adminAuthMiddleware = async (req, res, next) => {
-  const token = req.header("x-auth-token");
+  const token = req.header('x-auth-token');
 
-  console.log("=== Admin Auth Debug ===");
-  console.log("Request URL:", req.originalUrl);
-  console.log("Token received:", token ? "YES" : "NO");
-  console.log("Token value:", token ? token.substring(0, 20) + "..." : "none");
+  console.log('=== Admin Auth Debug ===');
+  console.log('Request URL:', req.originalUrl);
+  console.log('Token received:', token ? 'YES' : 'NO');
+  console.log('Token value:', token ? token.substring(0, 20) + '...' : 'none');
 
   if (!token) {
-    console.log("No token provided");
-    return res.status(401).json({ message: "No token, authorization denied" });
+    console.log('No token provided');
+    return res.status(401).json({ message: 'No token, authorization denied' });
   }
 
   try {
@@ -41,29 +41,25 @@ const adminAuthMiddleware = async (req, res, next) => {
     );
 
     if (users.length === 0) {
-      return res
-        .status(403)
-        .json({ message: "Access denied. User not found or inactive." });
+      return res.status(403).json({ message: 'Access denied. User not found or inactive.' });
     }
 
     const user = users[0];
 
     // Check if user has admin role (either legacy role 'admin' or role_name 'Admin')
     const isAdmin =
-      user.legacy_role === "admin" ||
-      (user.role_name && user.role_name.toLowerCase() === "admin") ||
+      user.legacy_role === 'admin' ||
+      (user.role_name && user.role_name.toLowerCase() === 'admin') ||
       user.level === 1; // Level 1 is typically admin level
 
     if (!isAdmin) {
-      return res
-        .status(403)
-        .json({ message: "Access denied. Admin privileges required." });
+      return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
     }
 
     next();
   } catch (err) {
     console.error(err.message);
-    res.status(401).json({ message: "Token is not valid" });
+    res.status(401).json({ message: 'Token is not valid' });
   }
 };
 

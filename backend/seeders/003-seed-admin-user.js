@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require('bcryptjs');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -22,7 +22,7 @@ module.exports = {
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("admin123", salt);
+    const hashedPassword = await bcrypt.hash('admin123', salt);
 
     // Check if admin user already exists
     const [existingAdmin] = await queryInterface.sequelize.query(
@@ -36,19 +36,17 @@ module.exports = {
          VALUES ('admin', 'admin@company.com', '${hashedPassword}', 'Admin', 'User', ${adminRoleId}, true, NOW(), NOW());`,
       );
 
-      console.log("✅ Admin user created successfully!");
-      console.log("📧 Email: admin@company.com");
-      console.log("🔑 Password: admin123");
+      console.log('✅ Admin user created successfully!');
+      console.log('📧 Email: admin@company.com');
+      console.log('🔑 Password: admin123');
     } else {
-      console.log("ℹ️  Admin user already exists");
+      console.log('ℹ️  Admin user already exists');
     }
   },
 
   down: async (queryInterface, Sequelize) => {
     // Remove admin user
-    await queryInterface.sequelize.query(
-      `DELETE FROM "Users" WHERE email = 'admin@company.com';`,
-    );
+    await queryInterface.sequelize.query(`DELETE FROM "Users" WHERE email = 'admin@company.com';`);
 
     // Optionally remove admin role if no other users have it
     const [usersWithAdminRole] = await queryInterface.sequelize.query(
@@ -58,9 +56,7 @@ module.exports = {
     );
 
     if (usersWithAdminRole[0].count === 0) {
-      await queryInterface.sequelize.query(
-        `DELETE FROM "RoleMasters" WHERE name = 'Admin';`,
-      );
+      await queryInterface.sequelize.query(`DELETE FROM "RoleMasters" WHERE name = 'Admin';`);
     }
   },
 };

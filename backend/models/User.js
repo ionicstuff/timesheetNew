@@ -1,9 +1,9 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
-const bcrypt = require("bcryptjs");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define(
-  "User",
+  'User',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -14,17 +14,17 @@ const User = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
-      field: "employee_id",
+      field: 'employee_id',
     },
     firstName: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: "first_name",
+      field: 'first_name',
     },
     lastName: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: "last_name",
+      field: 'last_name',
     },
     email: {
       type: DataTypes.STRING(255),
@@ -41,19 +41,19 @@ const User = sequelize.define(
     passwordHash: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      field: "password_hash",
+      field: 'password_hash',
     },
     role: {
-      type: DataTypes.ENUM("admin", "hr", "manager", "employee"),
-      defaultValue: "employee",
+      type: DataTypes.ENUM('admin', 'hr', 'manager', 'employee'),
+      defaultValue: 'employee',
     },
     roleId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "role_id",
+      field: 'role_id',
       references: {
-        model: "role_masters",
-        key: "id",
+        model: 'role_masters',
+        key: 'id',
       },
     },
     department: {
@@ -67,35 +67,35 @@ const User = sequelize.define(
     dateOfJoining: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      field: "date_of_joining",
+      field: 'date_of_joining',
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
+      field: 'is_active',
     },
     profilePicture: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      field: "profile_picture",
+      field: 'profile_picture',
     },
     resetPasswordToken: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      field: "reset_password_token",
+      field: 'reset_password_token',
     },
     resetPasswordExpires: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "reset_password_expires",
+      field: 'reset_password_expires',
     },
   },
   {
-    tableName: "users",
+    tableName: 'users',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   },
 );
 
@@ -127,7 +127,7 @@ User.beforeCreate(async (user) => {
 });
 
 User.beforeUpdate(async (user) => {
-  if (user.changed("passwordHash")) {
+  if (user.changed('passwordHash')) {
     user.passwordHash = await User.hashPassword(user.passwordHash);
   }
 });

@@ -9,158 +9,158 @@ const {
   Client,
   Project,
   Task,
-} = require("./index");
+} = require('./index');
 
 // User and RoleMaster associations
 User.belongsTo(RoleMaster, {
-  foreignKey: "roleId",
-  as: "roleMaster",
+  foreignKey: 'roleId',
+  as: 'roleMaster',
 });
 
 RoleMaster.hasMany(User, {
-  foreignKey: "roleId",
-  as: "users",
+  foreignKey: 'roleId',
+  as: 'users',
 });
 
 // ModuleMaster and PermissionMaster associations
 PermissionMaster.belongsTo(ModuleMaster, {
-  foreignKey: "moduleId",
-  as: "module",
+  foreignKey: 'moduleId',
+  as: 'module',
 });
 
 ModuleMaster.hasMany(PermissionMaster, {
-  foreignKey: "moduleId",
-  as: "permissions",
+  foreignKey: 'moduleId',
+  as: 'permissions',
 });
 
 // RoleMaster and PermissionMaster many-to-many through RolePermission
 RoleMaster.belongsToMany(PermissionMaster, {
   through: RolePermission,
-  foreignKey: "roleId",
-  otherKey: "permissionId",
-  as: "permissions",
+  foreignKey: 'roleId',
+  otherKey: 'permissionId',
+  as: 'permissions',
 });
 
 PermissionMaster.belongsToMany(RoleMaster, {
   through: RolePermission,
-  foreignKey: "permissionId",
-  otherKey: "roleId",
-  as: "roles",
+  foreignKey: 'permissionId',
+  otherKey: 'roleId',
+  as: 'roles',
 });
 
 // RolePermission associations
 RolePermission.belongsTo(RoleMaster, {
-  foreignKey: "roleId",
-  as: "role",
+  foreignKey: 'roleId',
+  as: 'role',
 });
 
 RolePermission.belongsTo(PermissionMaster, {
-  foreignKey: "permissionId",
-  as: "permission",
+  foreignKey: 'permissionId',
+  as: 'permission',
 });
 
 RolePermission.belongsTo(User, {
-  foreignKey: "grantedBy",
-  as: "grantedByUser",
+  foreignKey: 'grantedBy',
+  as: 'grantedByUser',
 });
 
 // UserHierarchy associations
 UserHierarchy.belongsTo(User, {
-  foreignKey: "userId",
-  as: "user",
+  foreignKey: 'userId',
+  as: 'user',
 });
 
 UserHierarchy.belongsTo(User, {
-  foreignKey: "parentUserId",
-  as: "parentUser",
+  foreignKey: 'parentUserId',
+  as: 'parentUser',
 });
 
 UserHierarchy.belongsTo(User, {
-  foreignKey: "createdBy",
-  as: "creator",
+  foreignKey: 'createdBy',
+  as: 'creator',
 });
 
 User.hasMany(UserHierarchy, {
-  foreignKey: "userId",
-  as: "hierarchyAsUser",
+  foreignKey: 'userId',
+  as: 'hierarchyAsUser',
 });
 
 User.hasMany(UserHierarchy, {
-  foreignKey: "parentUserId",
-  as: "hierarchyAsParent",
+  foreignKey: 'parentUserId',
+  as: 'hierarchyAsParent',
 });
 
 // Client associations
 Client.belongsTo(User, {
-  foreignKey: "accountManagerId",
-  as: "accountManager",
+  foreignKey: 'accountManagerId',
+  as: 'accountManager',
 });
 
 Client.belongsTo(User, {
-  foreignKey: "createdBy",
-  as: "creator",
+  foreignKey: 'createdBy',
+  as: 'creator',
 });
 
 User.hasMany(Client, {
-  foreignKey: "accountManagerId",
-  as: "managedClients",
+  foreignKey: 'accountManagerId',
+  as: 'managedClients',
 });
 
 // Project associations
 Project.belongsTo(Client, {
-  foreignKey: "clientId",
-  as: "client",
+  foreignKey: 'clientId',
+  as: 'client',
 });
 
 Project.belongsTo(User, {
-  foreignKey: "projectManagerId",
-  as: "projectManager",
+  foreignKey: 'projectManagerId',
+  as: 'projectManager',
 });
 
 Project.belongsTo(User, {
-  foreignKey: "createdBy",
-  as: "creator",
+  foreignKey: 'createdBy',
+  as: 'creator',
 });
 
 Client.hasMany(Project, {
-  foreignKey: "clientId",
-  as: "projects",
+  foreignKey: 'clientId',
+  as: 'projects',
 });
 
 User.hasMany(Project, {
-  foreignKey: "projectManagerId",
-  as: "managedProjects",
+  foreignKey: 'projectManagerId',
+  as: 'managedProjects',
 });
 
 // Task associations
-Project.hasMany(Task, { foreignKey: "projectId", as: "tasks" });
-Task.belongsTo(Project, { foreignKey: "projectId", as: "project" });
+Project.hasMany(Task, { foreignKey: 'projectId', as: 'tasks' });
+Task.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
 
 // Task and User (Assignee) association
 Task.belongsTo(User, {
-  foreignKey: "assignedTo",
-  as: "assignee",
+  foreignKey: 'assignedTo',
+  as: 'assignee',
 });
 
 User.hasMany(Task, {
-  foreignKey: "assignedTo",
-  as: "assignedTasks",
+  foreignKey: 'assignedTo',
+  as: 'assignedTasks',
 });
 
 // Existing User and Timesheet associations (keeping these)
 User.hasMany(Timesheet, {
-  foreignKey: "userId",
-  as: "timesheets",
+  foreignKey: 'userId',
+  as: 'timesheets',
 });
 
 Timesheet.belongsTo(User, {
-  foreignKey: "userId",
-  as: "user",
+  foreignKey: 'userId',
+  as: 'user',
 });
 
 module.exports = {
   // Export function to set up all associations
   setupAssociations: () => {
-    console.log("Database associations have been set up successfully");
+    console.log('Database associations have been set up successfully');
   },
 };

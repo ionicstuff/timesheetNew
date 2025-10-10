@@ -1,0 +1,3 @@
+chore: relax frontend ESLint rules temporarily
+
+chore: add helper scripts and backend eslint config

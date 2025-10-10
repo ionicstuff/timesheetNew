@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 
 class EmailService {
   constructor() {
@@ -8,7 +8,7 @@ class EmailService {
 
   async getFinanceEmails() {
     try {
-      const sequelize = require("../config/database");
+      const sequelize = require('../config/database');
       const [rows] = await sequelize.query(`
         SELECT u.email
         FROM users u
@@ -17,19 +17,19 @@ class EmailService {
       `);
       return (rows || []).map((r) => r.email).filter(Boolean);
     } catch (e) {
-      console.error("Failed to fetch finance emails", e);
+      console.error('Failed to fetch finance emails', e);
       return [];
     }
   }
 
   async init() {
     // Create transporter based on environment
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === 'production') {
       // Production email configuration
       this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT || 587,
-        secure: process.env.EMAIL_SECURE === "true", // true for 465, false for other ports
+        secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD,
@@ -40,7 +40,7 @@ class EmailService {
       try {
         const testAccount = await nodemailer.createTestAccount();
         this.transporter = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
+          host: 'smtp.ethereal.email',
           port: 587,
           secure: false,
           auth: {
@@ -49,15 +49,15 @@ class EmailService {
           },
         });
       } catch (error) {
-        console.error("Failed to create test email account:", error);
+        console.error('Failed to create test email account:', error);
         // Fallback to console logging in development
         this.transporter = {
           sendMail: async (mailOptions) => {
-            console.log("📧 Email would be sent:");
-            console.log("To:", mailOptions.to);
-            console.log("Subject:", mailOptions.subject);
-            console.log("Content:", mailOptions.html || mailOptions.text);
-            return { messageId: "development-mode" };
+            console.log('📧 Email would be sent:');
+            console.log('To:', mailOptions.to);
+            console.log('Subject:', mailOptions.subject);
+            console.log('Content:', mailOptions.html || mailOptions.text);
+            return { messageId: 'development-mode' };
           },
         };
       }
@@ -65,12 +65,12 @@ class EmailService {
   }
 
   async sendPasswordResetEmail(email, firstName, resetToken) {
-    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
-      from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || "noreply@timesheet.com"}>`,
+      from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
       to: email,
-      subject: "Password Reset Request - TimeSheet Pro",
+      subject: 'Password Reset Request - TimeSheet Pro',
       html: `
         <!DOCTYPE html>
         <html>
@@ -133,26 +133,24 @@ class EmailService {
     try {
       const info = await this.transporter.sendMail(mailOptions);
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log("📧 Password reset email sent successfully!");
-        console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📧 Password reset email sent successfully!');
+        console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
       }
 
       return info;
     } catch (error) {
-      console.error("Failed to send password reset email:", error);
-      throw new Error("Failed to send password reset email");
+      console.error('Failed to send password reset email:', error);
+      throw new Error('Failed to send password reset email');
     }
   }
   async sendTaskStatusEmail(task, verb, actorUser) {
     try {
-      const { Project, User } = require("../models");
+      const { Project, User } = require('../models');
       const project = await Project.findByPk(task.projectId);
-      const pm = project?.projectManagerId
-        ? await User.findByPk(project.projectManagerId)
-        : null;
+      const pm = project?.projectManagerId ? await User.findByPk(project.projectManagerId) : null;
       // Find account managers (simple query: role ACM)
-      const sequelize = require("../config/database");
+      const sequelize = require('../config/database');
       const [ams] = await sequelize.query(`
         SELECT u.email, u.first_name AS firstName, u.last_name AS lastName
         FROM users u
@@ -168,7 +166,7 @@ class EmailService {
       const subject = `Task ${verb}: ${task.name}`;
       const html = `
         <p>Hello,</p>
-        <p>Task <strong>${task.name}</strong> in project <strong>${project?.projectName || task.projectId}</strong> was <strong>${verb}</strong> by ${actorUser?.firstName || "a user"} ${actorUser?.lastName || ""}.</p>
+        <p>Task <strong>${task.name}</strong> in project <strong>${project?.projectName || task.projectId}</strong> was <strong>${verb}</strong> by ${actorUser?.firstName || 'a user'} ${actorUser?.lastName || ''}.</p>
         <ul>
           <li>Status: ${task.status}</li>
           <li>Total tracked: ${Math.round((task.totalTrackedSeconds || 0) / 60)} min</li>
@@ -177,24 +175,22 @@ class EmailService {
       `;
 
       await this.transporter.sendMail({
-        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || "noreply@timesheet.com"}>`,
-        to: recipients.join(","),
+        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
+        to: recipients.join(','),
         subject,
         html,
       });
     } catch (err) {
-      console.error("Failed to send task status email", err);
+      console.error('Failed to send task status email', err);
     }
   }
 
   async sendProjectClosedEmail(project, actorUser, reason) {
     try {
-      const { User } = require("../models");
-      const pm = project?.projectManagerId
-        ? await User.findByPk(project.projectManagerId)
-        : null;
+      const { User } = require('../models');
+      const pm = project?.projectManagerId ? await User.findByPk(project.projectManagerId) : null;
       const teamRecipients = [];
-      const sequelize = require("../config/database");
+      const sequelize = require('../config/database');
       const [team] = await sequelize.query(
         `
         SELECT DISTINCT u.email
@@ -205,24 +201,24 @@ class EmailService {
         { bind: [project.id] },
       );
       for (const m of team || []) if (m.email) teamRecipients.push(m.email);
-      const to = [pm?.email, ...teamRecipients].filter(Boolean).join(",");
+      const to = [pm?.email, ...teamRecipients].filter(Boolean).join(',');
       if (!to) return;
 
       const subject = `Project closed: ${project.projectName}`;
       const html = `
         <p>Hello,</p>
-        <p>Project <strong>${project.projectName}</strong> was closed by ${actorUser?.firstName || "a user"} ${actorUser?.lastName || ""}.</p>
-        ${reason ? `<p>Reason: ${reason}</p>` : ""}
+        <p>Project <strong>${project.projectName}</strong> was closed by ${actorUser?.firstName || 'a user'} ${actorUser?.lastName || ''}.</p>
+        ${reason ? `<p>Reason: ${reason}</p>` : ''}
         <p>Regards,<br/>TimeSheet Pro</p>
       `;
       await this.transporter.sendMail({
-        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || "noreply@timesheet.com"}>`,
+        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
         to,
         subject,
         html,
       });
     } catch (err) {
-      console.error("Failed to send project closed email", err);
+      console.error('Failed to send project closed email', err);
     }
   }
 
@@ -237,7 +233,7 @@ class EmailService {
         <ul>
           <li>Invoice: <strong>${invoice.invoiceNumber}</strong> (v${invoice.version})</li>
           <li>Project: ${project.projectName || project.id}</li>
-          <li>Client: ${client?.clientName || client?.companyName || client?.id || ""}</li>
+          <li>Client: ${client?.clientName || client?.companyName || client?.id || ''}</li>
           <li>Total: 0.00</li>
           <li>Issue Date: ${invoice.issueDate}</li>
           <li>Due Date: ${invoice.dueDate}</li>
@@ -245,40 +241,40 @@ class EmailService {
         <p>Review in the app and approve/send when ready.</p>
       `;
       await this.transporter.sendMail({
-        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || "noreply@timesheet.com"}>`,
-        to: toList.join(","),
+        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
+        to: toList.join(','),
         subject,
         html,
       });
     } catch (err) {
-      console.error("Failed to send invoice generated email", err);
+      console.error('Failed to send invoice generated email', err);
     }
   }
 
   async sendInvoiceToClient(toEmail, context, pdfFullPath) {
     try {
       if (!toEmail) return;
-      const subject = `Invoice for ${context.project_name || "your project"}`;
+      const subject = `Invoice for ${context.project_name || 'your project'}`;
       const html = `
         <p>Hello,</p>
-        <p>Please find attached the invoice for project <strong>${context.project_name || ""}</strong>.</p>
+        <p>Please find attached the invoice for project <strong>${context.project_name || ''}</strong>.</p>
         <p>Regards,<br/>TimeSheet Pro</p>
       `;
       await this.transporter.sendMail({
-        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || "noreply@timesheet.com"}>`,
+        from: `"TimeSheet Pro" <${process.env.EMAIL_FROM || 'noreply@timesheet.com'}>`,
         to: toEmail,
         subject,
         html,
         attachments: [
           {
-            filename: pdfFullPath.split(/[\\/]/).pop() || "invoice.pdf",
+            filename: pdfFullPath.split(/[\\/]/).pop() || 'invoice.pdf',
             path: pdfFullPath,
-            contentType: "application/pdf",
+            contentType: 'application/pdf',
           },
         ],
       });
     } catch (err) {
-      console.error("Failed to send invoice to client", err);
+      console.error('Failed to send invoice to client', err);
       throw err;
     }
   }

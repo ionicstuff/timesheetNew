@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Timesheet = sequelize.define(
-  "Timesheet",
+  'Timesheet',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,10 +12,10 @@ const Timesheet = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "user_id",
+      field: 'user_id',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     date: {
@@ -28,17 +28,17 @@ const Timesheet = sequelize.define(
     clockIn: {
       type: DataTypes.TIME,
       allowNull: true,
-      field: "clock_in",
+      field: 'clock_in',
     },
     clockOut: {
       type: DataTypes.TIME,
       allowNull: true,
-      field: "clock_out",
+      field: 'clock_out',
     },
     breakDuration: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      field: "break_duration",
+      field: 'break_duration',
       validate: {
         min: 0,
       },
@@ -46,7 +46,7 @@ const Timesheet = sequelize.define(
     totalHours: {
       type: DataTypes.DECIMAL(4, 2),
       defaultValue: 0,
-      field: "total_hours",
+      field: 'total_hours',
       validate: {
         min: 0,
       },
@@ -54,14 +54,14 @@ const Timesheet = sequelize.define(
     overtimeHours: {
       type: DataTypes.DECIMAL(4, 2),
       defaultValue: 0,
-      field: "overtime_hours",
+      field: 'overtime_hours',
       validate: {
         min: 0,
       },
     },
     status: {
-      type: DataTypes.ENUM("pending", "approved", "rejected"),
-      defaultValue: "pending",
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
     },
     notes: {
       type: DataTypes.TEXT,
@@ -70,7 +70,7 @@ const Timesheet = sequelize.define(
     ipAddress: {
       type: DataTypes.INET,
       allowNull: true,
-      field: "ip_address",
+      field: 'ip_address',
     },
     location: {
       type: DataTypes.STRING(255),
@@ -78,15 +78,15 @@ const Timesheet = sequelize.define(
     },
   },
   {
-    tableName: "timesheets",
+    tableName: 'timesheets',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
         unique: true,
-        fields: ["user_id", "date"],
+        fields: ['user_id', 'date'],
       },
     ],
   },
@@ -113,7 +113,7 @@ Timesheet.prototype.calculateTotalHours = function () {
   return 0;
 };
 
-Timesheet.prototype.isLate = function (standardClockIn = "09:00:00") {
+Timesheet.prototype.isLate = function (standardClockIn = '09:00:00') {
   if (!this.clockIn) return false;
 
   const clockInTime = new Date(`1970-01-01T${this.clockIn}`);
@@ -122,7 +122,7 @@ Timesheet.prototype.isLate = function (standardClockIn = "09:00:00") {
   return clockInTime > standardTime;
 };
 
-Timesheet.prototype.isEarlyOut = function (standardClockOut = "18:00:00") {
+Timesheet.prototype.isEarlyOut = function (standardClockOut = '18:00:00') {
   if (!this.clockOut) return false;
 
   const clockOutTime = new Date(`1970-01-01T${this.clockOut}`);

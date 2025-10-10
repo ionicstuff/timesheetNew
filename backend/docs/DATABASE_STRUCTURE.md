@@ -241,12 +241,12 @@ const user = await User.findByPk(userId, {
   include: [
     {
       model: RoleMaster,
-      as: "roleMaster",
+      as: 'roleMaster',
       include: [
         {
           model: PermissionMaster,
-          as: "permissions",
-          through: { attributes: ["isGranted"] },
+          as: 'permissions',
+          through: { attributes: ['isGranted'] },
         },
       ],
     },
@@ -260,7 +260,7 @@ const user = await User.findByPk(userId, {
 // Get direct reports
 const directReports = await UserHierarchy.findAll({
   where: { parentUserId: managerId, isActive: true },
-  include: [{ model: User, as: "user" }],
+  include: [{ model: User, as: 'user' }],
 });
 ```
 
@@ -271,8 +271,8 @@ const directReports = await UserHierarchy.findAll({
 const projects = await Project.findAll({
   where: { projectManagerId: userId },
   include: [
-    { model: Client, as: "client" },
-    { model: User, as: "projectManager" },
+    { model: Client, as: 'client' },
+    { model: User, as: 'projectManager' },
   ],
 });
 ```

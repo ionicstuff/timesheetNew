@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -14,21 +14,21 @@ module.exports = {
 
     // Use a named Postgres enum type to keep consistency
     const actionType = Sequelize.ENUM({
-      name: "task_time_action",
-      values: ["start", "pause", "resume", "stop", "complete"],
+      name: 'task_time_action',
+      values: ['start', 'pause', 'resume', 'stop', 'complete'],
     });
 
-    await queryInterface.createTable("task_time_logs", {
+    await queryInterface.createTable('task_time_logs', {
       id: { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       task_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "tasks", key: "id" },
+        references: { model: 'tasks', key: 'id' },
       },
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "users", key: "id" },
+        references: { model: 'users', key: 'id' },
       },
       action: { type: actionType, allowNull: false },
       start_at: { type: Sequelize.DATE, allowNull: true },
@@ -42,31 +42,31 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn("NOW"),
+        defaultValue: Sequelize.fn('NOW'),
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn("NOW"),
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
 
-    await queryInterface.addIndex("task_time_logs", ["task_id"], {
-      name: "idx_ttl_task",
+    await queryInterface.addIndex('task_time_logs', ['task_id'], {
+      name: 'idx_ttl_task',
     });
-    await queryInterface.addIndex("task_time_logs", ["user_id"], {
-      name: "idx_ttl_user",
+    await queryInterface.addIndex('task_time_logs', ['user_id'], {
+      name: 'idx_ttl_user',
     });
-    await queryInterface.addIndex("task_time_logs", ["action"], {
-      name: "idx_ttl_action",
+    await queryInterface.addIndex('task_time_logs', ['action'], {
+      name: 'idx_ttl_action',
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeIndex("task_time_logs", "idx_ttl_action");
-    await queryInterface.removeIndex("task_time_logs", "idx_ttl_user");
-    await queryInterface.removeIndex("task_time_logs", "idx_ttl_task");
-    await queryInterface.dropTable("task_time_logs");
+    await queryInterface.removeIndex('task_time_logs', 'idx_ttl_action');
+    await queryInterface.removeIndex('task_time_logs', 'idx_ttl_user');
+    await queryInterface.removeIndex('task_time_logs', 'idx_ttl_task');
+    await queryInterface.dropTable('task_time_logs');
 
     // Drop enum if exists (Postgres)
     try {

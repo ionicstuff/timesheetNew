@@ -1,0 +1,81 @@
+# Bug Context
+- id: BUG-002
+- title: 
+- description: Timer state not persisting across pages
+- priority: Medium
+- severity: High
+- status: Confirmed
+- module: Time Tracking
+- file_hint: 
+- steps_to_repro: Start timer, navigate to Dashboard
+- expected: Timer continues running
+- actual: Timer resets to Start button
+- owner: 
+- tags: 
+- environment: 
+- commit: 
+
+## Candidate Files (top)
+
+### backend\docs\DATABASE_STRUCTURE.md
+   84:   - `project_code` - Unique identifier
+   85:   - `client_id` - Links to client
+   86:   - `project_manager_id` - Links to managing user
+   87:   - `estimated_hours`, `actual_hours` - Time tracking
+   88:   - `budget_amount`, `spent_amount` - Financial tracking
+   89:   - `tags` - Array of project tags for categorization
+   90: 
+
+### backend\models\Task.js
+  125:       allowNull: true,
+  126:       field: 'sprint_end_date',
+  127:     },
+  128:     // Time tracking fields
+  129:     startedAt: {
+  130:       type: DataTypes.DATE,
+  131:       allowNull: true,
+
+### backend\seeders\002-seed-module-masters.js
+   22:         {
+   23:           id: 2,
+   24:           module_code: 'TIME',
+   25:           module_name: 'Time Tracking',
+   26:           description: 'Time tracking and timesheet management',
+   27:           route: '/timesheet',
+   28:           icon: 'schedule',
+
+### frontend\src\components\layout\TimeTracker.tsx
+   89:           <div className="flex items-center justify-between">
+   90:             <div className="flex items-center gap-2">
+   91:               <Clock className="h-4 w-4 text-muted-foreground" />
+   92:               <span className="text-sm font-medium">Time Tracking</span>
+   93:             </div>
+   94:             {isTracking && (
+   95:               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+
+### frontend\src\components\projects\ProjectTimeTracking.tsx
+  125:       <CardHeader>
+  126:         <CardTitle className="flex items-center gap-2">
+  127:           <Clock className="h-5 w-5" />
+  128:           Time Tracking
+  129:         </CardTitle>
+  130:         <CardDescription>Track time spent on project tasks</CardDescription>
+  131:       </CardHeader>
+
+### frontend\src\components\tasks\TimeTracking.tsx
+   87:       }
+   88:     } catch (e: any) {
+   89:       toast({
+   90:         title: 'Time tracking error',
+   91:         description: e.message || 'Request failed',
+   92:         variant: 'destructive',
+   93:       });
+
+### frontend\src\pages\TaskDetail.tsx
+  318:                   </div>
+  319: 
+  320:                   <div>
+  321:                     <h3 className="font-medium mb-2">Time Tracking</h3>
+  322:                     <div className="flex items-center text-sm">
+  323:                       <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+  324:                       <span>

@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Invoice = sequelize.define(
-  "Invoice",
+  'Invoice',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,13 +12,13 @@ const Invoice = sequelize.define(
     projectId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "project_id",
+      field: 'project_id',
     },
     invoiceNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
-      field: "invoice_number",
+      field: 'invoice_number',
     },
     version: {
       type: DataTypes.INTEGER,
@@ -26,19 +26,19 @@ const Invoice = sequelize.define(
       defaultValue: 1,
     },
     status: {
-      type: DataTypes.ENUM("generated", "approved", "sent"),
+      type: DataTypes.ENUM('generated', 'approved', 'sent'),
       allowNull: false,
-      defaultValue: "generated",
+      defaultValue: 'generated',
     },
     issueDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      field: "issue_date",
+      field: 'issue_date',
     },
     dueDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      field: "due_date",
+      field: 'due_date',
     },
     subtotal: {
       type: DataTypes.DECIMAL(12, 2),
@@ -53,7 +53,7 @@ const Invoice = sequelize.define(
     currency: {
       type: DataTypes.STRING(3),
       allowNull: false,
-      defaultValue: "USD",
+      defaultValue: 'USD',
     },
     notes: {
       type: DataTypes.TEXT,
@@ -62,35 +62,35 @@ const Invoice = sequelize.define(
     pdfPath: {
       type: DataTypes.STRING(500),
       allowNull: true,
-      field: "pdf_path",
+      field: 'pdf_path',
     },
     createdByUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "created_by_user_id",
+      field: 'created_by_user_id',
     },
     approvedByUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "approved_by_user_id",
+      field: 'approved_by_user_id',
     },
     sentByUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "sent_by_user_id",
+      field: 'sent_by_user_id',
     },
     sentAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "sent_at",
+      field: 'sent_at',
     },
   },
   {
-    tableName: "invoices",
+    tableName: 'invoices',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   },
 );
 

@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const { PDFDocument, StandardFonts } = require("pdf-lib");
+const fs = require('fs');
+const path = require('path');
+const { PDFDocument, StandardFonts } = require('pdf-lib');
 
 async function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -12,24 +12,14 @@ function getTemplatePath() {
   const provided = process.env.INVOICE_TEMPLATE_PATH;
   if (provided && fs.existsSync(provided)) return provided;
   // fallback to a relative template path if user copies it into repo later
-  const fallback = path.join(
-    __dirname,
-    "..",
-    "templates",
-    "invoice-template.pdf",
-  );
+  const fallback = path.join(__dirname, '..', 'templates', 'invoice-template.pdf');
   return fallback;
 }
 
 function getTemplateConfig() {
-  const configPath = path.join(
-    __dirname,
-    "..",
-    "config",
-    "invoiceTemplateConfig.json",
-  );
+  const configPath = path.join(__dirname, '..', 'config', 'invoiceTemplateConfig.json');
   try {
-    const raw = fs.readFileSync(configPath, "utf-8");
+    const raw = fs.readFileSync(configPath, 'utf-8');
     return JSON.parse(raw);
   } catch (e) {
     // default positions (rough). User can calibrate via config/invoiceTemplateConfig.json
@@ -66,7 +56,7 @@ async function generateInvoicePdf(invoiceData, destRelativePath) {
 
   const draw = (text, pos) => {
     if (!pos) return;
-    page.drawText(String(text ?? ""), {
+    page.drawText(String(text ?? ''), {
       x: pos.x,
       y: pos.y,
       size: pos.size || 12,
@@ -81,9 +71,9 @@ async function generateInvoicePdf(invoiceData, destRelativePath) {
   draw(invoiceData.clientEmail, cfg.fields.clientEmail);
   draw(invoiceData.projectName, cfg.fields.projectName);
   draw((invoiceData.total ?? 0).toFixed(2), cfg.fields.total);
-  draw(invoiceData.notes || "", cfg.fields.notes);
+  draw(invoiceData.notes || '', cfg.fields.notes);
 
-  const outDir = path.join(__dirname, "..", "uploads", "invoices");
+  const outDir = path.join(__dirname, '..', 'uploads', 'invoices');
   await ensureDir(outDir);
   const destFullPath = path.join(outDir, destRelativePath);
   await ensureDir(path.dirname(destFullPath));
@@ -92,7 +82,7 @@ async function generateInvoicePdf(invoiceData, destRelativePath) {
   fs.writeFileSync(destFullPath, pdfBytes);
 
   // return relative path for storage
-  const relativePath = path.join("uploads", "invoices", destRelativePath);
+  const relativePath = path.join('uploads', 'invoices', destRelativePath);
   return { relativePath, fullPath: destFullPath };
 }
 
