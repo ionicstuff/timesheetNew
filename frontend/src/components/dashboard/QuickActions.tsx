@@ -142,6 +142,7 @@ const QuickActions = () => {
           <EventForm
             onSubmit={handleEventSubmit}
             onCancel={() => setEventOpen(false)}
+            initialData={{ linkTaskId: 123 }}
           />
         </Modal>
 
