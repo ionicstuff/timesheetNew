@@ -114,6 +114,10 @@ const getInvoicePdf = async (req, res) => {
     const pdfPath = path.join(__dirname, '..', invoice.pdfPath);
     if (!fs.existsSync(pdfPath))
       return res.status(404).json({ message: 'PDF file missing on disk' });
+    // Set headers to encourage download with a friendly filename
+    res.setHeader('Content-Type', 'application/pdf');
+    const fname = `invoice-${invoice.id}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
     return res.sendFile(path.resolve(pdfPath));
   } catch (e) {
     console.error('getInvoicePdf error', e);

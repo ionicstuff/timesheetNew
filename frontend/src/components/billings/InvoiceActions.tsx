@@ -44,11 +44,23 @@ const InvoiceActions = ({
     });
   };
 
-  const handleDownloadPDF = () => {
-    toast({
-      title: 'Downloading PDF',
-      description: `Preparing invoice ${invoiceId} for download...`,
-    });
+  const handleDownloadPDF = async () => {
+    try {
+      toast({
+        title: 'Preparing download',
+        description: `Preparing invoice ${invoiceId} for download...`,
+      });
+      const idNum = Number(invoiceId);
+      if (!Number.isFinite(idNum)) throw new Error('Invalid invoice id');
+      const { downloadInvoicePdf } = await import('@/services/finance');
+      await downloadInvoicePdf(idNum);
+    } catch (e: any) {
+      toast({
+        title: 'Download failed',
+        description: e?.message || 'Could not download PDF',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handlePrint = () => {
