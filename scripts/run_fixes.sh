@@ -165,8 +165,14 @@ pushd frontend >/dev/null
   popd >/dev/null
 fi
 
-# Build fix-report.md with pass/fail inferred from tmp/failures.log
+# Aggregate failure logs into repo-root tmp/failures.log
+mkdir -p tmp
 FAIL_LOG="tmp/failures.log"
+: > "$FAIL_LOG"
+[ -f backend/tmp/failures.log ] && cat backend/tmp/failures.log >> "$FAIL_LOG"
+[ -f frontend/tmp/failures.log ] && cat frontend/tmp/failures.log >> "$FAIL_LOG"
+
+# Build fix-report.md with pass/fail inferred from aggregated log
 {
   echo "# Fix Report"
   echo
@@ -178,17 +184,17 @@ FAIL_LOG="tmp/failures.log"
     SHA=$(git rev-parse --short "$BRANCH" 2>/dev/null || echo "-")
     # Determine statuses
     LINT="OK"; TYPE="OK"; TESTS="OK"; BUILD="OK"
-    if [ -f "$FAIL_LOG" ]; then
-      grep -q "\[FAIL\].*\[ID=$ID .*lint\]" "$FAIL_LOG" && LINT="Fail" || true
-      grep -q "\[FAIL\].*\[ID=$ID .*typecheck\]" "$FAIL_LOG" && TYPE="Fail" || true
-      grep -q "\[FAIL\].*\[ID=$ID .*test\]" "$FAIL_LOG" && TESTS="Fail" || true
-      grep -q "\[FAIL\].*\[ID=$ID .*build\]" "$FAIL_LOG" && BUILD="Fail" || true
+    if [ -s "$FAIL_LOG" ]; then
+      grep -q "\\[FAIL\\].*\\[ID=$ID .*lint\\]" "$FAIL_LOG" && LINT="Fail" || true
+      grep -q "\\[FAIL\\].*\\[ID=$ID .*typecheck\\]" "$FAIL_LOG" && TYPE="Fail" || true
+      grep -q "\\[FAIL\\].*\\[ID=$ID .*test\\]" "$FAIL_LOG" && TESTS="Fail" || true
+      grep -q "\\[FAIL\\].*\\[ID=$ID .*build\\]" "$FAIL_LOG" && BUILD="Fail" || true
     fi
     NOTE="see tmp/${ID}-context.txt"
-    printf "| %s | %s | %s | %s | %s | %s | %s | %s |\n" "$ID" "$BRANCH" "$SHA" "$LINT" "$TYPE" "$TESTS" "$BUILD" "$NOTE"
+    printf "| %s | %s | %s | %s | %s | %s | %s | %s |\\n" "$ID" "$BRANCH" "$SHA" "$LINT" "$TYPE" "$TESTS" "$BUILD" "$NOTE"
   done < "$LOOP_FILE"
   echo
-  if [ -f "$FAIL_LOG" ]; then
+  if [ -s "$FAIL_LOG" ]; then
     echo "## Failures"
     cat "$FAIL_LOG"
   fi
