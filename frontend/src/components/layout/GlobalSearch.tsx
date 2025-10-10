@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useSearch } from "@/contexts/SearchContext";
+import { useState, useEffect } from 'react';
+import { Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useSearch } from '@/contexts/SearchContext';
 
 const GlobalSearch = () => {
   const { searchTerm, setSearchTerm } = useSearch();
@@ -22,8 +22,8 @@ const GlobalSearch = () => {
   };
 
   const clearSearch = () => {
-    setLocalSearchTerm("");
-    setSearchTerm("");
+    setLocalSearchTerm('');
+    setSearchTerm('');
   };
 
   return (

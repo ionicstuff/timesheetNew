@@ -1,76 +1,82 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  FileText, 
-  Image, 
-  Film, 
-  Music, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  FileText,
+  Image,
+  Film,
+  Music,
   Archive,
   MoreHorizontal,
   Download,
-  Plus
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+  Plus,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const ProjectFiles = () => {
   const files = [
-    { 
-      id: 1, 
-      name: "Project Requirements.pdf", 
-      type: "pdf", 
-      size: "2.4 MB", 
-      date: "2 days ago",
-      owner: "Alex Johnson"
+    {
+      id: 1,
+      name: 'Project Requirements.pdf',
+      type: 'pdf',
+      size: '2.4 MB',
+      date: '2 days ago',
+      owner: 'Alex Johnson',
     },
-    { 
-      id: 2, 
-      name: "Design Mockups.fig", 
-      type: "fig", 
-      size: "5.1 MB", 
-      date: "1 day ago",
-      owner: "Sam Smith"
+    {
+      id: 2,
+      name: 'Design Mockups.fig',
+      type: 'fig',
+      size: '5.1 MB',
+      date: '1 day ago',
+      owner: 'Sam Smith',
     },
-    { 
-      id: 3, 
-      name: "Meeting Notes.docx", 
-      type: "docx", 
-      size: "45 KB", 
-      date: "Today",
-      owner: "Taylor Brown"
+    {
+      id: 3,
+      name: 'Meeting Notes.docx',
+      type: 'docx',
+      size: '45 KB',
+      date: 'Today',
+      owner: 'Taylor Brown',
     },
-    { 
-      id: 4, 
-      name: "User Research.png", 
-      type: "png", 
-      size: "1.2 MB", 
-      date: "3 days ago",
-      owner: "Jordan Lee"
+    {
+      id: 4,
+      name: 'User Research.png',
+      type: 'png',
+      size: '1.2 MB',
+      date: '3 days ago',
+      owner: 'Jordan Lee',
     },
   ];
 
   const getFileIcon = (type: string) => {
     switch (type) {
-      case "pdf":
+      case 'pdf':
         return <FileText className="h-5 w-5 text-red-500" />;
-      case "png":
-      case "jpg":
-      case "jpeg":
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
         return <Image className="h-5 w-5 text-blue-500" />;
-      case "mp4":
-      case "mov":
+      case 'mp4':
+      case 'mov':
         return <Film className="h-5 w-5 text-purple-500" />;
-      case "mp3":
-      case "wav":
+      case 'mp3':
+      case 'wav':
         return <Music className="h-5 w-5 text-green-500" />;
-      case "zip":
-      case "rar":
+      case 'zip':
+      case 'rar':
         return <Archive className="h-5 w-5 text-yellow-500" />;
       default:
         return <FileText className="h-5 w-5 text-muted-foreground" />;
@@ -95,8 +101,8 @@ const ProjectFiles = () => {
       <CardContent>
         <div className="space-y-3">
           {files.map((file) => (
-            <div 
-              key={file.id} 
+            <div
+              key={file.id}
               className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
@@ -112,12 +118,9 @@ const ProjectFiles = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                >
+                <Button variant="ghost" size="icon">
                   <Download className="h-4 w-4" />
                 </Button>
                 <DropdownMenu>

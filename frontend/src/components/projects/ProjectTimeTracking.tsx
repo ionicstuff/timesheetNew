@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  Play, 
-  Pause, 
-  Square,
-  Clock,
-  BarChart3
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Play, Pause, Square, Clock, BarChart3 } from 'lucide-react';
 
 interface TimeEntry {
   id: string;
@@ -28,24 +28,28 @@ interface ProjectTimeTrackingProps {
   onTimeBudgetChange: (budget: number) => void;
 }
 
-const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }: ProjectTimeTrackingProps) => {
+const ProjectTimeTracking = ({
+  projectId,
+  totalTimeBudget,
+  onTimeBudgetChange,
+}: ProjectTimeTrackingProps) => {
   const [isTracking, setIsTracking] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [activeEntry, setActiveEntry] = useState<TimeEntry | null>(null);
-  const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskName, setNewTaskName] = useState('');
   const [timeBudget, setTimeBudget] = useState(totalTimeBudget);
 
   // Handle timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (isTracking && activeEntry) {
       interval = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
+        setElapsedTime((prev) => prev + 1);
       }, 1000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -60,20 +64,20 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
 
   const startTracking = () => {
     if (!newTaskName.trim()) return;
-    
+
     const newEntry: TimeEntry = {
       id: Date.now().toString(),
       taskId: `task-${Date.now()}`,
       taskName: newTaskName,
       startTime: new Date(),
       endTime: null,
-      duration: 0
+      duration: 0,
     };
-    
+
     setActiveEntry(newEntry);
     setIsTracking(true);
     setElapsedTime(0);
-    setNewTaskName("");
+    setNewTaskName('');
   };
 
   const pauseTracking = () => {
@@ -85,24 +89,29 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
       const completedEntry: TimeEntry = {
         ...activeEntry,
         endTime: new Date(),
-        duration: elapsedTime
+        duration: elapsedTime,
       };
-      
-      setTimeEntries(prev => [...prev, completedEntry]);
+
+      setTimeEntries((prev) => [...prev, completedEntry]);
       setActiveEntry(null);
     }
-    
+
     setIsTracking(false);
     setElapsedTime(0);
   };
 
   const getTotalTrackedTime = () => {
-    return timeEntries.reduce((sum, entry) => sum + entry.duration, 0) + (isTracking ? elapsedTime : 0);
+    return (
+      timeEntries.reduce((sum, entry) => sum + entry.duration, 0) +
+      (isTracking ? elapsedTime : 0)
+    );
   };
 
   const getProgressPercentage = () => {
     const totalSeconds = timeBudget * 3600;
-    return totalSeconds > 0 ? Math.min(100, (getTotalTrackedTime() / totalSeconds) * 100) : 0;
+    return totalSeconds > 0
+      ? Math.min(100, (getTotalTrackedTime() / totalSeconds) * 100)
+      : 0;
   };
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +136,7 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
               <div>
                 <h3 className="font-medium">Current Task</h3>
                 <p className="text-sm text-muted-foreground">
-                  {activeEntry ? activeEntry.taskName : "No active task"}
+                  {activeEntry ? activeEntry.taskName : 'No active task'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -137,8 +146,8 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
                     Resume
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={startTracking} 
+                  <Button
+                    onClick={startTracking}
                     size="sm"
                     disabled={isTracking || !newTaskName.trim()}
                   >
@@ -160,7 +169,7 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <Input
@@ -175,7 +184,7 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
               </div>
             </div>
           </div>
-          
+
           <div>
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium">Project Time Budget</h3>
@@ -202,24 +211,31 @@ const ProjectTimeTracking = ({ projectId, totalTimeBudget, onTimeBudgetChange }:
               </div>
             </div>
           </div>
-          
+
           {timeEntries.length > 0 && (
             <div>
               <h3 className="font-medium mb-3">Recent Time Entries</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {timeEntries.slice(-5).reverse().map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-2 border rounded">
-                    <div>
-                      <p className="text-sm font-medium">{entry.taskName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.startTime.toLocaleTimeString()} - {entry.endTime?.toLocaleTimeString()}
-                      </p>
+                {timeEntries
+                  .slice(-5)
+                  .reverse()
+                  .map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between p-2 border rounded"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{entry.taskName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.startTime.toLocaleTimeString()} -{' '}
+                          {entry.endTime?.toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">
+                        {formatTime(entry.duration)}
+                      </Badge>
                     </div>
-                    <Badge variant="secondary">
-                      {formatTime(entry.duration)}
-                    </Badge>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}

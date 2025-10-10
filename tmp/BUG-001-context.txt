@@ -1,0 +1,18 @@
+# Bug Context
+- id: BUG-001
+- title: 
+- description: Messages and sidebar links point to current page, not correct URL
+- priority: High
+- severity: Critical
+- status: Unconfirmed
+- module: Navigation/Sidebar
+- file_hint: 
+- steps_to_repro: Click Messages nav, click project/folder links in sidebar
+- expected: Navigates to correct page
+- actual: Links stay on current page
+- owner: 
+- tags: 
+- environment: 
+- commit: 
+
+## Candidate Files (top)

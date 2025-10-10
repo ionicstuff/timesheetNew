@@ -1,73 +1,74 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Filter,
-  User,
-  Users
-} from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Filter, User, Users } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 const TeamFilter = () => {
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState({
     role: [] as string[],
     status: [] as string[],
-    department: "all" as "all" | "design" | "development" | "marketing" | "management"
+    department: 'all' as
+      | 'all'
+      | 'design'
+      | 'development'
+      | 'marketing'
+      | 'management',
   });
 
   const toggleRole = (role: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       role: prev.role.includes(role)
-        ? prev.role.filter(r => r !== role)
-        : [...prev.role, role]
+        ? prev.role.filter((r) => r !== role)
+        : [...prev.role, role],
     }));
   };
 
   const toggleStatus = (status: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       status: prev.status.includes(status)
-        ? prev.status.filter(s => s !== status)
-        : [...prev.status, status]
+        ? prev.status.filter((s) => s !== status)
+        : [...prev.status, status],
     }));
   };
 
   const roles = [
-    { value: "manager", label: "Manager" },
-    { value: "designer", label: "Designer" },
-    { value: "developer", label: "Developer" },
-    { value: "marketer", label: "Marketer" }
+    { value: 'manager', label: 'Manager' },
+    { value: 'designer', label: 'Designer' },
+    { value: 'developer', label: 'Developer' },
+    { value: 'marketer', label: 'Marketer' },
   ];
 
   const statuses = [
-    { value: "online", label: "Online" },
-    { value: "away", label: "Away" },
-    { value: "offline", label: "Offline" }
+    { value: 'online', label: 'Online' },
+    { value: 'away', label: 'Away' },
+    { value: 'offline', label: 'Offline' },
   ];
 
   const departments = [
-    { value: "all", label: "All Departments" },
-    { value: "design", label: "Design" },
-    { value: "development", label: "Development" },
-    { value: "marketing", label: "Marketing" },
-    { value: "management", label: "Management" }
+    { value: 'all', label: 'All Departments' },
+    { value: 'design', label: 'Design' },
+    { value: 'development', label: 'Development' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'management', label: 'Management' },
   ];
 
   return (
@@ -83,14 +84,14 @@ const TeamFilter = () => {
           <h3 className="font-medium">Filter Team</h3>
           <p className="text-sm text-muted-foreground">Refine your team list</p>
         </div>
-        
+
         <Separator />
-        
+
         <div className="p-4 space-y-4">
           <div>
             <Label className="text-xs font-semibold">Role</Label>
             <div className="mt-2 space-y-2">
-              {roles.map(role => (
+              {roles.map((role) => (
                 <div key={role.value} className="flex items-center">
                   <Checkbox
                     id={`role-${role.value}`}
@@ -107,11 +108,11 @@ const TeamFilter = () => {
               ))}
             </div>
           </div>
-          
+
           <div>
             <Label className="text-xs font-semibold">Status</Label>
             <div className="mt-2 space-y-2">
-              {statuses.map(status => (
+              {statuses.map((status) => (
                 <div key={status.value} className="flex items-center">
                   <Checkbox
                     id={`status-${status.value}`}
@@ -128,21 +129,26 @@ const TeamFilter = () => {
               ))}
             </div>
           </div>
-          
+
           <div>
             <Label className="text-xs font-semibold">Department</Label>
             <div className="mt-2">
-              <Select 
-                value={filters.department} 
-                onValueChange={(value: "all" | "design" | "development" | "marketing" | "management") => 
-                  setFilters(prev => ({ ...prev, department: value }))
-                }
+              <Select
+                value={filters.department}
+                onValueChange={(
+                  value:
+                    | 'all'
+                    | 'design'
+                    | 'development'
+                    | 'marketing'
+                    | 'management'
+                ) => setFilters((prev) => ({ ...prev, department: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map(dept => (
+                  {departments.map((dept) => (
                     <SelectItem key={dept.value} value={dept.value}>
                       {dept.label}
                     </SelectItem>
@@ -152,18 +158,20 @@ const TeamFilter = () => {
             </div>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         <div className="p-4 flex justify-between">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => setFilters({
-              role: [],
-              status: [],
-              department: "all"
-            })}
+            onClick={() =>
+              setFilters({
+                role: [],
+                status: [],
+                department: 'all',
+              })
+            }
           >
             Reset
           </Button>

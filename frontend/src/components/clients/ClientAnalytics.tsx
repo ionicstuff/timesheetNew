@@ -1,15 +1,32 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { 
-  TrendingUp, 
-  DollarSign, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import {
+  TrendingUp,
+  DollarSign,
   CheckCircle,
   Clock,
-  AlertCircle
-} from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+  AlertCircle,
+} from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 const ClientAnalytics = () => {
   const projectData = [
@@ -29,10 +46,30 @@ const ClientAnalytics = () => {
   ];
 
   const stats = [
-    { title: "Total Projects", value: "12", change: "+2", icon: <CheckCircle className="h-4 w-4" /> },
-    { title: "Active Tasks", value: "24", change: "+5", icon: <Clock className="h-4 w-4" /> },
-    { title: "Completed Tasks", value: "42", change: "+8", icon: <TrendingUp className="h-4 w-4" /> },
-    { title: "Contract Value", value: "$125,000", change: "+$15,000", icon: <DollarSign className="h-4 w-4" /> },
+    {
+      title: 'Total Projects',
+      value: '12',
+      change: '+2',
+      icon: <CheckCircle className="h-4 w-4" />,
+    },
+    {
+      title: 'Active Tasks',
+      value: '24',
+      change: '+5',
+      icon: <Clock className="h-4 w-4" />,
+    },
+    {
+      title: 'Completed Tasks',
+      value: '42',
+      change: '+8',
+      icon: <TrendingUp className="h-4 w-4" />,
+    },
+    {
+      title: 'Contract Value',
+      value: '$125,000',
+      change: '+$15,000',
+      icon: <DollarSign className="h-4 w-4" />,
+    },
   ];
 
   return (
@@ -41,15 +78,16 @@ const ClientAnalytics = () => {
         {stats.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className="text-muted-foreground">
-                {stat.icon}
-              </div>
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <div className="text-muted-foreground">{stat.icon}</div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                <span className="text-green-500">↑</span> {stat.change} from last month
+                <span className="text-green-500">↑</span> {stat.change} from
+                last month
               </p>
             </CardContent>
           </Card>
@@ -74,7 +112,9 @@ const ClientAnalytics = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                   >
                     <Cell key={`cell-0`} fill={projectData[0].color} />
                     <Cell key={`cell-1`} fill={projectData[1].color} />
@@ -90,7 +130,9 @@ const ClientAnalytics = () => {
         <Card>
           <CardHeader>
             <CardTitle>Task Completion Trend</CardTitle>
-            <CardDescription>Tasks completed vs pending over time</CardDescription>
+            <CardDescription>
+              Tasks completed vs pending over time
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -112,7 +154,9 @@ const ClientAnalytics = () => {
       <Card>
         <CardHeader>
           <CardTitle>Client Health Score</CardTitle>
-          <CardDescription>Overall satisfaction and engagement metrics</CardDescription>
+          <CardDescription>
+            Overall satisfaction and engagement metrics
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -122,36 +166,45 @@ const ClientAnalytics = () => {
                 <span className="text-sm font-bold">85%</span>
               </div>
               <Progress value={85} className="h-2" />
-              <p className="text-xs text-muted-foreground">Response time and clarity</p>
+              <p className="text-xs text-muted-foreground">
+                Response time and clarity
+              </p>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Satisfaction</span>
                 <span className="text-sm font-bold">92%</span>
               </div>
               <Progress value={92} className="h-2" />
-              <p className="text-xs text-muted-foreground">Project delivery and quality</p>
+              <p className="text-xs text-muted-foreground">
+                Project delivery and quality
+              </p>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Retention</span>
                 <span className="text-sm font-bold">78%</span>
               </div>
               <Progress value={78} className="h-2" />
-              <p className="text-xs text-muted-foreground">Likelihood to continue working</p>
+              <p className="text-xs text-muted-foreground">
+                Likelihood to continue working
+              </p>
             </div>
           </div>
-          
+
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-start gap-3">
               <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
               <div>
-                <p className="font-medium text-green-800">Excellent Client Health</p>
+                <p className="font-medium text-green-800">
+                  Excellent Client Health
+                </p>
                 <p className="text-sm text-green-700 mt-1">
-                  This client shows strong engagement and satisfaction. Continue regular check-ins 
-                  and proactive communication to maintain this positive relationship.
+                  This client shows strong engagement and satisfaction. Continue
+                  regular check-ins and proactive communication to maintain this
+                  positive relationship.
                 </p>
               </div>
             </div>

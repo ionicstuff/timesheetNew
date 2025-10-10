@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, getUser, createUser, updateUser, deleteUser, getRoles, getDepartments, getDesignations } from '../services/admin-api.service';
+import {
+  getUsers,
+  getUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  getRoles,
+  getDepartments,
+  getDesignations,
+} from '../services/admin-api.service';
 import '../styles/AdminManagement.css';
 
 interface User {
@@ -55,7 +64,7 @@ const UserManagement: React.FC = () => {
     designation: '',
     roleId: '',
     managerId: '',
-    isActive: true
+    isActive: true,
   });
 
   useEffect(() => {
@@ -104,7 +113,7 @@ const UserManagement: React.FC = () => {
         { name: 'Customer Support' },
         { name: 'Product Management' },
         { name: 'Quality Assurance' },
-        { name: 'IT Support' }
+        { name: 'IT Support' },
       ];
       setDepartments(fallbackDepartments);
     }
@@ -149,7 +158,7 @@ const UserManagement: React.FC = () => {
         { name: 'Manager' },
         { name: 'Senior Manager' },
         { name: 'Director' },
-        { name: 'Vice President' }
+        { name: 'Vice President' },
       ];
       setDesignations(fallbackDesignations);
     }
@@ -159,16 +168,16 @@ const UserManagement: React.FC = () => {
     if (users.length === 0) {
       return 'E-001';
     }
-    
+
     // Extract numeric part from all employee IDs and find the maximum
     const existingIds = users
-      .map(user => user.username)
-      .filter(username => username && username.startsWith('E-'))
-      .map(username => {
+      .map((user) => user.username)
+      .filter((username) => username && username.startsWith('E-'))
+      .map((username) => {
         const numPart = username.split('-')[1];
         return isNaN(parseInt(numPart)) ? 0 : parseInt(numPart);
       });
-    
+
     const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
     const newIdNumber = maxId + 1;
     return `E-${newIdNumber.toString().padStart(3, '0')}`;
@@ -181,11 +190,11 @@ const UserManagement: React.FC = () => {
       const submissionData = {
         ...formData,
         roleId: parseInt(formData.roleId),
-        managerId: formData.managerId ? parseInt(formData.managerId) : null
+        managerId: formData.managerId ? parseInt(formData.managerId) : null,
       };
-      
+
       console.log('Submitting user data:', submissionData);
-      
+
       if (editingUser) {
         await updateUser(editingUser.id, submissionData);
       } else {
@@ -204,7 +213,7 @@ const UserManagement: React.FC = () => {
       console.log('Fetching detailed user data for ID:', user.id);
       const userData = await getUser(user.id);
       console.log('Received user data:', userData);
-      
+
       setEditingUser(userData);
       setFormData({
         employeeId: userData.username,
@@ -217,7 +226,7 @@ const UserManagement: React.FC = () => {
         designation: userData.designation || '',
         roleId: userData.role.id,
         managerId: userData.manager?.id || '',
-        isActive: userData.isActive
+        isActive: userData.isActive,
       });
       setShowModal(true);
       console.log('Modal should be showing now');
@@ -237,7 +246,7 @@ const UserManagement: React.FC = () => {
         designation: '',
         roleId: user.role.id,
         managerId: user.manager?.id || '',
-        isActive: user.isActive
+        isActive: user.isActive,
       });
       setShowModal(true);
       console.log('Modal should be showing now with fallback data');
@@ -267,54 +276,65 @@ const UserManagement: React.FC = () => {
       designation: '',
       roleId: '',
       managerId: '',
-      isActive: true
+      isActive: true,
     });
     setEditingUser(null);
     setShowModal(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]:
+        type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
   const getPotentialManagers = () => {
     if (!editingUser) return users;
-    return users.filter(user => user.id !== editingUser.id);
+    return users.filter((user) => user.id !== editingUser.id);
   };
 
   if (isLoading) {
     return <div className="loading">Loading users...</div>;
   }
 
-  console.log('UserManagement render - showModal:', showModal, 'editingUser:', editingUser);
+  console.log(
+    'UserManagement render - showModal:',
+    showModal,
+    'editingUser:',
+    editingUser
+  );
 
   return (
     <div className="management-container">
       <div className="management-header">
         <h2>User Management</h2>
-        <button className="btn btn-primary" onClick={() => {
-          console.log('Add New User button clicked');
-          setEditingUser(null);
-          setFormData({
-            employeeId: generateNewEmployeeId(),
-            email: '',
-            password: '',
-            firstName: '',
-            lastName: '',
-            phone: '',
-            department: '',
-            designation: '',
-            roleId: '',
-            managerId: '',
-            isActive: true
-          });
-          setShowModal(true);
-          console.log('showModal set to true');
-        }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            console.log('Add New User button clicked');
+            setEditingUser(null);
+            setFormData({
+              employeeId: generateNewEmployeeId(),
+              email: '',
+              password: '',
+              firstName: '',
+              lastName: '',
+              phone: '',
+              department: '',
+              designation: '',
+              roleId: '',
+              managerId: '',
+              isActive: true,
+            });
+            setShowModal(true);
+            console.log('showModal set to true');
+          }}
+        >
           Add New User
         </button>
       </div>
@@ -333,9 +353,11 @@ const UserManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.firstName} {user.lastName}</td>
+                <td>
+                  {user.firstName} {user.lastName}
+                </td>
                 <td>{user.email}</td>
                 <td>{user.username}</td>
                 <td>
@@ -344,22 +366,26 @@ const UserManagement: React.FC = () => {
                   </span>
                 </td>
                 <td>
-                  {user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : 'None'}
+                  {user.manager
+                    ? `${user.manager.firstName} ${user.manager.lastName}`
+                    : 'None'}
                 </td>
                 <td>
-                  <span className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}>
+                  <span
+                    className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}
+                  >
                     {user.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td>
-                  <button 
-                    className="btn btn-sm btn-secondary" 
+                  <button
+                    className="btn btn-sm btn-secondary"
                     onClick={() => handleEdit(user)}
                   >
                     Edit
                   </button>
-                  <button 
-                    className="btn btn-sm btn-danger" 
+                  <button
+                    className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(user.id)}
                   >
                     Delete
@@ -376,7 +402,9 @@ const UserManagement: React.FC = () => {
           <div className="modal">
             <div className="modal-header">
               <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
-              <button className="modal-close" onClick={resetForm}>×</button>
+              <button className="modal-close" onClick={resetForm}>
+                ×
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
@@ -437,7 +465,7 @@ const UserManagement: React.FC = () => {
                     onChange={handleInputChange}
                   >
                     <option value="">Select Department</option>
-                    {departments.map(dept => (
+                    {departments.map((dept) => (
                       <option key={dept.name} value={dept.name}>
                         {dept.name}
                       </option>
@@ -452,7 +480,7 @@ const UserManagement: React.FC = () => {
                     onChange={handleInputChange}
                   >
                     <option value="">Select Designation</option>
-                    {designations.map(designation => (
+                    {designations.map((designation) => (
                       <option key={designation.name} value={designation.name}>
                         {designation.name}
                       </option>
@@ -480,7 +508,7 @@ const UserManagement: React.FC = () => {
                     required
                   >
                     <option value="">Select Role</option>
-                    {roles.map(role => (
+                    {roles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>
@@ -495,7 +523,7 @@ const UserManagement: React.FC = () => {
                     onChange={handleInputChange}
                   >
                     <option value="">No Manager</option>
-                    {getPotentialManagers().map(user => (
+                    {getPotentialManagers().map((user) => (
                       <option key={user.id} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
@@ -515,7 +543,11 @@ const UserManagement: React.FC = () => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={resetForm}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

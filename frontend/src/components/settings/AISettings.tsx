@@ -1,24 +1,30 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Brain,
-  Key,
-  Save,
-  TestTube
-} from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { llmClient } from "@/lib/llmClient";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Brain, Key, Save, TestTube } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { llmClient } from '@/lib/llmClient';
 
 const AISettings = () => {
-  const [apiKey, setApiKey] = useState(import.meta.env.VITE_LLM_API_KEY || "");
-  const [model, setModel] = useState(import.meta.env.VITE_LLM_MODEL || "gpt-3.5-turbo");
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_LLM_API_URL || "https://api.openai.com/v1/chat/completions");
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_LLM_API_KEY || '');
+  const [model, setModel] = useState(
+    import.meta.env.VITE_LLM_MODEL || 'gpt-3.5-turbo'
+  );
+  const [apiUrl, setApiUrl] = useState(
+    import.meta.env.VITE_LLM_API_URL ||
+      'https://api.openai.com/v1/chat/completions'
+  );
   const [isTesting, setIsTesting] = useState(false);
   const { toast } = useToast();
 
@@ -27,43 +33,45 @@ const AISettings = () => {
     localStorage.setItem('llmApiKey', apiKey);
     localStorage.setItem('llmModel', model);
     localStorage.setItem('llmApiUrl', apiUrl);
-    
+
     toast({
-      title: "Settings Saved",
-      description: "AI configuration has been updated successfully."
+      title: 'Settings Saved',
+      description: 'AI configuration has been updated successfully.',
     });
   };
 
   const handleTestConnection = async () => {
     setIsTesting(true);
-    
+
     try {
       // Test with a simple prompt
-      const testPrompt = "Respond with 'Connection successful' if you receive this message.";
-      
+      const testPrompt =
+        "Respond with 'Connection successful' if you receive this message.";
+
       // Create a temporary client with current settings
       const tempClient = new (llmClient.constructor as any)({
         apiKey,
         model,
-        apiUrl
+        apiUrl,
       });
-      
+
       // In a real implementation, we would test the connection
       // For now, we'll simulate a successful test
       setTimeout(() => {
         setIsTesting(false);
         toast({
-          title: "Connection Successful",
-          description: "AI service is properly configured and responding."
+          title: 'Connection Successful',
+          description: 'AI service is properly configured and responding.',
         });
       }, 1500);
     } catch (error) {
       setIsTesting(false);
       console.error('AI connection test failed:', error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to AI service. Please check your settings.",
-        variant: "destructive"
+        title: 'Connection Failed',
+        description:
+          'Failed to connect to AI service. Please check your settings.',
+        variant: 'destructive',
       });
     }
   };
@@ -89,8 +97,8 @@ const AISettings = () => {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Enter your API key"
               />
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="icon"
                 onClick={() => navigator.clipboard.writeText(apiKey)}
               >
@@ -101,7 +109,7 @@ const AISettings = () => {
               Your API key is stored locally and never sent to our servers.
             </p>
           </div>
-          
+
           <div>
             <Label htmlFor="model">Model</Label>
             <Input
@@ -114,7 +122,7 @@ const AISettings = () => {
               Select the AI model to use for task analysis and scheduling.
             </p>
           </div>
-          
+
           <div>
             <Label htmlFor="api-url">API Endpoint</Label>
             <Input
@@ -127,22 +135,22 @@ const AISettings = () => {
               The API endpoint for your AI service provider.
             </p>
           </div>
-          
+
           <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleTestConnection}
               disabled={isTesting || !apiKey}
             >
               <TestTube className="h-4 w-4 mr-2" />
-              {isTesting ? "Testing..." : "Test Connection"}
+              {isTesting ? 'Testing...' : 'Test Connection'}
             </Button>
             <Button onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Save Settings
             </Button>
           </div>
-          
+
           <div className="p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-2">Supported Providers</h4>
             <ul className="text-sm space-y-1">

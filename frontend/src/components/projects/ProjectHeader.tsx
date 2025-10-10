@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Edit, 
-  Plus, 
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Edit,
+  Plus,
   MoreHorizontal,
   Share2,
   Star,
-  Archive
-} from "lucide-react";
+  Archive,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -25,19 +25,23 @@ interface ProjectHeaderProps {
   onAddTask: () => void;
 }
 
-const ProjectHeader = ({ 
-  projectName, 
-  projectStatus, 
+const ProjectHeader = ({
+  projectName,
+  projectStatus,
   projectColor,
   onEdit,
-  onAddTask
+  onAddTask,
 }: ProjectHeaderProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "completed": return "bg-blue-100 text-blue-800";
-      case "on-hold": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'on-hold':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -55,7 +59,8 @@ const ProjectHeader = ({
           </Button>
         </div>
         <p className="text-muted-foreground max-w-3xl">
-          Complete overhaul of company website to improve user experience and modernize the brand.
+          Complete overhaul of company website to improve user experience and
+          modernize the brand.
         </p>
       </div>
       <div className="flex gap-2">

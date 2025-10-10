@@ -1,20 +1,26 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
   Mail,
   Phone,
   MapPin,
   MessageSquare,
   MoreHorizontal,
-  Edit
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TaskList from "@/components/tasks/TaskList";
-import TeamCollaboration from "@/components/team/TeamCollaboration";
+  Edit,
+} from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import TaskList from '@/components/tasks/TaskList';
+import TeamCollaboration from '@/components/team/TeamCollaboration';
 
 interface ApiUserDetail {
   id: number;
@@ -40,7 +46,9 @@ const TeamMemberDetail = () => {
       setError(null);
       try {
         const token = localStorage.getItem('token') || '';
-        const res = await fetch(`/api/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/users/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) {
           const j = await res.json().catch(() => ({}));
           throw new Error(j?.message || `Failed to load user (${res.status})`);
@@ -65,11 +73,15 @@ const TeamMemberDetail = () => {
       email: data?.email || '',
       phone: data?.phone || '',
       location: '—',
-      status: (data?.isActive ? 'online' : 'offline') as 'online'|'away'|'offline',
+      status: (data?.isActive ? 'online' : 'offline') as
+        | 'online'
+        | 'away'
+        | 'offline',
       tasks: 0,
       projects: 0,
-      avatar: data?.profilePicture || `https://i.pravatar.cc/150?u=${data?.id || id}`,
-      bio: ''
+      avatar:
+        data?.profilePicture || `https://i.pravatar.cc/150?u=${data?.id || id}`,
+      bio: '',
     };
   }, [data, id]);
 
@@ -79,10 +91,14 @@ const TeamMemberDetail = () => {
 
   const getStatusColor = () => {
     switch (member.status) {
-      case "online": return "bg-green-500";
-      case "away": return "bg-yellow-500";
-      case "offline": return "bg-gray-500";
-      default: return "bg-gray-500";
+      case 'online':
+        return 'bg-green-500';
+      case 'away':
+        return 'bg-yellow-500';
+      case 'offline':
+        return 'bg-gray-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -100,9 +116,16 @@ const TeamMemberDetail = () => {
           <div className="relative">
             <Avatar className="h-20 w-20">
               <AvatarImage src={member.avatar} alt={member.name} />
-              <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              <AvatarFallback>
+                {member.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')}
+              </AvatarFallback>
             </Avatar>
-            <div className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-background ${getStatusColor()}`}></div>
+            <div
+              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-background ${getStatusColor()}`}
+            ></div>
           </div>
           <div>
             <h1 className="text-2xl font-bold">{member.name}</h1>
@@ -131,12 +154,14 @@ const TeamMemberDetail = () => {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Assigned Tasks</span>
-                <span className="text-sm text-muted-foreground">{member.tasks} tasks</span>
+                <span className="text-sm text-muted-foreground">
+                  {member.tasks} tasks
+                </span>
               </CardTitle>
               <CardDescription>Tasks assigned to this member</CardDescription>
             </CardHeader>
@@ -158,7 +183,7 @@ const TeamMemberDetail = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -172,7 +197,7 @@ const TeamMemberDetail = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -182,27 +207,39 @@ const TeamMemberDetail = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Email</h3>
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    Email
+                  </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${member.email}`} className="text-sm hover:underline">
+                    <a
+                      href={`mailto:${member.email}`}
+                      className="text-sm hover:underline"
+                    >
                       {member.email}
                     </a>
                   </div>
                 </div>
-                
+
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Phone</h3>
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    Phone
+                  </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a href={`tel:${member.phone}`} className="text-sm hover:underline">
+                    <a
+                      href={`tel:${member.phone}`}
+                      className="text-sm hover:underline"
+                    >
                       {member.phone || '—'}
                     </a>
                   </div>
                 </div>
-                
+
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Location</h3>
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    Location
+                  </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{member.location}</span>
@@ -211,11 +248,13 @@ const TeamMemberDetail = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
-              <CardDescription>Projects this member is involved in</CardDescription>
+              <CardDescription>
+                Projects this member is involved in
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -223,7 +262,9 @@ const TeamMemberDetail = () => {
                   <div className="flex items-center gap-3">
                     <div className="h-3 w-3 rounded-full bg-blue-500"></div>
                     <div>
-                      <p className="font-medium text-sm">No linked projects yet</p>
+                      <p className="font-medium text-sm">
+                        No linked projects yet
+                      </p>
                       <p className="text-xs text-muted-foreground">—</p>
                     </div>
                   </div>
@@ -234,7 +275,7 @@ const TeamMemberDetail = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Performance</CardTitle>
@@ -248,7 +289,10 @@ const TeamMemberDetail = () => {
                     <span>—</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: "0%" }}></div>
+                    <div
+                      className="bg-green-500 h-2 rounded-full"
+                      style={{ width: '0%' }}
+                    ></div>
                   </div>
                 </div>
               </div>

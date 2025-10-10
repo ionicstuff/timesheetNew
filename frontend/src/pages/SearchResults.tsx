@@ -1,69 +1,91 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  Search, 
-  FileText, 
-  CheckCircle, 
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import {
+  Search,
+  FileText,
+  CheckCircle,
   LayoutGrid,
   Users,
-  Calendar
-} from "lucide-react";
-import TaskCard from "@/components/tasks/TaskCard";
-import ProjectCard from "@/components/projects/ProjectCard";
-import DocumentCard from "@/components/documents/DocumentCard";
-import TeamMemberCard from "@/components/team/TeamMemberCard";
-import { Input } from "@/components/ui/input";
+  Calendar,
+} from 'lucide-react';
+import TaskCard from '@/components/tasks/TaskCard';
+import ProjectCard from '@/components/projects/ProjectCard';
+import DocumentCard from '@/components/documents/DocumentCard';
+import TeamMemberCard from '@/components/team/TeamMemberCard';
+import { Input } from '@/components/ui/input';
 
 const SearchResults = () => {
   // In a real app, you would get search params from the URL
   // For now, we'll simulate search results
-  const [searchTerm, setSearchTerm] = useState("design");
-  
+  const [searchTerm, setSearchTerm] = useState('design');
+
   // Simulated search results
   const tasks = [
-    { id: 1, title: "Design homepage", project: "Website Redesign", dueDate: "Today", priority: "High" as const, completed: false, assignedTo: "Alex Johnson" },
-    { id: 2, title: "Create wireframes", project: "Website Redesign", dueDate: "In 3 days", priority: "High" as const, completed: false },
+    {
+      id: 1,
+      title: 'Design homepage',
+      project: 'Website Redesign',
+      dueDate: 'Today',
+      priority: 'High' as const,
+      completed: false,
+      assignedTo: 'Alex Johnson',
+    },
+    {
+      id: 2,
+      title: 'Create wireframes',
+      project: 'Website Redesign',
+      dueDate: 'In 3 days',
+      priority: 'High' as const,
+      completed: false,
+    },
   ];
-  
+
   const projects = [
-    { 
-      id: 1, 
-      name: "Website Redesign", 
-      description: "Complete overhaul of company website", 
-      progress: 65, 
+    {
+      id: 1,
+      name: 'Website Redesign',
+      description: 'Complete overhaul of company website',
+      progress: 65,
       tasks: 12,
       members: 5,
-      color: "bg-blue-500",
-      membersList: ["Alex Johnson", "Sam Smith", "Taylor Brown"],
-      status: "active",
-      dueDate: "Dec 15, 2023"
+      color: 'bg-blue-500',
+      membersList: ['Alex Johnson', 'Sam Smith', 'Taylor Brown'],
+      status: 'active',
+      dueDate: 'Dec 15, 2023',
     },
   ];
-  
+
   const documents = [
-    { id: 1, name: "Design Mockups", type: "pdf", updatedAt: "2 days ago" },
-    { id: 2, name: "Design Assets Folder", type: "folder", updatedAt: "1 week ago", items: 8, isFolder: true },
-  ];
-  
-  const teamMembers = [
-    { 
-      id: 1, 
-      name: "Alex Johnson", 
-      role: "Project Manager", 
-      email: "alex@example.com", 
-      status: "online" as const,
-      tasks: 12
+    { id: 1, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago' },
+    {
+      id: 2,
+      name: 'Design Assets Folder',
+      type: 'folder',
+      updatedAt: '1 week ago',
+      items: 8,
+      isFolder: true,
     },
-    { 
-      id: 2, 
-      name: "Sam Smith", 
-      role: "Designer", 
-      email: "sam@example.com", 
-      status: "online" as const,
-      tasks: 8
+  ];
+
+  const teamMembers = [
+    {
+      id: 1,
+      name: 'Alex Johnson',
+      role: 'Project Manager',
+      email: 'alex@example.com',
+      status: 'online' as const,
+      tasks: 12,
+    },
+    {
+      id: 2,
+      name: 'Sam Smith',
+      role: 'Designer',
+      email: 'sam@example.com',
+      status: 'online' as const,
+      tasks: 8,
     },
   ];
 
@@ -72,7 +94,12 @@ const SearchResults = () => {
       <div>
         <h1 className="text-3xl font-bold">Search Results</h1>
         <p className="text-muted-foreground">
-          Found {tasks.length + projects.length + documents.length + teamMembers.length} results for "{searchTerm}"
+          Found{' '}
+          {tasks.length +
+            projects.length +
+            documents.length +
+            teamMembers.length}{' '}
+          results for "{searchTerm}"
         </p>
       </div>
 
@@ -92,7 +119,9 @@ const SearchResults = () => {
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Tasks</h2>
-            <span className="text-sm text-muted-foreground">({tasks.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({tasks.length})
+            </span>
           </div>
           <div className="space-y-3">
             {tasks.map((task) => (
@@ -117,7 +146,9 @@ const SearchResults = () => {
           <div className="flex items-center gap-2 mb-4">
             <LayoutGrid className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Projects</h2>
-            <span className="text-sm text-muted-foreground">({projects.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({projects.length})
+            </span>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
@@ -144,7 +175,9 @@ const SearchResults = () => {
           <div className="flex items-center gap-2 mb-4">
             <FileText className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Documents</h2>
-            <span className="text-sm text-muted-foreground">({documents.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({documents.length})
+            </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {documents.map((doc) => (
@@ -167,7 +200,9 @@ const SearchResults = () => {
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-xl font-semibold">Team Members</h2>
-            <span className="text-sm text-muted-foreground">({teamMembers.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({teamMembers.length})
+            </span>
           </div>
           <div className="space-y-3">
             {teamMembers.map((member) => (
@@ -185,15 +220,18 @@ const SearchResults = () => {
         </div>
       )}
 
-      {tasks.length === 0 && projects.length === 0 && documents.length === 0 && teamMembers.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Search className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-1">No results found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search terms or filters
-          </p>
-        </div>
-      )}
+      {tasks.length === 0 &&
+        projects.length === 0 &&
+        documents.length === 0 &&
+        teamMembers.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-1">No results found</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search terms or filters
+            </p>
+          </div>
+        )}
     </div>
   );
 };

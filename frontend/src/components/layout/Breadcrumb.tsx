@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 
 interface BreadcrumbItem {
   label: string;
@@ -18,8 +18,8 @@ const Breadcrumb = ({ items }: BreadcrumbProps) => {
       {items.map((item, index) => (
         <div key={index} className="flex items-center">
           {item.href ? (
-            <Link 
-              to={item.href} 
+            <Link
+              to={item.href}
               className="hover:text-foreground transition-colors"
             >
               {item.label}

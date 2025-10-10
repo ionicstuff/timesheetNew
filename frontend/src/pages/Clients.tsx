@@ -1,26 +1,27 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  Plus, 
-  Building2,
-  MoreHorizontal
-} from "lucide-react";
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Plus, Building2, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import Modal from "@/components/ui/Modal";
-import ClientForm from "@/components/clients/ClientForm";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+} from '@/components/ui/dropdown-menu';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Modal from '@/components/ui/Modal';
+import ClientForm from '@/components/clients/ClientForm';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 interface UiClientCard {
   id: number;
@@ -33,7 +34,7 @@ interface UiClientCard {
 }
 
 const Clients = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<UiClientCard[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
@@ -45,17 +46,25 @@ const Clients = () => {
       const token = localStorage.getItem('token') || '';
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
-      const res = await fetch(`/api/clients?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/clients?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const json = await res.json();
-      const rows = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
+      const rows = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.data)
+          ? json.data
+          : [];
       const mapped: UiClientCard[] = rows.map((c: any) => ({
         id: c.id,
         name: c.clientName || c.name || `Client #${c.id}`,
         industry: c.industry || c.companyName || undefined,
-        projects: Array.isArray(c.projects) ? c.projects.length : (c.projectsCount ?? 0),
+        projects: Array.isArray(c.projects)
+          ? c.projects.length
+          : (c.projectsCount ?? 0),
         status: (c.status || (c.isActive ? 'Active' : 'Inactive')) + '',
         contact: c.contact || c.primaryContact || c.contactName,
-        email: c.email || c.contactEmail
+        email: c.email || c.contactEmail,
       }));
       setClients(mapped);
     } catch (e) {
@@ -66,14 +75,20 @@ const Clients = () => {
     }
   };
 
-  useEffect(() => { void fetchClients(); }, [searchTerm]);
+  useEffect(() => {
+    void fetchClients();
+  }, [searchTerm]);
 
   const getStatusColor = (status: string) => {
     switch ((status || '').toLowerCase()) {
-      case "active": return "bg-green-100 text-green-800";
-      case "inactive": return "bg-gray-100 text-gray-800";
-      case "prospect": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'prospect':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -116,7 +131,10 @@ const Clients = () => {
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg">
-                      <Link to={`/clients/${client.id}`} className="hover:underline">
+                      <Link
+                        to={`/clients/${client.id}`}
+                        className="hover:underline"
+                      >
                         {client.name}
                       </Link>
                     </CardTitle>
@@ -140,16 +158,24 @@ const Clients = () => {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Primary Contact</span>
-                  <span className="text-sm font-medium">{client.contact || client.email || '—'}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Primary Contact
+                  </span>
+                  <span className="text-sm font-medium">
+                    {client.contact || client.email || '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Projects</span>
+                  <span className="text-sm text-muted-foreground">
+                    Projects
+                  </span>
                   <span className="text-sm font-medium">{client.projects}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(client.status)}`}>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${getStatusColor(client.status)}`}
+                  >
                     {client.status}
                   </span>
                 </div>
@@ -178,35 +204,53 @@ const Clients = () => {
         </div>
       )}
 
-      <Modal open={createOpen} onOpenChange={setCreateOpen} title="Create Client" size="lg">
-        <ClientForm onSubmit={async (data: any) => {
-          try {
-            const token = localStorage.getItem('token') || '';
-              const statusNorm = (data.status ? String(data.status) : 'active').toLowerCase().replace(/\s+/g,'_');
+      <Modal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Create Client"
+        size="lg"
+      >
+        <ClientForm
+          onSubmit={async (data: any) => {
+            try {
+              const token = localStorage.getItem('token') || '';
+              const statusNorm = (data.status ? String(data.status) : 'active')
+                .toLowerCase()
+                .replace(/\s+/g, '_');
               const payload: any = {
-              clientName: data.name,
-              industry: data.industry || undefined,
-              email: data.email || undefined,
-              phone: data.phone || undefined,
-              address: data.address || undefined,
-              website: data.website || undefined,
-              status: statusNorm,
-              notes: data.notes || undefined
-            };
-            const res = await fetch('/api/clients', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify(payload)
-            });
-            const j = await res.json().catch(()=>({}));
-            if (!res.ok) throw new Error(j?.message || 'Failed to create client');
-            setCreateOpen(false);
-            toast({ title: 'Client created' });
-            await fetchClients();
-          } catch (e: any) {
-            toast({ title: 'Error', description: e.message || 'Failed to create client', variant: 'destructive' });
-          }
-        }} onCancel={() => setCreateOpen(false)} />
+                clientName: data.name,
+                industry: data.industry || undefined,
+                email: data.email || undefined,
+                phone: data.phone || undefined,
+                address: data.address || undefined,
+                website: data.website || undefined,
+                status: statusNorm,
+                notes: data.notes || undefined,
+              };
+              const res = await fetch('/api/clients', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+              });
+              const j = await res.json().catch(() => ({}));
+              if (!res.ok)
+                throw new Error(j?.message || 'Failed to create client');
+              setCreateOpen(false);
+              toast({ title: 'Client created' });
+              await fetchClients();
+            } catch (e: any) {
+              toast({
+                title: 'Error',
+                description: e.message || 'Failed to create client',
+                variant: 'destructive',
+              });
+            }
+          }}
+          onCancel={() => setCreateOpen(false)}
+        />
       </Modal>
     </div>
   );

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
+import { ReactNode } from 'react';
+import Sidebar from './Sidebar';
+import Topbar from './Topbar';
 
 const MainLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -12,9 +12,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
       </div>
       <div className="flex-1 flex flex-col">
         <Topbar />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );

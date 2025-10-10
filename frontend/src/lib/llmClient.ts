@@ -35,13 +35,13 @@ class LLMClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`
+          Authorization: `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify({
           model: this.config.model,
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7
-        })
+          temperature: 0.7,
+        }),
       });
 
       if (!response.ok) {
@@ -61,5 +61,7 @@ class LLMClient {
 export const llmClient = new LLMClient({
   apiKey: import.meta.env.VITE_LLM_API_KEY || '',
   model: import.meta.env.VITE_LLM_MODEL || 'gpt-3.5-turbo',
-  apiUrl: import.meta.env.VITE_LLM_API_URL || 'https://api.openai.com/v1/chat/completions'
+  apiUrl:
+    import.meta.env.VITE_LLM_API_URL ||
+    'https://api.openai.com/v1/chat/completions',
 });

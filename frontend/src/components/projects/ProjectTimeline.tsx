@@ -1,63 +1,64 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Calendar, 
-  CheckCircle, 
-  Circle, 
-  MoreHorizontal
-} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Calendar, CheckCircle, Circle, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const ProjectTimeline = () => {
   const milestones = [
-    { 
-      id: 1, 
-      title: "Project Kickoff", 
-      date: "Oct 1, 2023", 
-      status: "completed",
-      description: "Initial project planning and team onboarding"
+    {
+      id: 1,
+      title: 'Project Kickoff',
+      date: 'Oct 1, 2023',
+      status: 'completed',
+      description: 'Initial project planning and team onboarding',
     },
-    { 
-      id: 2, 
-      title: "Design Phase Complete", 
-      date: "Nov 15, 2023", 
-      status: "completed",
-      description: "All design mockups and assets finalized"
+    {
+      id: 2,
+      title: 'Design Phase Complete',
+      date: 'Nov 15, 2023',
+      status: 'completed',
+      description: 'All design mockups and assets finalized',
     },
-    { 
-      id: 3, 
-      title: "Development Phase", 
-      date: "Nov 16 - Dec 10, 2023", 
-      status: "in-progress",
-      description: "Core development and feature implementation"
+    {
+      id: 3,
+      title: 'Development Phase',
+      date: 'Nov 16 - Dec 10, 2023',
+      status: 'in-progress',
+      description: 'Core development and feature implementation',
     },
-    { 
-      id: 4, 
-      title: "Testing & QA", 
-      date: "Dec 11 - Dec 14, 2023", 
-      status: "upcoming",
-      description: "Comprehensive testing and quality assurance"
+    {
+      id: 4,
+      title: 'Testing & QA',
+      date: 'Dec 11 - Dec 14, 2023',
+      status: 'upcoming',
+      description: 'Comprehensive testing and quality assurance',
     },
-    { 
-      id: 5, 
-      title: "Project Delivery", 
-      date: "Dec 15, 2023", 
-      status: "upcoming",
-      description: "Final delivery and client handover"
+    {
+      id: 5,
+      title: 'Project Delivery',
+      date: 'Dec 15, 2023',
+      status: 'upcoming',
+      description: 'Final delivery and client handover',
     },
   ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
+      case 'completed':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case "in-progress":
+      case 'in-progress':
         return <Circle className="h-5 w-5 text-blue-500 fill-blue-500" />;
       default:
         return <Circle className="h-5 w-5 text-muted-foreground" />;
@@ -66,12 +67,12 @@ const ProjectTimeline = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
-        return "text-green-500";
-      case "in-progress":
-        return "text-blue-500";
+      case 'completed':
+        return 'text-green-500';
+      case 'in-progress':
+        return 'text-blue-500';
       default:
-        return "text-muted-foreground";
+        return 'text-muted-foreground';
     }
   };
 
@@ -89,7 +90,9 @@ const ProjectTimeline = () => {
           {milestones.map((milestone, index) => (
             <div key={milestone.id} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className={`p-1 rounded-full ${getStatusColor(milestone.status)}`}>
+                <div
+                  className={`p-1 rounded-full ${getStatusColor(milestone.status)}`}
+                >
                   {getStatusIcon(milestone.status)}
                 </div>
                 {index < milestones.length - 1 && (
@@ -113,7 +116,9 @@ const ProjectTimeline = () => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View Details</DropdownMenuItem>
                       <DropdownMenuItem>Edit Milestone</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

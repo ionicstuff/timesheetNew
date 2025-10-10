@@ -1,16 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { 
-  Bell, 
-  Mail, 
-  Smartphone,
-  Save
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Bell, Mail, Smartphone, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const NotificationSettings = () => {
   const [settings, setSettings] = useState({
@@ -19,24 +14,24 @@ const NotificationSettings = () => {
     taskReminders: true,
     mentionNotifications: true,
     dailyDigest: false,
-    weeklySummary: true
+    weeklySummary: true,
   });
-  
+
   const { toast } = useToast();
 
   const handleSave = () => {
-    console.log("Saving notification settings:", settings);
+    console.log('Saving notification settings:', settings);
     // In a real app, you would save this to your database
     toast({
-      title: "Settings saved",
-      description: "Your notification preferences have been updated."
+      title: 'Settings saved',
+      description: 'Your notification preferences have been updated.',
     });
   };
 
   const toggleSetting = (key: keyof typeof settings) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
   };
 
@@ -48,7 +43,7 @@ const NotificationSettings = () => {
           Manage how you receive notifications
         </p>
       </div>
-      
+
       <div className="border rounded-lg p-6">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -69,7 +64,7 @@ const NotificationSettings = () => {
               onCheckedChange={() => toggleSetting('emailNotifications')}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
               <Smartphone className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -88,7 +83,7 @@ const NotificationSettings = () => {
               onCheckedChange={() => toggleSetting('pushNotifications')}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
               <Bell className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -107,7 +102,7 @@ const NotificationSettings = () => {
               onCheckedChange={() => toggleSetting('taskReminders')}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
               <Bell className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -126,7 +121,7 @@ const NotificationSettings = () => {
               onCheckedChange={() => toggleSetting('mentionNotifications')}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -145,7 +140,7 @@ const NotificationSettings = () => {
               onCheckedChange={() => toggleSetting('dailyDigest')}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -165,7 +160,7 @@ const NotificationSettings = () => {
             />
           </div>
         </div>
-        
+
         <div className="flex justify-end mt-6">
           <Button onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />

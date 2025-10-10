@@ -1,48 +1,72 @@
 // TaskList.tsx
-"use client";
+'use client';
 
-import TaskCard from "./TaskCard";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import TaskCard from './TaskCard';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, MoreHorizontal } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar, MoreHorizontal } from 'lucide-react';
 
 interface Task {
   id: number;
   title: string;
   project: string;
   dueDate: string;
-  priority: "High" | "Medium" | "Low";
+  priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
-  assignedTo?: string | number | { firstName?: string; lastName?: string; email?: string };
+  assignedTo?:
+    | string
+    | number
+    | { firstName?: string; lastName?: string; email?: string };
 }
 
 interface TaskListProps {
   tasks: Task[];
   onToggle?: (id: number) => void; // optional callback from parent
-  variant?: "card" | "row";
+  variant?: 'card' | 'row';
 }
 
-function PriorityBadge({ p }: { p: Task["priority"] }) {
-  const cls = p === 'High' ? 'bg-red-100 text-red-800' : p === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+function PriorityBadge({ p }: { p: Task['priority'] }) {
+  const cls =
+    p === 'High'
+      ? 'bg-red-100 text-red-800'
+      : p === 'Medium'
+        ? 'bg-yellow-100 text-yellow-800'
+        : 'bg-green-100 text-green-800';
   return <span className={`text-xs px-2 py-1 rounded-full ${cls}`}>{p}</span>;
 }
 
-const TaskRow = ({ task, onToggle }: { task: Task; onToggle?: (id:number)=>void }) => (
+const TaskRow = ({
+  task,
+  onToggle,
+}: {
+  task: Task;
+  onToggle?: (id: number) => void;
+}) => (
   <div className="grid grid-cols-12 gap-4 items-center p-4 hover:bg-muted/50">
     <div className="col-span-1 flex items-center">
-      <Checkbox checked={task.completed} onCheckedChange={() => onToggle && onToggle(task.id)} />
+      <Checkbox
+        checked={task.completed}
+        onCheckedChange={() => onToggle && onToggle(task.id)}
+      />
     </div>
     <div className="col-span-5 truncate">
-      <Link to={`/tasks/${task.id}`} className="font-medium hover:underline truncate block">{task.title}</Link>
+      <Link
+        to={`/tasks/${task.id}`}
+        className="font-medium hover:underline truncate block"
+      >
+        {task.title}
+      </Link>
     </div>
-    <div className="col-span-2 truncate text-sm text-muted-foreground">{task.project}</div>
+    <div className="col-span-2 truncate text-sm text-muted-foreground">
+      {task.project}
+    </div>
     <div className="col-span-2 text-sm flex items-center">
       <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
       <span>{task.dueDate}</span>
@@ -67,8 +91,8 @@ const TaskRow = ({ task, onToggle }: { task: Task; onToggle?: (id:number)=>void 
   </div>
 );
 
-const TaskList = ({ tasks, onToggle, variant = "card" }: TaskListProps) => {
-  if (variant === "row") {
+const TaskList = ({ tasks, onToggle, variant = 'card' }: TaskListProps) => {
+  if (variant === 'row') {
     return (
       <div className="divide-y">
         {tasks.map((t) => (

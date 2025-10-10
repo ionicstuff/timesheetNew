@@ -1,23 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Play, 
-  Pause, 
-  Square,
-  Clock,
-  Search,
-  ChevronDown
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Play, Pause, Square, Clock, Search, ChevronDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: number;
@@ -30,19 +23,19 @@ const TimeTracker = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [activeTask, setActiveTask] = useState<Task | null>({
     id: 1,
-    title: "Design homepage",
-    project: "Website Redesign"
+    title: 'Design homepage',
+    project: 'Website Redesign',
   });
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Mock tasks data
   const tasks: Task[] = [
-    { id: 1, title: "Design homepage", project: "Website Redesign" },
-    { id: 2, title: "Meeting with client", project: "Product Launch" },
-    { id: 3, title: "Update documentation", project: "Marketing Campaign" },
-    { id: 4, title: "Research competitors", project: "Product Launch" },
-    { id: 5, title: "Create wireframes", project: "Website Redesign" },
+    { id: 1, title: 'Design homepage', project: 'Website Redesign' },
+    { id: 2, title: 'Meeting with client', project: 'Product Launch' },
+    { id: 3, title: 'Update documentation', project: 'Marketing Campaign' },
+    { id: 4, title: 'Research competitors', project: 'Product Launch' },
+    { id: 5, title: 'Create wireframes', project: 'Website Redesign' },
   ];
 
   // Format seconds to HH:MM:SS
@@ -56,13 +49,13 @@ const TimeTracker = () => {
   // Handle timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (isTracking) {
       interval = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
+        setElapsedTime((prev) => prev + 1);
       }, 1000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -80,12 +73,13 @@ const TimeTracker = () => {
   const selectTask = (task: Task) => {
     setActiveTask(task);
     setSearchOpen(false);
-    setSearchTerm("");
+    setSearchTerm('');
   };
 
-  const filteredTasks = tasks.filter(task => 
-    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.project.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTasks = tasks.filter(
+    (task) =>
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.project.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -101,17 +95,21 @@ const TimeTracker = () => {
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
             )}
           </div>
-          
+
           <div className="p-3 bg-muted rounded-lg">
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="h-auto p-0 w-full justify-start hover:bg-transparent"
                 >
                   <div className="text-left">
-                    <p className="font-medium text-sm truncate">{activeTask.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{activeTask.project}</p>
+                    <p className="font-medium text-sm truncate">
+                      {activeTask.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {activeTask.project}
+                    </p>
                   </div>
                   <ChevronDown className="h-4 w-4 ml-1 text-muted-foreground" />
                 </Button>
@@ -139,8 +137,12 @@ const TimeTracker = () => {
                         onClick={() => selectTask(task)}
                       >
                         <div className="text-left">
-                          <p className="font-medium text-sm truncate">{task.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{task.project}</p>
+                          <p className="font-medium text-sm truncate">
+                            {task.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {task.project}
+                          </p>
                         </div>
                       </Button>
                     ))}
@@ -153,15 +155,15 @@ const TimeTracker = () => {
                 </ScrollArea>
               </PopoverContent>
             </Popover>
-            
+
             <div className="mt-3 text-2xl font-mono text-center">
               {formatTime(elapsedTime)}
             </div>
-            
+
             <div className="flex gap-2 mt-3">
-              <Button 
-                onClick={toggleTracking} 
-                variant={isTracking ? "destructive" : "default"}
+              <Button
+                onClick={toggleTracking}
+                variant={isTracking ? 'destructive' : 'default'}
                 size="sm"
                 className="flex-1"
               >
@@ -178,11 +180,7 @@ const TimeTracker = () => {
                 )}
               </Button>
               {isTracking && (
-                <Button 
-                  onClick={stopTracking} 
-                  variant="outline" 
-                  size="sm"
-                >
+                <Button onClick={stopTracking} variant="outline" size="sm">
                   <Square className="h-4 w-4" />
                 </Button>
               )}
@@ -195,13 +193,10 @@ const TimeTracker = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Time Tracking</span>
           </div>
-          
+
           <Popover open={searchOpen} onOpenChange={setSearchOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full justify-between"
-              >
+              <Button variant="outline" className="w-full justify-between">
                 <span>Select a task to track</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
@@ -229,8 +224,12 @@ const TimeTracker = () => {
                       onClick={() => selectTask(task)}
                     >
                       <div className="text-left">
-                        <p className="font-medium text-sm truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{task.project}</p>
+                        <p className="font-medium text-sm truncate">
+                          {task.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {task.project}
+                        </p>
                       </div>
                     </Button>
                   ))}

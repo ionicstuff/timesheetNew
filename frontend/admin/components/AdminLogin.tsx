@@ -11,7 +11,7 @@ interface LoginFormData {
 const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
-    password: ''
+    password: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -20,9 +20,9 @@ const AdminLogin: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     setError(''); // Clear error when user starts typing
   };
@@ -36,7 +36,9 @@ const AdminLogin: React.FC = () => {
       await adminAuthService.login(formData.email, formData.password);
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(
+        err.response?.data?.message || 'Login failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -51,11 +53,7 @@ const AdminLogin: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="admin-login-form">
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">
             <label htmlFor="email">Email Address</label>

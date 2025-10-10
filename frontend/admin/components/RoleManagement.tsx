@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getRoles, createRole, updateRole, deleteRole, getPermissions, getModules } from '../services/admin-api.service';
+import {
+  getRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  getPermissions,
+  getModules,
+} from '../services/admin-api.service';
 import '../styles/AdminManagement.css';
 
 interface Role {
@@ -39,7 +46,7 @@ const RoleManagement: React.FC = () => {
     name: '',
     description: '',
     level: 1,
-    permissions: [] as string[]
+    permissions: [] as string[],
   });
 
   useEffect(() => {
@@ -51,7 +58,7 @@ const RoleManagement: React.FC = () => {
       const [rolesData, permissionsData, modulesData] = await Promise.all([
         getRoles(),
         getPermissions(),
-        getModules()
+        getModules(),
       ]);
       setRoles(rolesData);
       setPermissions(permissionsData);
@@ -84,7 +91,7 @@ const RoleManagement: React.FC = () => {
       name: role.name,
       description: role.description,
       level: role.level,
-      permissions: role.permissions?.map(p => p.id) || []
+      permissions: role.permissions?.map((p) => p.id) || [],
     });
     setShowModal(true);
   };
@@ -105,26 +112,30 @@ const RoleManagement: React.FC = () => {
       name: '',
       description: '',
       level: 1,
-      permissions: []
+      permissions: [],
     });
     setEditingRole(null);
     setShowModal(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value) : value
+      [name]: type === 'number' ? parseInt(value) : value,
     }));
   };
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      permissions: checked 
+      permissions: checked
         ? [...prev.permissions, permissionId]
-        : prev.permissions.filter(id => id !== permissionId)
+        : prev.permissions.filter((id) => id !== permissionId),
     }));
   };
 
@@ -153,7 +164,7 @@ const RoleManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {roles.map(role => (
+            {roles.map((role) => (
               <tr key={role.id}>
                 <td>
                   <span className={`role-badge level-${role.level}`}>
@@ -164,7 +175,7 @@ const RoleManagement: React.FC = () => {
                 <td>{role.level}</td>
                 <td>
                   <div className="permissions-list">
-                    {role.permissions?.slice(0, 3).map(permission => (
+                    {role.permissions?.slice(0, 3).map((permission) => (
                       <span key={permission.id} className="permission-tag">
                         {permission.name}
                       </span>
@@ -177,14 +188,14 @@ const RoleManagement: React.FC = () => {
                   </div>
                 </td>
                 <td>
-                  <button 
-                    className="btn btn-sm btn-secondary" 
+                  <button
+                    className="btn btn-sm btn-secondary"
                     onClick={() => handleEdit(role)}
                   >
                     Edit
                   </button>
-                  <button 
-                    className="btn btn-sm btn-danger" 
+                  <button
+                    className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(role.id)}
                   >
                     Delete
@@ -201,7 +212,9 @@ const RoleManagement: React.FC = () => {
           <div className="modal large-modal">
             <div className="modal-header">
               <h3>{editingRole ? 'Edit Role' : 'Add New Role'}</h3>
-              <button className="modal-close" onClick={resetForm}>×</button>
+              <button className="modal-close" onClick={resetForm}>
+                ×
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
@@ -240,15 +253,25 @@ const RoleManagement: React.FC = () => {
                 <div className="form-group full-width">
                   <label>Permissions</label>
                   <div className="permissions-grid">
-                    {modules.map(module => (
+                    {modules.map((module) => (
                       <div key={module.id} className="module-permissions">
                         <h4>{module.name}</h4>
-                        {module.permissions.map(permission => (
-                          <label key={permission.id} className="permission-checkbox">
+                        {module.permissions.map((permission) => (
+                          <label
+                            key={permission.id}
+                            className="permission-checkbox"
+                          >
                             <input
                               type="checkbox"
-                              checked={formData.permissions.includes(permission.id)}
-                              onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                              checked={formData.permissions.includes(
+                                permission.id
+                              )}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  permission.id,
+                                  e.target.checked
+                                )
+                              }
                             />
                             {permission.name}
                           </label>
@@ -259,7 +282,11 @@ const RoleManagement: React.FC = () => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={resetForm}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

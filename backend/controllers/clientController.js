@@ -1,5 +1,5 @@
-const { Client, Project, User, Spoc, Notification } = require('../models');
-const { Op } = require('sequelize');
+const { Client, Project, User, Spoc, Notification } = require("../models");
+const { Op } = require("sequelize");
 
 const clientController = {
   // Get all clients (for users with appropriate roles)
@@ -9,22 +9,22 @@ const clientController = {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Project,
-            as: 'projects',
+            as: "projects",
             where: { isActive: true },
             required: false,
-            attributes: ['id', 'projectName', 'status', 'startDate', 'endDate']
-          }
+            attributes: ["id", "projectName", "status", "startDate", "endDate"],
+          },
         ],
-        order: [['clientName', 'ASC']]
+        order: [["clientName", "ASC"]],
       });
 
       // Transform data to match expected format
-      const transformedClients = clients.map(client => ({
+      const transformedClients = clients.map((client) => ({
         id: client.id,
         name: client.clientName,
         description: client.companyName,
@@ -32,13 +32,15 @@ const clientController = {
         contactPhone: client.phone,
         address: client.address,
         isActive: client.isActive,
-        createdAt: client.createdAt
+        createdAt: client.createdAt,
       }));
 
       res.json(transformedClients);
     } catch (error) {
-      console.error('Error fetching clients:', error);
-      res.status(500).json({ message: 'Error fetching clients', error: error.message });
+      console.error("Error fetching clients:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching clients", error: error.message });
     }
   },
 
@@ -46,33 +48,33 @@ const clientController = {
   getClient: async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       const client = await Client.findByPk(id, {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Project,
-            as: 'projects',
+            as: "projects",
             where: { isActive: true },
             required: false,
-            attributes: ['id', 'projectName', 'status', 'startDate', 'endDate']
+            attributes: ["id", "projectName", "status", "startDate", "endDate"],
           },
           {
             model: Spoc,
-            as: 'spocs',
-            attributes: ['id', 'name', 'email', 'phone'],
+            as: "spocs",
+            attributes: ["id", "name", "email", "phone"],
             where: { isActive: true },
-            required: false
-          }
-        ]
+            required: false,
+          },
+        ],
       });
 
       if (!client) {
-        return res.status(404).json({ message: 'Client not found' });
+        return res.status(404).json({ message: "Client not found" });
       }
 
       const transformedClient = {
@@ -83,13 +85,15 @@ const clientController = {
         contactPhone: client.phone,
         address: client.address,
         isActive: client.isActive,
-        createdAt: client.createdAt
+        createdAt: client.createdAt,
       };
 
       res.json(transformedClient);
     } catch (error) {
-      console.error('Error fetching client:', error);
-      res.status(500).json({ message: 'Error fetching client', error: error.message });
+      console.error("Error fetching client:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching client", error: error.message });
     }
   },
 
@@ -98,15 +102,15 @@ const clientController = {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      
+
       const [updatedRowsCount] = await Client.update(updateData, {
-        where: { id }
+        where: { id },
       });
 
       if (updatedRowsCount === 0) {
         return res.status(404).json({
           success: false,
-          message: 'Client not found'
+          message: "Client not found",
         });
       }
 
@@ -115,35 +119,38 @@ const clientController = {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: User,
-            as: 'creator',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "creator",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Project,
-            as: 'projects',
+            as: "projects",
             where: { isActive: true },
             required: false,
-            attributes: ['id', 'projectName', 'status', 'startDate', 'endDate']
-          }
-        ]
+            attributes: ["id", "projectName", "status", "startDate", "endDate"],
+          },
+        ],
       });
 
       res.json({
         success: true,
         data: updatedClient,
-        message: 'Client updated successfully'
+        message: "Client updated successfully",
       });
     } catch (error) {
-      console.error('Error updating client:', error);
+      console.error("Error updating client:", error);
       res.status(500).json({
         success: false,
-        message: 'Error updating client',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Error updating client",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
   },
@@ -152,26 +159,28 @@ const clientController = {
   deleteClient: async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Check if client has projects
       const projectCount = await Project.count({ where: { clientId: id } });
-      
+
       if (projectCount > 0) {
-        return res.status(400).json({ 
-          message: `Cannot delete client. ${projectCount} projects are associated with this client.` 
+        return res.status(400).json({
+          message: `Cannot delete client. ${projectCount} projects are associated with this client.`,
         });
       }
 
       const deletedRowsCount = await Client.destroy({ where: { id } });
 
       if (deletedRowsCount === 0) {
-        return res.status(404).json({ message: 'Client not found' });
+        return res.status(404).json({ message: "Client not found" });
       }
 
-      res.json({ message: 'Client deleted successfully' });
+      res.json({ message: "Client deleted successfully" });
     } catch (error) {
-      console.error('Error deleting client:', error);
-      res.status(500).json({ message: 'Error deleting client', error: error.message });
+      console.error("Error deleting client:", error);
+      res
+        .status(500)
+        .json({ message: "Error deleting client", error: error.message });
     }
   },
 
@@ -193,15 +202,15 @@ const clientController = {
                   [Op.or]: [
                     { projectManagerId: userId },
                     // Add timesheet associations here when available
-                  ]
+                  ],
                 },
-                attributes: ['clientId'],
-                raw: true
-              }).then(projects => projects.map(p => p.clientId))
-            }
-          }
+                attributes: ["clientId"],
+                raw: true,
+              }).then((projects) => projects.map((p) => p.clientId)),
+            },
+          },
         ],
-        isActive: true
+        isActive: true,
       };
 
       // Add search filter
@@ -211,8 +220,8 @@ const clientController = {
           [Op.or]: [
             { clientName: { [Op.iLike]: `%${search}%` } },
             { companyName: { [Op.iLike]: `%${search}%` } },
-            { clientCode: { [Op.iLike]: `%${search}%` } }
-          ]
+            { clientCode: { [Op.iLike]: `%${search}%` } },
+          ],
         });
       }
 
@@ -234,31 +243,34 @@ const clientController = {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Project,
-            as: 'projects',
+            as: "projects",
             where: { isActive: true },
             required: false,
-            attributes: ['id', 'projectName', 'status', 'startDate', 'endDate']
-          }
+            attributes: ["id", "projectName", "status", "startDate", "endDate"],
+          },
         ],
-        order: [['clientName', 'ASC']]
+        order: [["clientName", "ASC"]],
       });
 
       res.json({
         success: true,
         data: clients,
-        message: 'Clients retrieved successfully'
+        message: "Clients retrieved successfully",
       });
     } catch (error) {
-      console.error('Error fetching user clients:', error);
+      console.error("Error fetching user clients:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching clients',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Error fetching clients",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
   },
@@ -266,26 +278,31 @@ const clientController = {
   getIndustries: async (req, res) => {
     try {
       const industries = await Client.findAll({
-        attributes: [[Client.sequelize.fn('DISTINCT', Client.sequelize.col('industry')), 'industry']],
+        attributes: [
+          [
+            Client.sequelize.fn("DISTINCT", Client.sequelize.col("industry")),
+            "industry",
+          ],
+        ],
         where: {
           industry: {
             [Op.ne]: null,
-            [Op.ne]: ''
-          }
+            [Op.ne]: "",
+          },
         },
-        order: [['industry', 'ASC']]
+        order: [["industry", "ASC"]],
       });
 
       res.json({
         success: true,
-        data: industries.map(item => item.industry),
-        message: 'Industries retrieved successfully'
+        data: industries.map((item) => item.industry),
+        message: "Industries retrieved successfully",
       });
     } catch (error) {
-      console.error('Error fetching industries:', error);
+      console.error("Error fetching industries:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching industries'
+        message: "Error fetching industries",
       });
     }
   },
@@ -312,27 +329,27 @@ const clientController = {
         hourlyRate,
         currency,
         notes,
-        spocEmail // Added SPOC email field
+        spocEmail, // Added SPOC email field
       } = req.body;
 
       // Validate required fields
       if (!clientName) {
         return res.status(400).json({
           success: false,
-          message: 'Client name is required'
+          message: "Client name is required",
         });
       }
 
       // Check if client code already exists (only if provided)
       if (clientCode) {
         const existingClient = await Client.findOne({
-          where: { clientCode }
+          where: { clientCode },
         });
 
         if (existingClient) {
           return res.status(400).json({
             success: false,
-            message: 'Client code already exists'
+            message: "Client code already exists",
           });
         }
       }
@@ -341,7 +358,7 @@ const clientController = {
       let finalClientCode = clientCode;
       if (!finalClientCode) {
         const clientCount = await Client.count();
-        finalClientCode = `CL${String(clientCount + 1).padStart(4, '0')}`;
+        finalClientCode = `CL${String(clientCount + 1).padStart(4, "0")}`;
       }
 
       // Create the client
@@ -360,30 +377,30 @@ const clientController = {
         industry,
         contractStartDate,
         contractEndDate,
-        status: status || 'active',
+        status: status || "active",
         billingType,
         hourlyRate,
-        currency: currency || 'USD',
+        currency: currency || "USD",
         notes,
-        createdBy: userId
+        createdBy: userId,
       });
 
       // Create SPOC if email is provided
       if (spocEmail) {
         try {
           // Extract name from email if no name provided
-          const spocName = spocEmail.split('@')[0]; // Use email prefix as default name
-          
+          const spocName = spocEmail.split("@")[0]; // Use email prefix as default name
+
           await Spoc.create({
             clientId: newClient.id,
             name: spocName,
             email: spocEmail,
             isPrimary: true, // Assuming primary SPOC
             isActive: true,
-            createdBy: userId
+            createdBy: userId,
           });
         } catch (error) {
-          console.error('Error creating SPOC:', error);
+          console.error("Error creating SPOC:", error);
           // Don't fail the entire client creation if SPOC creation fails
         }
       }
@@ -399,73 +416,80 @@ const clientController = {
           const notifs = financeUsers.map((u) => ({
             userId: u.id,
             title: `Client "${clientName}" requires profile completion`,
-            body: 'Please add logo, email, phone, address, and at least one SPOC',
+            body: "Please add logo, email, phone, address, and at least one SPOC",
             link: `/clients/${newClient.id}`,
-            type: 'client_profile_pending',
+            type: "client_profile_pending",
             actorUserId: userId,
             metadata: { clientId: newClient.id },
-            isRead: false
+            isRead: false,
           }));
           // Bulk insert via Notification model
-          try { await Notification.bulkCreate(notifs, { ignoreDuplicates: true }); } catch {}
+          try {
+            await Notification.bulkCreate(notifs, { ignoreDuplicates: true });
+          } catch {}
         }
-      } catch (e) { console.warn('Notify finance failed:', e.message); }
+      } catch (e) {
+        console.warn("Notify finance failed:", e.message);
+      }
 
       // Fetch the created client with associations
       const clientWithDetails = await Client.findByPk(newClient.id, {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: User,
-            as: 'creator',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "creator",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Spoc,
-            as: 'spocs',
-            attributes: ['id', 'name', 'email'],
+            as: "spocs",
+            attributes: ["id", "name", "email"],
             where: { isActive: true },
-            required: false
-          }
-        ]
+            required: false,
+          },
+        ],
       });
 
       res.status(201).json({
         success: true,
         data: clientWithDetails,
-        message: 'Client created and SPOC added successfully'
+        message: "Client created and SPOC added successfully",
       });
     } catch (error) {
-      console.error('Error creating client:', error);
-      
+      console.error("Error creating client:", error);
+
       // Handle validation errors
-      if (error.name === 'SequelizeValidationError') {
+      if (error.name === "SequelizeValidationError") {
         return res.status(400).json({
           success: false,
-          message: 'Validation error',
-          errors: error.errors.map(err => ({
+          message: "Validation error",
+          errors: error.errors.map((err) => ({
             field: err.path,
-            message: err.message
-          }))
+            message: err.message,
+          })),
         });
       }
 
       // Handle unique constraint errors
-      if (error.name === 'SequelizeUniqueConstraintError') {
+      if (error.name === "SequelizeUniqueConstraintError") {
         return res.status(400).json({
           success: false,
-          message: 'Client code already exists'
+          message: "Client code already exists",
         });
       }
 
       res.status(500).json({
         success: false,
-        message: 'Error creating client',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Error creating client",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
   },
@@ -476,7 +500,8 @@ const clientController = {
       const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
       const offset = parseInt(req.query.offset, 10) || 0;
       // A client is pending if email/phone/address missing OR no active SPOC exists
-      const [rows] = await sequelize.query(`
+      const [rows] = await sequelize.query(
+        `
         SELECT c.id, c.client_name, c.company_name, c.email, c.phone, c.address,
                COALESCE(sp.spoc_count, 0) AS spoc_count
         FROM clients c
@@ -494,7 +519,9 @@ const clientController = {
         )
         ORDER BY c.client_name ASC
         LIMIT $1 OFFSET $2
-      `, { bind: [limit, offset] });
+      `,
+        { bind: [limit, offset] },
+      );
 
       const data = rows.map((r) => ({
         id: r.id,
@@ -506,8 +533,10 @@ const clientController = {
       }));
       return res.json({ items: data, limit, offset });
     } catch (error) {
-      console.error('Error fetching pending clients:', error);
-      return res.status(500).json({ message: 'Error fetching pending clients' });
+      console.error("Error fetching pending clients:", error);
+      return res
+        .status(500)
+        .json({ message: "Error fetching pending clients" });
     }
   },
 
@@ -519,27 +548,30 @@ const clientController = {
         include: [
           {
             model: Spoc,
-            as: 'spocs',
-            attributes: ['id', 'name', 'email'],
+            as: "spocs",
+            attributes: ["id", "name", "email"],
             where: { isActive: true },
-            required: false
-          }
+            required: false,
+          },
         ],
-        attributes: ['id', 'clientCode', 'clientName', 'companyName', 'status'],
-        order: [['clientName', 'ASC']]
+        attributes: ["id", "clientCode", "clientName", "companyName", "status"],
+        order: [["clientName", "ASC"]],
       });
 
       res.json({
         success: true,
         data: clients,
-        message: 'All clients retrieved successfully'
+        message: "All clients retrieved successfully",
       });
     } catch (error) {
-      console.error('Error fetching all clients:', error);
+      console.error("Error fetching all clients:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching clients',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Error fetching clients",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
   },
@@ -547,57 +579,67 @@ const clientController = {
   getClientById: async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       const client = await Client.findByPk(id, {
         include: [
           {
             model: User,
-            as: 'accountManager',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "accountManager",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: User,
-            as: 'creator',
-            attributes: ['id', 'firstName', 'lastName', 'email']
+            as: "creator",
+            attributes: ["id", "firstName", "lastName", "email"],
           },
           {
             model: Project,
-            as: 'projects',
+            as: "projects",
             where: { isActive: true },
             required: false,
-            attributes: ['id', 'projectName', 'status', 'startDate', 'endDate', 'projectManagerId'],
+            attributes: [
+              "id",
+              "projectName",
+              "status",
+              "startDate",
+              "endDate",
+              "projectManagerId",
+            ],
             include: [
               {
                 model: User,
-                as: 'projectManager',
-                attributes: ['id', 'firstName', 'lastName', 'email']
-              }
-            ]
-          }
-        ]
+                as: "projectManager",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          },
+        ],
       });
 
       if (!client) {
         return res.status(404).json({
           success: false,
-          message: 'Client not found'
+          message: "Client not found",
         });
       }
 
       res.json({
         success: true,
         data: client,
-        message: 'Client retrieved successfully'
+        message: "Client retrieved successfully",
       });
     } catch (error) {
-      console.error('Error fetching client:', error);
+      console.error("Error fetching client:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching client',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Error fetching client",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
-  }
+  },
 };
 
 module.exports = clientController;

@@ -1,5 +1,5 @@
 // Import the Supabase client
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Initialize Supabase client
@@ -93,18 +93,21 @@ serve(async (_req) => {
     `;
 
     // Call AI service
-    const aiResponse = await fetch(aiConfig.api_url || 'https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${aiConfig.api_key}`
-      },
-      body: JSON.stringify({
-        model: aiConfig.model || 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
-      })
-    });
+    const aiResponse = await fetch(
+      aiConfig.api_url || 'https://api.openai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${aiConfig.api_key}`,
+        },
+        body: JSON.stringify({
+          model: aiConfig.model || 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+        }),
+      }
+    );
 
     if (!aiResponse.ok) {
       throw new Error(`AI service error: ${aiResponse.statusText}`);
@@ -119,14 +122,14 @@ serve(async (_req) => {
     const { error: saveError } = await supabase
       .from('task_recommendations')
       .insert(
-        recommendations.map(rec => ({
+        recommendations.map((rec) => ({
           user_id: userId,
           task_id: rec.task_id,
           recommended_order: rec.recommended_order,
           estimated_start_time: rec.estimated_start_time,
           estimated_end_time: rec.estimated_end_time,
           notes: rec.notes,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }))
       );
 
@@ -135,16 +138,16 @@ serve(async (_req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: 'Task schedule generated successfully',
-        recommendations 
+        recommendations,
       }),
       { headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { 'Content-Type': 'application/json' }, status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
 });

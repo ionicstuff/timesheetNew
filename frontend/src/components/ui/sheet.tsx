@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import { 
+import { ReactNode } from 'react';
+import {
   Sheet as SheetPrimitive,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface SheetProps {
   open: boolean;
@@ -19,17 +19,17 @@ interface SheetProps {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  side?: "top" | "right" | "bottom" | "left";
+  side?: 'top' | 'right' | 'bottom' | 'left';
 }
 
-const Sheet = ({ 
-  open, 
-  onOpenChange, 
-  title, 
-  description, 
-  children, 
+const Sheet = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
   footer,
-  side = "right"
+  side = 'right',
 }: SheetProps) => {
   return (
     <SheetPrimitive open={open} onOpenChange={onOpenChange}>
@@ -43,18 +43,10 @@ const Sheet = ({
               </Button>
             </SheetClose>
           </div>
-          {description && (
-            <SheetDescription>{description}</SheetDescription>
-          )}
+          {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <div className="flex-1 py-4">
-          {children}
-        </div>
-        {footer && (
-          <div className="flex justify-end gap-2">
-            {footer}
-          </div>
-        )}
+        <div className="flex-1 py-4">{children}</div>
+        {footer && <div className="flex justify-end gap-2">{footer}</div>}
       </SheetContent>
     </SheetPrimitive>
   );

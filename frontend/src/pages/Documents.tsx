@@ -1,23 +1,41 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import DocumentCard from "@/components/documents/DocumentCard";
-import CreateDocumentButton from "@/components/documents/CreateDocumentButton";
-import DocumentFilter from "@/components/documents/DocumentFilter";
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import DocumentCard from '@/components/documents/DocumentCard';
+import CreateDocumentButton from '@/components/documents/CreateDocumentButton';
+import DocumentFilter from '@/components/documents/DocumentFilter';
 
 const Documents = () => {
   const folders = [
-    { id: 1, name: "Design Assets", type: "folder", updatedAt: "2 days ago", items: 12 },
-    { id: 2, name: "Research", type: "folder", updatedAt: "1 week ago", items: 8 },
-    { id: 3, name: "Client Docs", type: "folder", updatedAt: "3 days ago", items: 15 },
+    {
+      id: 1,
+      name: 'Design Assets',
+      type: 'folder',
+      updatedAt: '2 days ago',
+      items: 12,
+    },
+    {
+      id: 2,
+      name: 'Research',
+      type: 'folder',
+      updatedAt: '1 week ago',
+      items: 8,
+    },
+    {
+      id: 3,
+      name: 'Client Docs',
+      type: 'folder',
+      updatedAt: '3 days ago',
+      items: 15,
+    },
   ];
 
   const documents = [
-    { id: 1, name: "Project Requirements", type: "doc", updatedAt: "Today" },
-    { id: 2, name: "Meeting Notes", type: "txt", updatedAt: "Yesterday" },
-    { id: 3, name: "Design Mockups", type: "pdf", updatedAt: "2 days ago" },
-    { id: 4, name: "User Research", type: "doc", updatedAt: "1 week ago" },
+    { id: 1, name: 'Project Requirements', type: 'doc', updatedAt: 'Today' },
+    { id: 2, name: 'Meeting Notes', type: 'txt', updatedAt: 'Yesterday' },
+    { id: 3, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago' },
+    { id: 4, name: 'User Research', type: 'doc', updatedAt: '1 week ago' },
   ];
 
   return (
@@ -69,7 +87,10 @@ const Documents = () => {
           </div>
           <div className="divide-y">
             {documents.map((doc) => (
-              <div key={doc.id} className="p-4 hover:bg-muted/50 cursor-pointer">
+              <div
+                key={doc.id}
+                className="p-4 hover:bg-muted/50 cursor-pointer"
+              >
                 <div className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-1">
                     <DocumentCard

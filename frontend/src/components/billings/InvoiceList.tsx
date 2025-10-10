@@ -1,33 +1,48 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useApproveInvoice, useInvoices, useSendInvoice } from "@/hooks/useFinance";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { Download, Mail, CheckCircle2, Search, MoreHorizontal, Eye } from "lucide-react";
-import { getInvoicePdfUrl } from "@/services/finance";
+import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  useApproveInvoice,
+  useInvoices,
+  useSendInvoice,
+} from '@/hooks/useFinance';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import {
+  Download,
+  Mail,
+  CheckCircle2,
+  Search,
+  MoreHorizontal,
+  Eye,
+} from 'lucide-react';
+import { getInvoicePdfUrl } from '@/services/finance';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const map: Record<string, string> = {
-    generated: "bg-gray-100 text-gray-800",
-    approved: "bg-blue-100 text-blue-800",
-    sent: "bg-green-100 text-green-800",
+    generated: 'bg-gray-100 text-gray-800',
+    approved: 'bg-blue-100 text-blue-800',
+    sent: 'bg-green-100 text-green-800',
   };
   return (
-    <Badge className={map[status] || "bg-gray-100 text-gray-800"}>
+    <Badge className={map[status] || 'bg-gray-100 text-gray-800'}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </Badge>
   );
 };
 
 const InvoiceList = () => {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const { data: invoices, isLoading, isError } = useInvoices(statusFilter || undefined);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const {
+    data: invoices,
+    isLoading,
+    isError,
+  } = useInvoices(statusFilter || undefined);
   const { mutateAsync: approve, isPending: approving } = useApproveInvoice();
   const { mutateAsync: send, isPending: sending } = useSendInvoice();
   const { toast } = useToast();
@@ -48,29 +63,44 @@ const InvoiceList = () => {
   const doApprove = async (id: number) => {
     try {
       await approve(id);
-      toast({ title: "Approved", description: `Invoice ${id} approved.` });
+      toast({ title: 'Approved', description: `Invoice ${id} approved.` });
     } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to approve", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: e.message || 'Failed to approve',
+        variant: 'destructive',
+      });
     }
   };
 
   const doSend = async (id: number) => {
     try {
       await send(id);
-      toast({ title: "Sent", description: `Invoice ${id} sent to client (if SMTP configured).` });
+      toast({
+        title: 'Sent',
+        description: `Invoice ${id} sent to client (if SMTP configured).`,
+      });
     } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to send", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: e.message || 'Failed to send',
+        variant: 'destructive',
+      });
     }
   };
 
   if (isLoading) {
     return (
-      <div className="border rounded-lg p-4 text-sm text-muted-foreground">Loading invoices…</div>
+      <div className="border rounded-lg p-4 text-sm text-muted-foreground">
+        Loading invoices…
+      </div>
     );
   }
   if (isError) {
     return (
-      <div className="border rounded-lg p-4 text-sm text-red-600">Failed to load invoices.</div>
+      <div className="border rounded-lg p-4 text-sm text-red-600">
+        Failed to load invoices.
+      </div>
     );
   }
 
@@ -109,7 +139,10 @@ const InvoiceList = () => {
         </div>
         <div className="divide-y">
           {filtered.map((inv) => (
-            <div key={inv.id} className="grid grid-cols-12 gap-4 p-3 items-center">
+            <div
+              key={inv.id}
+              className="grid grid-cols-12 gap-4 p-3 items-center"
+            >
               <div className="col-span-2">
                 <button
                   className="text-left text-blue-600 hover:underline"
@@ -123,32 +156,52 @@ const InvoiceList = () => {
                 </div>
               </div>
               <div className="col-span-3">
-                <div className="font-medium">{inv.projectName || `#${inv.projectId}`}</div>
-                <div className="text-xs text-muted-foreground">Due {new Date(inv.dueDate).toLocaleDateString()}</div>
+                <div className="font-medium">
+                  {inv.projectName || `#${inv.projectId}`}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Due {new Date(inv.dueDate).toLocaleDateString()}
+                </div>
               </div>
-              <div className="col-span-2">{Intl.NumberFormat('en-US', { style: 'currency', currency: inv.currency || 'USD' }).format(inv.total || 0)}</div>
+              <div className="col-span-2">
+                {Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: inv.currency || 'USD',
+                }).format(inv.total || 0)}
+              </div>
               <div className="col-span-2">
                 <StatusBadge status={inv.status} />
               </div>
               <div className="col-span-1 flex items-center justify-end gap-1">
-                <Button variant="ghost" size="icon" title="View" onClick={() => navigate(`/billings/${inv.id}`)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="View"
+                  onClick={() => navigate(`/billings/${inv.id}`)}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
-                <a href={getInvoicePdfUrl(inv.id)} target="_blank" rel="noreferrer">
+                <a
+                  href={getInvoicePdfUrl(inv.id)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <Button variant="ghost" size="icon" title="Download PDF">
                     <Download className="h-4 w-4" />
                   </Button>
                 </a>
-                <Button 
-                  variant="ghost" size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   title={inv.status === 'sent' ? 'Already sent' : 'Approve'}
                   onClick={() => doApprove(inv.id)}
                   disabled={inv.status === 'sent' || approving}
                 >
                   <CheckCircle2 className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="ghost" size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   title="Send"
                   onClick={() => doSend(inv.id)}
                   disabled={sending}
@@ -159,7 +212,9 @@ const InvoiceList = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="p-6 text-sm text-muted-foreground">No invoices found.</div>
+            <div className="p-6 text-sm text-muted-foreground">
+              No invoices found.
+            </div>
           )}
         </div>
       </div>

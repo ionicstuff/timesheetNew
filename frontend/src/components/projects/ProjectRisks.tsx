@@ -1,64 +1,77 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
   AlertTriangle,
   CheckCircle,
   AlertCircle,
   Plus,
-  MoreHorizontal
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+  MoreHorizontal,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const ProjectRisks = () => {
   const risks = [
-    { 
-      id: 1, 
-      title: "Resource Shortage", 
-      level: "high",
-      status: "mitigated",
-      description: "Potential shortage of developers during peak development phase",
-      mitigation: "Hire 2 additional freelancers for the critical period"
+    {
+      id: 1,
+      title: 'Resource Shortage',
+      level: 'high',
+      status: 'mitigated',
+      description:
+        'Potential shortage of developers during peak development phase',
+      mitigation: 'Hire 2 additional freelancers for the critical period',
     },
-    { 
-      id: 2, 
-      title: "Scope Creep", 
-      level: "medium",
-      status: "monitoring",
-      description: "Client keeps adding new features to the project scope",
-      mitigation: "Implement formal change request process with client approval"
+    {
+      id: 2,
+      title: 'Scope Creep',
+      level: 'medium',
+      status: 'monitoring',
+      description: 'Client keeps adding new features to the project scope',
+      mitigation:
+        'Implement formal change request process with client approval',
     },
-    { 
-      id: 3, 
-      title: "Technical Debt", 
-      level: "low",
-      status: "identified",
-      description: "Legacy code may require more time to integrate with new features",
-      mitigation: "Allocate 2 days per sprint for refactoring tasks"
+    {
+      id: 3,
+      title: 'Technical Debt',
+      level: 'low',
+      status: 'identified',
+      description:
+        'Legacy code may require more time to integrate with new features',
+      mitigation: 'Allocate 2 days per sprint for refactoring tasks',
     },
   ];
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case "high": return "text-red-500";
-      case "medium": return "text-yellow-500";
-      case "low": return "text-green-500";
-      default: return "text-muted-foreground";
+      case 'high':
+        return 'text-red-500';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'low':
+        return 'text-green-500';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "mitigated":
+      case 'mitigated':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case "monitoring":
+      case 'monitoring':
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       default:
         return <AlertCircle className="h-5 w-5 text-muted-foreground" />;
@@ -78,7 +91,9 @@ const ProjectRisks = () => {
             Add Risk
           </Button>
         </CardTitle>
-        <CardDescription>Potential issues and mitigation strategies</CardDescription>
+        <CardDescription>
+          Potential issues and mitigation strategies
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -105,43 +120,52 @@ const ProjectRisks = () => {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>View Details</DropdownMenuItem>
                     <DropdownMenuItem>Edit Risk</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600">
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              
+
               <div className="mt-3">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="font-medium">Mitigation Plan</span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    risk.level === "high" ? "bg-red-100 text-red-800" :
-                    risk.level === "medium" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-green-100 text-green-800"
-                  }`}>
-                    {risk.level.charAt(0).toUpperCase() + risk.level.slice(1)} Risk
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      risk.level === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : risk.level === 'medium'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {risk.level.charAt(0).toUpperCase() + risk.level.slice(1)}{' '}
+                    Risk
                   </span>
                 </div>
-                <p className="text-sm mt-1">
-                  {risk.mitigation}
-                </p>
+                <p className="text-sm mt-1">{risk.mitigation}</p>
               </div>
-              
+
               <div className="mt-3">
                 <div className="flex justify-between text-sm mb-1">
                   <span>Status</span>
-                  <span className="capitalize">
-                    {risk.status}
-                  </span>
+                  <span className="capitalize">{risk.status}</span>
                 </div>
-                <Progress 
-                  value={risk.status === "mitigated" ? 100 : risk.status === "monitoring" ? 50 : 25} 
-                  className="h-2" 
+                <Progress
+                  value={
+                    risk.status === 'mitigated'
+                      ? 100
+                      : risk.status === 'monitoring'
+                        ? 50
+                        : 25
+                  }
+                  className="h-2"
                 />
               </div>
             </div>
           ))}
         </div>
-        
+
         <div className="mt-6 p-4 bg-muted rounded-lg">
           <h4 className="font-medium mb-2">Risk Management Tips</h4>
           <ul className="text-sm space-y-1">

@@ -1,17 +1,23 @@
-"use client";
+'use client';
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet-custom";
-import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  User, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet-custom';
+import { Button } from '@/components/ui/button';
+import {
+  Calendar,
+  User,
   Download,
   Share2,
   Eye,
   MessageSquare,
-  FileText
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+  FileText,
+} from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface DocumentDetailSheetProps {
   open: boolean;
@@ -19,7 +25,11 @@ interface DocumentDetailSheetProps {
   document: any;
 }
 
-const DocumentDetailSheet = ({ open, onOpenChange, document }: DocumentDetailSheetProps) => {
+const DocumentDetailSheet = ({
+  open,
+  onOpenChange,
+  document,
+}: DocumentDetailSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-lg">
@@ -91,7 +101,11 @@ const DocumentDetailSheet = ({ open, onOpenChange, document }: DocumentDetailShe
               <Avatar className="border-2 border-background">
                 <AvatarFallback>SS</AvatarFallback>
               </Avatar>
-              <Button variant="ghost" size="icon" className="border-2 border-dashed">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="border-2 border-dashed"
+              >
                 <User className="h-4 w-4" />
               </Button>
             </div>
@@ -106,12 +120,15 @@ const DocumentDetailSheet = ({ open, onOpenChange, document }: DocumentDetailShe
                 </Avatar>
                 <div className="flex-1">
                   <p className="text-sm">
-                    <span className="font-medium">John Doe</span> viewed this document
+                    <span className="font-medium">John Doe</span> viewed this
+                    document
                   </p>
-                  <p className="text-xs text-muted-foreground">Today at 9:30 AM</p>
+                  <p className="text-xs text-muted-foreground">
+                    Today at 9:30 AM
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>AJ</AvatarFallback>
@@ -120,7 +137,9 @@ const DocumentDetailSheet = ({ open, onOpenChange, document }: DocumentDetailShe
                   <p className="text-sm">
                     <span className="font-medium">Alex Johnson</span> commented
                   </p>
-                  <p className="text-xs text-muted-foreground">Yesterday at 4:15 PM</p>
+                  <p className="text-xs text-muted-foreground">
+                    Yesterday at 4:15 PM
+                  </p>
                 </div>
               </div>
             </div>

@@ -1,20 +1,15 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { 
-  Palette,
-  Monitor,
-  Sun,
-  Moon
-} from "lucide-react";
-import ThemeToggle from "@/components/layout/ThemeToggle";
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Palette, Monitor, Sun, Moon } from 'lucide-react';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 const AppearanceSettings = () => {
   const themes = [
-    { id: "light", name: "Light", icon: Sun },
-    { id: "dark", name: "Dark", icon: Moon },
-    { id: "system", name: "System", icon: Monitor }
+    { id: 'light', name: 'Light', icon: Sun },
+    { id: 'dark', name: 'Dark', icon: Moon },
+    { id: 'system', name: 'System', icon: Monitor },
   ];
 
   return (
@@ -25,7 +20,7 @@ const AppearanceSettings = () => {
           Customize the look and feel of the application
         </p>
       </div>
-      
+
       <div className="border rounded-lg p-6">
         <div className="space-y-6">
           <div>
@@ -43,7 +38,7 @@ const AppearanceSettings = () => {
               <ThemeToggle />
             </div>
           </div>
-          
+
           <div>
             <Label className="font-medium mb-4 block">Language</Label>
             <div className="flex items-center justify-between p-4 border rounded-lg">

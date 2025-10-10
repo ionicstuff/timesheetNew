@@ -1,58 +1,62 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon 
-} from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import CreateEventButton from "@/components/calendar/CreateEventButton";
+} from '@/components/ui/dropdown-menu';
+import CreateEventButton from '@/components/calendar/CreateEventButton';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+
   // Generate calendar days
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
-  
+
   const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay();
   };
-  
+
   const renderCalendar = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const daysInMonth = getDaysInMonth(year, month);
     const firstDayOfMonth = getFirstDayOfMonth(year, month);
-    
+
     const days = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(<div key={`empty-${i}`} className="h-24 border-t border-l"></div>);
+      days.push(
+        <div key={`empty-${i}`} className="h-24 border-t border-l"></div>
+      );
     }
-    
+
     // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = 
+      const isToday =
         day === new Date().getDate() &&
         month === new Date().getMonth() &&
         year === new Date().getFullYear();
-      
+
       days.push(
-        <div 
-          key={day} 
+        <div
+          key={day}
           className={`h-24 border-t border-l p-1 ${isToday ? 'bg-primary/10' : ''}`}
         >
-          <div className={`text-right p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
+          <div
+            className={`text-right p-1 ${isToday ? 'font-bold text-primary' : ''}`}
+          >
             {day}
           </div>
           <div className="text-xs space-y-1 mt-1">
@@ -70,28 +74,42 @@ const Calendar = () => {
         </div>
       );
     }
-    
+
     return days;
   };
-  
+
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
-  
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    );
   };
-  
+
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    );
   };
-  
+
   const today = new Date();
-  const isCurrentMonth = 
-    currentDate.getMonth() === today.getMonth() && 
+  const isCurrentMonth =
+    currentDate.getMonth() === today.getMonth() &&
     currentDate.getFullYear() === today.getFullYear();
 
   return (
@@ -100,7 +118,7 @@ const Calendar = () => {
         <h1 className="text-3xl font-bold">Calendar</h1>
         <CreateEventButton />
       </div>
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={prevMonth}>
@@ -113,10 +131,10 @@ const Calendar = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setCurrentDate(new Date())}
             disabled={isCurrentMonth}
           >
@@ -137,7 +155,7 @@ const Calendar = () => {
           </DropdownMenu>
         </div>
       </div>
-      
+
       <div className="border rounded-lg overflow-hidden">
         <div className="grid grid-cols-7 bg-muted">
           {dayNames.map((day) => (
@@ -146,9 +164,7 @@ const Calendar = () => {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7">
-          {renderCalendar()}
-        </div>
+        <div className="grid grid-cols-7">{renderCalendar()}</div>
       </div>
     </div>
   );

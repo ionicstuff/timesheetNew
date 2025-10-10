@@ -73,7 +73,9 @@ const AdminDashboard: React.FC = () => {
                   <div className="stat-details">
                     <h3>{stats.totalUsers}</h3>
                     <p>Total Users</p>
-                    <span className="stat-subtitle">{stats.activeUsers} active</span>
+                    <span className="stat-subtitle">
+                      {stats.activeUsers} active
+                    </span>
                   </div>
                 </div>
                 <div className="stat-card">
