@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -24,43 +24,41 @@ module.exports = {
     }
 
     // Add new columns to tasks
-    await queryInterface.addColumn("tasks", "started_at", {
+    await queryInterface.addColumn('tasks', 'started_at', {
       type: Sequelize.DATE,
       allowNull: true,
     });
-    await queryInterface.addColumn("tasks", "completed_at", {
+    await queryInterface.addColumn('tasks', 'completed_at', {
       type: Sequelize.DATE,
       allowNull: true,
     });
-    await queryInterface.addColumn("tasks", "total_tracked_seconds", {
+    await queryInterface.addColumn('tasks', 'total_tracked_seconds', {
       type: Sequelize.INTEGER,
       allowNull: false,
       defaultValue: 0,
     });
-    await queryInterface.addColumn("tasks", "active_timer_started_at", {
+    await queryInterface.addColumn('tasks', 'active_timer_started_at', {
       type: Sequelize.DATE,
       allowNull: true,
     });
-    await queryInterface.addColumn("tasks", "last_paused_at", {
+    await queryInterface.addColumn('tasks', 'last_paused_at', {
       type: Sequelize.DATE,
       allowNull: true,
     });
 
     // Index for concurrent-timer checks
-    await queryInterface.addIndex(
-      "tasks",
-      ["assigned_to", "active_timer_started_at"],
-      { name: "idx_tasks_assignee_timer" },
-    );
+    await queryInterface.addIndex('tasks', ['assigned_to', 'active_timer_started_at'], {
+      name: 'idx_tasks_assignee_timer',
+    });
   },
 
   async down(queryInterface, Sequelize) {
     // Remove columns (enum change not easily reversible)
-    await queryInterface.removeIndex("tasks", "idx_tasks_assignee_timer");
-    await queryInterface.removeColumn("tasks", "last_paused_at");
-    await queryInterface.removeColumn("tasks", "active_timer_started_at");
-    await queryInterface.removeColumn("tasks", "total_tracked_seconds");
-    await queryInterface.removeColumn("tasks", "completed_at");
-    await queryInterface.removeColumn("tasks", "started_at");
+    await queryInterface.removeIndex('tasks', 'idx_tasks_assignee_timer');
+    await queryInterface.removeColumn('tasks', 'last_paused_at');
+    await queryInterface.removeColumn('tasks', 'active_timer_started_at');
+    await queryInterface.removeColumn('tasks', 'total_tracked_seconds');
+    await queryInterface.removeColumn('tasks', 'completed_at');
+    await queryInterface.removeColumn('tasks', 'started_at');
   },
 };

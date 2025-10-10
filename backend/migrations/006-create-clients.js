@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("clients", {
+    await queryInterface.createTable('clients', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -68,11 +68,11 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       contract_start_date: {
         type: Sequelize.DATEONLY,
@@ -83,11 +83,11 @@ module.exports = {
         allowNull: true,
       },
       status: {
-        type: Sequelize.ENUM("active", "inactive", "prospect", "closed"),
-        defaultValue: "active",
+        type: Sequelize.ENUM('active', 'inactive', 'prospect', 'closed'),
+        defaultValue: 'active',
       },
       billing_type: {
-        type: Sequelize.ENUM("hourly", "fixed", "monthly", "project"),
+        type: Sequelize.ENUM('hourly', 'fixed', 'monthly', 'project'),
         allowNull: true,
       },
       hourly_rate: {
@@ -96,7 +96,7 @@ module.exports = {
       },
       currency: {
         type: Sequelize.STRING(3),
-        defaultValue: "USD",
+        defaultValue: 'USD',
         validate: {
           len: [3, 3],
         },
@@ -113,33 +113,33 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
 
     // Add indexes
-    await queryInterface.addIndex("clients", ["client_code"]);
-    await queryInterface.addIndex("clients", ["client_name"]);
-    await queryInterface.addIndex("clients", ["account_manager_id"]);
-    await queryInterface.addIndex("clients", ["status"]);
-    await queryInterface.addIndex("clients", ["is_active"]);
+    await queryInterface.addIndex('clients', ['client_code']);
+    await queryInterface.addIndex('clients', ['client_name']);
+    await queryInterface.addIndex('clients', ['account_manager_id']);
+    await queryInterface.addIndex('clients', ['status']);
+    await queryInterface.addIndex('clients', ['is_active']);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("clients");
+    await queryInterface.dropTable('clients');
   },
 };

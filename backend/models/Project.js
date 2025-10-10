@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Project = sequelize.define(
-  "Project",
+  'Project',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -13,7 +13,7 @@ const Project = sequelize.define(
       type: DataTypes.STRING(20),
       allowNull: false,
       unique: true,
-      field: "project_code",
+      field: 'project_code',
       validate: {
         notEmpty: true,
       },
@@ -21,7 +21,7 @@ const Project = sequelize.define(
     projectName: {
       type: DataTypes.STRING(200),
       allowNull: false,
-      field: "project_name",
+      field: 'project_name',
       validate: {
         notEmpty: true,
       },
@@ -33,35 +33,35 @@ const Project = sequelize.define(
     clientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "client_id",
+      field: 'client_id',
       references: {
-        model: "clients",
-        key: "id",
+        model: 'clients',
+        key: 'id',
       },
     },
     projectManagerId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "project_manager_id",
+      field: 'project_manager_id',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     startDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      field: "start_date",
+      field: 'start_date',
     },
     endDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      field: "end_date",
+      field: 'end_date',
     },
     estimatedHours: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: true,
-      field: "estimated_hours",
+      field: 'estimated_hours',
       validate: {
         min: 0,
       },
@@ -69,7 +69,7 @@ const Project = sequelize.define(
     actualHours: {
       type: DataTypes.DECIMAL(8, 2),
       defaultValue: 0,
-      field: "actual_hours",
+      field: 'actual_hours',
       validate: {
         min: 0,
       },
@@ -77,7 +77,7 @@ const Project = sequelize.define(
     budgetAmount: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: true,
-      field: "budget_amount",
+      field: 'budget_amount',
       validate: {
         min: 0,
       },
@@ -85,56 +85,50 @@ const Project = sequelize.define(
     spentAmount: {
       type: DataTypes.DECIMAL(12, 2),
       defaultValue: 0,
-      field: "spent_amount",
+      field: 'spent_amount',
       validate: {
         min: 0,
       },
     },
     currency: {
       type: DataTypes.STRING(3),
-      defaultValue: "USD",
+      defaultValue: 'USD',
       validate: {
         len: [3, 3],
       },
     },
     status: {
-      type: DataTypes.ENUM(
-        "planning",
-        "active",
-        "on_hold",
-        "completed",
-        "cancelled",
-      ),
-      defaultValue: "planning",
+      type: DataTypes.ENUM('planning', 'active', 'on_hold', 'completed', 'cancelled'),
+      defaultValue: 'planning',
     },
     priority: {
-      type: DataTypes.ENUM("low", "medium", "high", "critical"),
-      defaultValue: "medium",
+      type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+      defaultValue: 'medium',
     },
     billingType: {
-      type: DataTypes.ENUM("hourly", "fixed", "milestone"),
-      defaultValue: "hourly",
-      field: "billing_type",
+      type: DataTypes.ENUM('hourly', 'fixed', 'milestone'),
+      defaultValue: 'hourly',
+      field: 'billing_type',
     },
     hourlyRate: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
-      field: "hourly_rate",
+      field: 'hourly_rate',
     },
     isTimeTrackingEnabled: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_time_tracking_enabled",
+      field: 'is_time_tracking_enabled',
     },
     isBillable: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_billable",
+      field: 'is_billable',
     },
     tags: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       defaultValue: [],
-      comment: "Array of project tags for categorization",
+      comment: 'Array of project tags for categorization',
     },
     notes: {
       type: DataTypes.TEXT,
@@ -143,94 +137,94 @@ const Project = sequelize.define(
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
+      field: 'is_active',
     },
     spocId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "spoc_id",
+      field: 'spoc_id',
       references: {
-        model: "spocs",
-        key: "id",
+        model: 'spocs',
+        key: 'id',
       },
     },
     briefReceivedOn: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      field: "brief_received_on",
+      field: 'brief_received_on',
     },
     estimatedTime: {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: true,
-      field: "estimated_time",
+      field: 'estimated_time',
       validate: {
         min: 0,
       },
-      comment: "Estimated time in hours",
+      comment: 'Estimated time in hours',
     },
     createdBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "created_by",
+      field: 'created_by',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     // Closing metadata
     closedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "closed_at",
+      field: 'closed_at',
     },
     closedByUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "closed_by_user_id",
+      field: 'closed_by_user_id',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     closedReason: {
       type: DataTypes.TEXT,
       allowNull: true,
-      field: "closed_reason",
+      field: 'closed_reason',
     },
   },
   {
-    tableName: "projects",
+    tableName: 'projects',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
-        fields: ["project_code"],
+        fields: ['project_code'],
       },
       {
-        fields: ["project_name"],
+        fields: ['project_name'],
       },
       {
-        fields: ["client_id"],
+        fields: ['client_id'],
       },
       {
-        fields: ["project_manager_id"],
+        fields: ['project_manager_id'],
       },
       {
-        fields: ["status"],
+        fields: ['status'],
       },
       {
-        fields: ["priority"],
+        fields: ['priority'],
       },
       {
-        fields: ["start_date", "end_date"],
+        fields: ['start_date', 'end_date'],
       },
       {
-        fields: ["is_active"],
+        fields: ['is_active'],
       },
       {
-        fields: ["closed_at"],
+        fields: ['closed_at'],
       },
     ],
   },

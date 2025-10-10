@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const RolePermission = sequelize.define(
-  "RolePermission",
+  'RolePermission',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,65 +12,65 @@ const RolePermission = sequelize.define(
     roleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "role_id",
+      field: 'role_id',
       references: {
-        model: "role_masters",
-        key: "id",
+        model: 'role_masters',
+        key: 'id',
       },
     },
     permissionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "permission_id",
+      field: 'permission_id',
       references: {
-        model: "permission_masters",
-        key: "id",
+        model: 'permission_masters',
+        key: 'id',
       },
     },
     isGranted: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_granted",
+      field: 'is_granted',
     },
     grantedBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "granted_by",
+      field: 'granted_by',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     grantedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "granted_at",
+      field: 'granted_at',
     },
     expiresAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "expires_at",
+      field: 'expires_at',
     },
   },
   {
-    tableName: "role_permissions",
+    tableName: 'role_permissions',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
         unique: true,
-        fields: ["role_id", "permission_id"],
+        fields: ['role_id', 'permission_id'],
       },
       {
-        fields: ["role_id"],
+        fields: ['role_id'],
       },
       {
-        fields: ["permission_id"],
+        fields: ['permission_id'],
       },
       {
-        fields: ["granted_by"],
+        fields: ['granted_by'],
       },
     ],
   },

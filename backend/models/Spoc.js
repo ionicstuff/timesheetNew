@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Spoc = sequelize.define(
-  "Spoc",
+  'Spoc',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -39,31 +39,31 @@ const Spoc = sequelize.define(
     clientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "client_id",
+      field: 'client_id',
       references: {
-        model: "clients",
-        key: "id",
+        model: 'clients',
+        key: 'id',
       },
     },
     projectId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "project_id",
+      field: 'project_id',
       references: {
-        model: "projects",
-        key: "id",
+        model: 'projects',
+        key: 'id',
       },
     },
     isPrimary: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      field: "is_primary",
-      comment: "Indicates if this is the primary SPOC for the client/project",
+      field: 'is_primary',
+      comment: 'Indicates if this is the primary SPOC for the client/project',
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
+      field: 'is_active',
     },
     notes: {
       type: DataTypes.TEXT,
@@ -72,42 +72,42 @@ const Spoc = sequelize.define(
     createdBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "created_by",
+      field: 'created_by',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
   },
   {
-    tableName: "spocs",
+    tableName: 'spocs',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
-        fields: ["client_id"],
+        fields: ['client_id'],
       },
       {
-        fields: ["project_id"],
+        fields: ['project_id'],
       },
       {
-        fields: ["email"],
+        fields: ['email'],
       },
       {
-        fields: ["is_primary"],
+        fields: ['is_primary'],
       },
       {
-        fields: ["is_active"],
+        fields: ['is_active'],
       },
       {
         unique: true,
-        fields: ["client_id", "project_id", "email"],
+        fields: ['client_id', 'project_id', 'email'],
         where: {
           is_active: true,
         },
-        name: "unique_active_spoc_per_client_project",
+        name: 'unique_active_spoc_per_client_project',
       },
     ],
   },

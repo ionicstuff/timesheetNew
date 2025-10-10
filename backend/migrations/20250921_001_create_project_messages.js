@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("project_messages", {
+    await queryInterface.createTable('project_messages', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -12,16 +12,16 @@ module.exports = {
       project_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "projects", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
+        references: { model: 'projects', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "users", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
+        references: { model: 'users', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       content: {
         type: Sequelize.TEXT,
@@ -29,22 +29,20 @@ module.exports = {
       },
       created_at: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
 
-    await queryInterface.addIndex(
-      "project_messages",
-      ["project_id", "created_at"],
-      { name: "idx_project_messages_project_time" },
-    );
+    await queryInterface.addIndex('project_messages', ['project_id', 'created_at'], {
+      name: 'idx_project_messages_project_time',
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("project_messages");
+    await queryInterface.dropTable('project_messages');
   },
 };

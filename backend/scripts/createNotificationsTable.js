@@ -1,9 +1,9 @@
-const db = require("../config/database");
+const db = require('../config/database');
 
 async function createTable() {
   try {
     await db.authenticate();
-    console.log("DB connected");
+    console.log('DB connected');
     const sql = `
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
@@ -16,9 +16,9 @@ async function createTable() {
       );
     `;
     await db.query(sql);
-    console.log("Notifications table ensured");
+    console.log('Notifications table ensured');
   } catch (e) {
-    console.error("Failed to create notifications table", e);
+    console.error('Failed to create notifications table', e);
     process.exitCode = 1;
   } finally {
     await db.close();

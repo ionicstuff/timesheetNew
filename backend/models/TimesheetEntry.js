@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const TimesheetEntry = sequelize.define(
-  "TimesheetEntry",
+  'TimesheetEntry',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,20 +12,20 @@ const TimesheetEntry = sequelize.define(
     timesheetId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "timesheet_id",
-      references: { model: "timesheets", key: "id" },
+      field: 'timesheet_id',
+      references: { model: 'timesheets', key: 'id' },
     },
     projectId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "project_id",
-      references: { model: "projects", key: "id" },
+      field: 'project_id',
+      references: { model: 'projects', key: 'id' },
     },
     taskId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "task_id",
-      references: { model: "tasks", key: "id" },
+      field: 'task_id',
+      references: { model: 'tasks', key: 'id' },
     },
     minutes: {
       type: DataTypes.INTEGER,
@@ -35,7 +35,7 @@ const TimesheetEntry = sequelize.define(
     isBillable: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      field: "is_billable",
+      field: 'is_billable',
     },
     description: {
       type: DataTypes.TEXT,
@@ -44,16 +44,16 @@ const TimesheetEntry = sequelize.define(
     startedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "started_at",
+      field: 'started_at',
     },
     endedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "ended_at",
+      field: 'ended_at',
     },
   },
   {
-    tableName: "timesheet_entries",
+    tableName: 'timesheet_entries',
     underscored: true,
     timestamps: true,
   },

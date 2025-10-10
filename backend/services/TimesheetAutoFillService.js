@@ -1,11 +1,11 @@
-const { Op } = require("sequelize");
-const sequelize = require("../config/database");
-const { Timesheet, TimesheetEntry, Project } = require("../models");
-const TaskTimeLog = require("../models/TaskTimeLog");
+const { Op } = require('sequelize');
+const sequelize = require('../config/database');
+const { Timesheet, TimesheetEntry, Project } = require('../models');
+const TaskTimeLog = require('../models/TaskTimeLog');
 
 function getTodayDate() {
   // Keep consistent with other routes using UTC date partitioning
-  return new Date().toISOString().split("T")[0];
+  return new Date().toISOString().split('T')[0];
 }
 
 function startOfUtcDay(dateStr) {
@@ -25,14 +25,10 @@ async function ensureTimesheet(userId, date, t) {
     transaction: t,
   });
   if (existing) {
-    if (existing.status === "submitted")
-      return { header: existing, skip: true };
+    if (existing.status === 'submitted') return { header: existing, skip: true };
     return { header: existing, skip: false };
   }
-  const header = await Timesheet.create(
-    { userId, date, status: "pending" },
-    { transaction: t },
-  );
+  const header = await Timesheet.create({ userId, date, status: 'pending' }, { transaction: t });
   return { header, skip: false };
 }
 
@@ -62,10 +58,7 @@ async function upsertFromTaskCompletion(task, user, t) {
     transaction: t,
   });
 
-  const totalSeconds = logs.reduce(
-    (sum, l) => sum + (l.durationSeconds || 0),
-    0,
-  );
+  const totalSeconds = logs.reduce((sum, l) => sum + (l.durationSeconds || 0), 0);
   const minutes = Math.max(0, Math.floor(totalSeconds / 60));
 
   if (minutes <= 0) {

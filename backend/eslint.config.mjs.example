@@ -1,0 +1,31 @@
+// Example eslint.config.mjs (flat config) with migration/seed override
+// If you already have an eslint.config.mjs, merge the overrides block into it.
+
+import js from "@eslint/js";
+import globals from "globals";
+
+export default [
+  js.configs.recommended,
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2021,
+      sourceType: "commonjs",
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "no-undef": "error"
+    }
+  },
+  // dial down noise in migrations/seeders
+  {
+    files: ["**/migrations/**", "**/seeders/**"],
+    rules: {
+      "no-unused-vars": "off",
+      "no-empty": "off"
+    }
+  }
+];

@@ -1,5 +1,5 @@
-const sequelize = require("../config/database");
-const { Project, ProjectMember, ProjectMessage, User } = require("../models");
+const sequelize = require('../config/database');
+const { Project, ProjectMember, ProjectMessage, User } = require('../models');
 
 async function isMember(projectId, userId) {
   // A user is considered a member if they are in project_members OR they are the PM or creator of the project
@@ -22,24 +22,22 @@ const listMessages = async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id || req.user?.userId;
-    if (!projectId || !userId)
-      return res.status(401).json({ message: "Unauthorized" });
+    if (!projectId || !userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    if (!(await isMember(projectId, userId)))
-      return res.status(403).json({ message: "Forbidden" });
+    if (!(await isMember(projectId, userId))) return res.status(403).json({ message: 'Forbidden' });
 
-    const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
+    const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
 
     const rows = await ProjectMessage.findAll({
       where: { projectId },
       include: [
         {
           model: User,
-          as: "author",
-          attributes: ["id", "firstName", "lastName", "email"],
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
         },
       ],
-      order: [["created_at", "ASC"]],
+      order: [['created_at', 'ASC']],
       limit,
     });
 
@@ -59,8 +57,8 @@ const listMessages = async (req, res) => {
     }));
     return res.json(messages);
   } catch (e) {
-    console.error("listMessages error", e);
-    return res.status(500).json({ message: "Failed to fetch messages" });
+    console.error('listMessages error', e);
+    return res.status(500).json({ message: 'Failed to fetch messages' });
   }
 };
 
@@ -68,19 +66,16 @@ const createMessage = async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id || req.user?.userId;
-    if (!projectId || !userId)
-      return res.status(401).json({ message: "Unauthorized" });
+    if (!projectId || !userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    if (!(await isMember(projectId, userId)))
-      return res.status(403).json({ message: "Forbidden" });
+    if (!(await isMember(projectId, userId))) return res.status(403).json({ message: 'Forbidden' });
 
-    const content = (req.body?.content || "").trim();
-    if (!content)
-      return res.status(400).json({ message: "content is required" });
+    const content = (req.body?.content || '').trim();
+    if (!content) return res.status(400).json({ message: 'content is required' });
 
     const row = await ProjectMessage.create({ projectId, userId, content });
     const author = await User.findByPk(userId, {
-      attributes: ["id", "firstName", "lastName", "email"],
+      attributes: ['id', 'firstName', 'lastName', 'email'],
     });
 
     return res.status(201).json({
@@ -98,8 +93,8 @@ const createMessage = async (req, res) => {
       attachments: [],
     });
   } catch (e) {
-    console.error("createMessage error", e);
-    return res.status(500).json({ message: "Failed to create message" });
+    console.error('createMessage error', e);
+    return res.status(500).json({ message: 'Failed to create message' });
   }
 };
 

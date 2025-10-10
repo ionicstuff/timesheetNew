@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const ProjectMember = sequelize.define(
-  "ProjectMember",
+  'ProjectMember',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,37 +12,37 @@ const ProjectMember = sequelize.define(
     projectId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "project_id",
-      references: { model: "projects", key: "id" },
+      field: 'project_id',
+      references: { model: 'projects', key: 'id' },
     },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "user_id",
-      references: { model: "users", key: "id" },
+      field: 'user_id',
+      references: { model: 'users', key: 'id' },
     },
     projectRole: {
-      type: DataTypes.ENUM("owner", "pm", "member", "viewer"),
+      type: DataTypes.ENUM('owner', 'pm', 'member', 'viewer'),
       allowNull: true,
-      field: "project_role",
+      field: 'project_role',
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
+      field: 'is_active',
     },
     addedBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "added_by",
+      field: 'added_by',
     },
   },
   {
-    tableName: "project_members",
+    tableName: 'project_members',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   },
 );
 

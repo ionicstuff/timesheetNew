@@ -1,5 +1,5 @@
-const { Spoc, Client, User } = require("../models");
-const { Op } = require("sequelize");
+const { Spoc, Client, User } = require('../models');
+const { Op } = require('sequelize');
 
 const spocController = {
   // Get SPOCs by client ID
@@ -15,39 +15,28 @@ const spocController = {
         include: [
           {
             model: Client,
-            as: "client",
-            attributes: ["id", "clientName", "clientCode"],
+            as: 'client',
+            attributes: ['id', 'clientName', 'clientCode'],
           },
         ],
-        attributes: [
-          "id",
-          "name",
-          "email",
-          "phone",
-          "designation",
-          "department",
-          "isPrimary",
-        ],
+        attributes: ['id', 'name', 'email', 'phone', 'designation', 'department', 'isPrimary'],
         order: [
-          ["isPrimary", "DESC"],
-          ["name", "ASC"],
+          ['isPrimary', 'DESC'],
+          ['name', 'ASC'],
         ],
       });
 
       res.json({
         success: true,
         data: spocs,
-        message: "SPOCs retrieved successfully",
+        message: 'SPOCs retrieved successfully',
       });
     } catch (error) {
-      console.error("Error fetching SPOCs by client:", error);
+      console.error('Error fetching SPOCs by client:', error);
       res.status(500).json({
         success: false,
-        message: "Error fetching SPOCs",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Internal server error",
+        message: 'Error fetching SPOCs',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       });
     }
   },
@@ -60,27 +49,24 @@ const spocController = {
         include: [
           {
             model: Client,
-            as: "client",
-            attributes: ["id", "clientName", "clientCode"],
+            as: 'client',
+            attributes: ['id', 'clientName', 'clientCode'],
           },
         ],
-        order: [["name", "ASC"]],
+        order: [['name', 'ASC']],
       });
 
       res.json({
         success: true,
         data: spocs,
-        message: "All SPOCs retrieved successfully",
+        message: 'All SPOCs retrieved successfully',
       });
     } catch (error) {
-      console.error("Error fetching all SPOCs:", error);
+      console.error('Error fetching all SPOCs:', error);
       res.status(500).json({
         success: false,
-        message: "Error fetching SPOCs",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Internal server error",
+        message: 'Error fetching SPOCs',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       });
     }
   },
@@ -89,23 +75,14 @@ const spocController = {
   createSpoc: async (req, res) => {
     try {
       const userId = req.user.id;
-      const {
-        name,
-        email,
-        phone,
-        designation,
-        department,
-        clientId,
-        projectId,
-        isPrimary,
-        notes,
-      } = req.body;
+      const { name, email, phone, designation, department, clientId, projectId, isPrimary, notes } =
+        req.body;
 
       // Validate required fields
       if (!name || !email || !clientId) {
         return res.status(400).json({
           success: false,
-          message: "Name, email, and client are required",
+          message: 'Name, email, and client are required',
         });
       }
 
@@ -121,7 +98,7 @@ const spocController = {
       if (existingSpoc) {
         return res.status(400).json({
           success: false,
-          message: "SPOC with this email already exists for this client",
+          message: 'SPOC with this email already exists for this client',
         });
       }
 
@@ -144,13 +121,13 @@ const spocController = {
         include: [
           {
             model: Client,
-            as: "client",
-            attributes: ["id", "clientName", "clientCode"],
+            as: 'client',
+            attributes: ['id', 'clientName', 'clientCode'],
           },
           {
             model: User,
-            as: "creator",
-            attributes: ["id", "firstName", "lastName", "email"],
+            as: 'creator',
+            attributes: ['id', 'firstName', 'lastName', 'email'],
           },
         ],
       });
@@ -158,16 +135,16 @@ const spocController = {
       res.status(201).json({
         success: true,
         data: spocWithDetails,
-        message: "SPOC created successfully",
+        message: 'SPOC created successfully',
       });
     } catch (error) {
-      console.error("Error creating SPOC:", error);
+      console.error('Error creating SPOC:', error);
 
       // Handle validation errors
-      if (error.name === "SequelizeValidationError") {
+      if (error.name === 'SequelizeValidationError') {
         return res.status(400).json({
           success: false,
-          message: "Validation error",
+          message: 'Validation error',
           errors: error.errors.map((err) => ({
             field: err.path,
             message: err.message,
@@ -177,11 +154,8 @@ const spocController = {
 
       res.status(500).json({
         success: false,
-        message: "Error creating SPOC",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Internal server error",
+        message: 'Error creating SPOC',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       });
     }
   },
@@ -199,23 +173,20 @@ const spocController = {
       if (updatedRowsCount === 0) {
         return res.status(404).json({
           success: false,
-          message: "SPOC not found",
+          message: 'SPOC not found',
         });
       }
 
       res.json({
         success: true,
-        message: "SPOC updated successfully",
+        message: 'SPOC updated successfully',
       });
     } catch (error) {
-      console.error("Error updating SPOC:", error);
+      console.error('Error updating SPOC:', error);
       res.status(500).json({
         success: false,
-        message: "Error updating SPOC",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Internal server error",
+        message: 'Error updating SPOC',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       });
     }
   },
@@ -226,31 +197,25 @@ const spocController = {
       const { id } = req.params;
 
       // Instead of hard delete, we'll soft delete by setting isActive to false
-      const [updatedRowsCount] = await Spoc.update(
-        { isActive: false },
-        { where: { id } },
-      );
+      const [updatedRowsCount] = await Spoc.update({ isActive: false }, { where: { id } });
 
       if (updatedRowsCount === 0) {
         return res.status(404).json({
           success: false,
-          message: "SPOC not found",
+          message: 'SPOC not found',
         });
       }
 
       res.json({
         success: true,
-        message: "SPOC deactivated successfully",
+        message: 'SPOC deactivated successfully',
       });
     } catch (error) {
-      console.error("Error deleting SPOC:", error);
+      console.error('Error deleting SPOC:', error);
       res.status(500).json({
         success: false,
-        message: "Error deleting SPOC",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Internal server error",
+        message: 'Error deleting SPOC',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       });
     }
   },

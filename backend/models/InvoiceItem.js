@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const InvoiceItem = sequelize.define(
-  "InvoiceItem",
+  'InvoiceItem',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,7 +12,7 @@ const InvoiceItem = sequelize.define(
     invoiceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "invoice_id",
+      field: 'invoice_id',
     },
     description: {
       type: DataTypes.TEXT,
@@ -27,7 +27,7 @@ const InvoiceItem = sequelize.define(
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0,
-      field: "unit_price",
+      field: 'unit_price',
     },
     amount: {
       type: DataTypes.DECIMAL(12, 2),
@@ -38,15 +38,15 @@ const InvoiceItem = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
-      field: "order_index",
+      field: 'order_index',
     },
   },
   {
-    tableName: "invoice_items",
+    tableName: 'invoice_items',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   },
 );
 

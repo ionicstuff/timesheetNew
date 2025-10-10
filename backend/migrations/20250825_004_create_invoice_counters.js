@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("invoice_counters", {
+    await queryInterface.createTable('invoice_counters', {
       year: {
         allowNull: false,
         primaryKey: true,
@@ -16,12 +16,12 @@ module.exports = {
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("invoice_counters");
+    await queryInterface.dropTable('invoice_counters');
   },
 };

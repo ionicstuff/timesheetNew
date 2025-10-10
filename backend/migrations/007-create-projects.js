@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("projects", {
+    await queryInterface.createTable('projects', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -26,21 +26,21 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "clients",
-          key: "id",
+          model: 'clients',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       project_manager_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       start_date: {
         type: Sequelize.DATEONLY,
@@ -68,28 +68,22 @@ module.exports = {
       },
       currency: {
         type: Sequelize.STRING(3),
-        defaultValue: "USD",
+        defaultValue: 'USD',
         validate: {
           len: [3, 3],
         },
       },
       status: {
-        type: Sequelize.ENUM(
-          "planning",
-          "active",
-          "on_hold",
-          "completed",
-          "cancelled",
-        ),
-        defaultValue: "planning",
+        type: Sequelize.ENUM('planning', 'active', 'on_hold', 'completed', 'cancelled'),
+        defaultValue: 'planning',
       },
       priority: {
-        type: Sequelize.ENUM("low", "medium", "high", "critical"),
-        defaultValue: "medium",
+        type: Sequelize.ENUM('low', 'medium', 'high', 'critical'),
+        defaultValue: 'medium',
       },
       billing_type: {
-        type: Sequelize.ENUM("hourly", "fixed", "milestone"),
-        defaultValue: "hourly",
+        type: Sequelize.ENUM('hourly', 'fixed', 'milestone'),
+        defaultValue: 'hourly',
       },
       hourly_rate: {
         type: Sequelize.DECIMAL(10, 2),
@@ -106,7 +100,7 @@ module.exports = {
       tags: {
         type: Sequelize.ARRAY(Sequelize.STRING),
         defaultValue: [],
-        comment: "Array of project tags for categorization",
+        comment: 'Array of project tags for categorization',
       },
       notes: {
         type: Sequelize.TEXT,
@@ -120,36 +114,36 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
 
     // Add indexes
-    await queryInterface.addIndex("projects", ["project_code"]);
-    await queryInterface.addIndex("projects", ["project_name"]);
-    await queryInterface.addIndex("projects", ["client_id"]);
-    await queryInterface.addIndex("projects", ["project_manager_id"]);
-    await queryInterface.addIndex("projects", ["status"]);
-    await queryInterface.addIndex("projects", ["priority"]);
-    await queryInterface.addIndex("projects", ["start_date", "end_date"]);
-    await queryInterface.addIndex("projects", ["is_active"]);
+    await queryInterface.addIndex('projects', ['project_code']);
+    await queryInterface.addIndex('projects', ['project_name']);
+    await queryInterface.addIndex('projects', ['client_id']);
+    await queryInterface.addIndex('projects', ['project_manager_id']);
+    await queryInterface.addIndex('projects', ['status']);
+    await queryInterface.addIndex('projects', ['priority']);
+    await queryInterface.addIndex('projects', ['start_date', 'end_date']);
+    await queryInterface.addIndex('projects', ['is_active']);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("projects");
+    await queryInterface.dropTable('projects');
   },
 };

@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const InvoiceCounter = sequelize.define(
-  "InvoiceCounter",
+  'InvoiceCounter',
   {
     year: {
       type: DataTypes.INTEGER,
@@ -12,16 +12,16 @@ const InvoiceCounter = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
-      field: "last_seq",
+      field: 'last_seq',
     },
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      field: "updated_at",
+      field: 'updated_at',
     },
   },
   {
-    tableName: "invoice_counters",
+    tableName: 'invoice_counters',
     underscored: true,
     timestamps: false,
   },

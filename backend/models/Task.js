@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Task = sequelize.define(
-  "Task",
+  'Task',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,14 +12,14 @@ const Task = sequelize.define(
     projectId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "project_id",
+      field: 'project_id',
       references: {
-        model: "projects",
-        key: "id",
+        model: 'projects',
+        key: 'id',
       },
       validate: {
         notNull: {
-          msg: "Project ID is required",
+          msg: 'Project ID is required',
         },
       },
     },
@@ -28,11 +28,11 @@ const Task = sequelize.define(
       allowNull: false,
       validate: {
         notEmpty: {
-          msg: "Task name cannot be empty",
+          msg: 'Task name cannot be empty',
         },
         len: {
           args: [1, 255],
-          msg: "Task name must be between 1 and 255 characters",
+          msg: 'Task name must be between 1 and 255 characters',
         },
       },
     },
@@ -43,112 +43,104 @@ const Task = sequelize.define(
     assignedTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "assigned_to",
+      field: 'assigned_to',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     estimatedTime: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
-      field: "estimated_time",
+      field: 'estimated_time',
       validate: {
         min: {
           args: [0],
-          msg: "Estimated time must be greater than or equal to 0",
+          msg: 'Estimated time must be greater than or equal to 0',
         },
         notNull: {
-          msg: "Estimated time is required",
+          msg: 'Estimated time is required',
         },
       },
-      comment: "Estimated time in hours",
+      comment: 'Estimated time in hours',
     },
     status: {
-      type: DataTypes.ENUM(
-        "pending",
-        "in_progress",
-        "paused",
-        "completed",
-        "cancelled",
-      ),
-      defaultValue: "pending",
+      type: DataTypes.ENUM('pending', 'in_progress', 'paused', 'completed', 'cancelled'),
+      defaultValue: 'pending',
       validate: {
         isIn: {
-          args: [
-            ["pending", "in_progress", "paused", "completed", "cancelled"],
-          ],
-          msg: "Status must be one of: pending, in_progress, paused, completed, cancelled",
+          args: [['pending', 'in_progress', 'paused', 'completed', 'cancelled']],
+          msg: 'Status must be one of: pending, in_progress, paused, completed, cancelled',
         },
       },
     },
     acceptanceStatus: {
-      type: DataTypes.ENUM("pending", "accepted", "rejected"),
-      defaultValue: "pending",
-      field: "acceptance_status",
+      type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
+      defaultValue: 'pending',
+      field: 'acceptance_status',
       validate: {
         isIn: {
-          args: [["pending", "accepted", "rejected"]],
-          msg: "Acceptance status must be one of: pending, accepted, rejected",
+          args: [['pending', 'accepted', 'rejected']],
+          msg: 'Acceptance status must be one of: pending, accepted, rejected',
         },
       },
     },
     acceptedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "accepted_at",
+      field: 'accepted_at',
     },
     rejectionReason: {
       type: DataTypes.TEXT,
       allowNull: true,
-      field: "rejection_reason",
+      field: 'rejection_reason',
     },
     priority: {
-      type: DataTypes.ENUM("High", "Medium", "Low"),
-      defaultValue: "Medium",
+      type: DataTypes.ENUM('High', 'Medium', 'Low'),
+      defaultValue: 'Medium',
       allowNull: false,
       validate: {
         isIn: {
-          args: [["High", "Medium", "Low"]],
-          msg: "Priority must be one of: High, Medium, Low",
+          args: [['High', 'Medium', 'Low']],
+          msg: 'Priority must be one of: High, Medium, Low',
         },
       },
     },
     createdBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "created_by",
+      field: 'created_by',
       references: {
-        model: "users",
-        key: "id",
+        model: 'users',
+        key: 'id',
       },
     },
     sprintStartDate: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "sprint_start_date",
+      field: 'sprint_start_date',
     },
     sprintEndDate: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "sprint_end_date",
+      field: 'sprint_end_date',
     },
     // Time tracking fields
     startedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "started_at",
+      field: 'started_at',
     },
     completedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "completed_at",
+      field: 'completed_at',
     },
     totalTrackedSeconds: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
-      field: "total_tracked_seconds",
+      field: 'total_tracked_seconds',
       validate: {
         min: 0,
       },
@@ -156,35 +148,35 @@ const Task = sequelize.define(
     activeTimerStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "active_timer_started_at",
+      field: 'active_timer_started_at',
     },
     lastPausedAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: "last_paused_at",
+      field: 'last_paused_at',
     },
   },
   {
-    tableName: "tasks",
+    tableName: 'tasks',
     underscored: true,
     timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
-        fields: ["project_id"],
+        fields: ['project_id'],
       },
       {
-        fields: ["assigned_to"],
+        fields: ['assigned_to'],
       },
       {
-        fields: ["status"],
+        fields: ['status'],
       },
       {
-        fields: ["project_id", "status"],
+        fields: ['project_id', 'status'],
       },
       {
-        fields: ["assigned_to", "active_timer_started_at"],
+        fields: ['assigned_to', 'active_timer_started_at'],
       },
     ],
   },

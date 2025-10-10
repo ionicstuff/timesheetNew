@@ -1,4 +1,4 @@
-const sequelize = require("../config/database");
+const sequelize = require('../config/database');
 
 async function run() {
   const qi = sequelize.getQueryInterface();
@@ -10,24 +10,24 @@ async function run() {
 
     const migrations = [
       {
-        name: "20250919_001_create_task_comments.js",
-        mod: require("../migrations/20250919_001_create_task_comments"),
+        name: '20250919_001_create_task_comments.js',
+        mod: require('../migrations/20250919_001_create_task_comments'),
       },
       {
-        name: "20250919_002_create_task_files.js",
-        mod: require("../migrations/20250919_002_create_task_files"),
+        name: '20250919_002_create_task_files.js',
+        mod: require('../migrations/20250919_002_create_task_files'),
       },
       {
-        name: "20250919_003_create_task_dependencies.js",
-        mod: require("../migrations/20250919_003_create_task_dependencies"),
+        name: '20250919_003_create_task_dependencies.js',
+        mod: require('../migrations/20250919_003_create_task_dependencies'),
       },
       {
-        name: "20250919_004_create_task_activities.js",
-        mod: require("../migrations/20250919_004_create_task_activities"),
+        name: '20250919_004_create_task_activities.js',
+        mod: require('../migrations/20250919_004_create_task_activities'),
       },
       {
-        name: "20250919_005_create_task_comment_likes.js",
-        mod: require("../migrations/20250919_005_create_task_comment_likes"),
+        name: '20250919_005_create_task_comment_likes.js',
+        mod: require('../migrations/20250919_005_create_task_comment_likes'),
       },
     ];
 
@@ -42,13 +42,13 @@ async function run() {
       }
       console.log(`Applying ${name}...`);
       await mod.up(qi, sequelize.constructor);
-      await qi.bulkInsert("SequelizeMeta", [{ name }]);
+      await qi.bulkInsert('SequelizeMeta', [{ name }]);
       console.log(`Applied ${name}`);
     }
 
-    console.log("All task detail migrations applied.");
+    console.log('All task detail migrations applied.');
   } catch (err) {
-    console.error("Migration error:", err);
+    console.error('Migration error:', err);
     process.exitCode = 1;
   } finally {
     await sequelize.close();

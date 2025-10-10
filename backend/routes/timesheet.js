@@ -1,25 +1,25 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { Timesheet, Task } = require("../models");
-const { authMiddleware } = require("../middleware/auth");
-const TaskTimerService = require("../services/TaskTimerService");
-const { Op } = require("sequelize");
+const { Timesheet, Task } = require('../models');
+const { authMiddleware } = require('../middleware/auth');
+const TaskTimerService = require('../services/TaskTimerService');
+const { Op } = require('sequelize');
 
 // Apply authentication middleware to all routes
 router.use(authMiddleware);
 
 // Helper functions
-const getTodayDate = () => new Date().toISOString().split("T")[0];
+const getTodayDate = () => new Date().toISOString().split('T')[0];
 const getCurrentTime = () => {
   const now = new Date();
-  return now.toTimeString().split(" ")[0]; // Returns HH:MM:SS format
+  return now.toTimeString().split(' ')[0]; // Returns HH:MM:SS format
 };
 
 // Format timesheet response
 const formatTimesheetResponse = (timesheet) => {
   if (!timesheet) {
     return {
-      status: "not_clocked_in",
+      status: 'not_clocked_in',
       clockInTime: null,
       clockOutTime: null,
       totalHours: 0,
@@ -29,10 +29,10 @@ const formatTimesheetResponse = (timesheet) => {
 
   const status =
     timesheet.clockIn && !timesheet.clockOut
-      ? "clocked_in"
+      ? 'clocked_in'
       : timesheet.clockIn && timesheet.clockOut
-        ? "clocked_out"
-        : "not_clocked_in";
+        ? 'clocked_out'
+        : 'not_clocked_in';
 
   return {
     id: timesheet.id,
@@ -49,7 +49,7 @@ const formatTimesheetResponse = (timesheet) => {
 };
 
 // Clock In
-router.post("/clockin", async (req, res) => {
+router.post('/clockin', async (req, res) => {
   try {
     const todayDate = getTodayDate();
     const currentTime = getCurrentTime();
@@ -62,7 +62,7 @@ router.post("/clockin", async (req, res) => {
     if (timesheet && timesheet.clockIn) {
       return res.status(400).json({
         success: false,
-        message: "Already clocked in today",
+        message: 'Already clocked in today',
         data: formatTimesheetResponse(timesheet),
       });
     }
@@ -85,20 +85,20 @@ router.post("/clockin", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Clocked in successfully",
+      message: 'Clocked in successfully',
       data: formatTimesheetResponse(timesheet),
     });
   } catch (error) {
-    console.error("Error during clock in:", error);
+    console.error('Error during clock in:', error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 });
 
 // Clock Out
-router.post("/clockout", async (req, res) => {
+router.post('/clockout', async (req, res) => {
   try {
     const todayDate = getTodayDate();
     const currentTime = getCurrentTime();
@@ -111,7 +111,7 @@ router.post("/clockout", async (req, res) => {
     if (!timesheet || !timesheet.clockIn) {
       return res.status(400).json({
         success: false,
-        message: "Cannot clock out before clocking in",
+        message: 'Cannot clock out before clocking in',
         data: formatTimesheetResponse(null),
       });
     }
@@ -119,7 +119,7 @@ router.post("/clockout", async (req, res) => {
     if (timesheet.clockOut) {
       return res.status(400).json({
         success: false,
-        message: "Already clocked out today",
+        message: 'Already clocked out today',
         data: formatTimesheetResponse(timesheet),
       });
     }
@@ -133,14 +133,10 @@ router.post("/clockout", async (req, res) => {
     });
     for (const task of runningTasks) {
       try {
-        await TaskTimerService.pause(
-          task.id,
-          req.user,
-          "Auto-pause due to clock out",
-        );
+        await TaskTimerService.pause(task.id, req.user, 'Auto-pause due to clock out');
       } catch (e) {
         // Non-blocking: proceed even if a task fails to pause
-        console.error("Auto-pause failed for task", task.id, e?.message || e);
+        console.error('Auto-pause failed for task', task.id, e?.message || e);
       }
     }
 
@@ -149,20 +145,20 @@ router.post("/clockout", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Clocked out successfully",
+      message: 'Clocked out successfully',
       data: formatTimesheetResponse(timesheet),
     });
   } catch (error) {
-    console.error("Error during clock out:", error);
+    console.error('Error during clock out:', error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 });
 
 // Get current status
-router.get("/status", async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
     const todayDate = getTodayDate();
     const timesheet = await Timesheet.findOne({
@@ -174,10 +170,10 @@ router.get("/status", async (req, res) => {
       data: formatTimesheetResponse(timesheet),
     });
   } catch (error) {
-    console.error("Error fetching status:", error);
+    console.error('Error fetching status:', error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 });

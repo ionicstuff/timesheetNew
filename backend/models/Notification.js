@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
 const Notification = sequelize.define(
-  "Notification",
+  'Notification',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,7 +12,7 @@ const Notification = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "user_id",
+      field: 'user_id',
     },
     title: {
       type: DataTypes.STRING(255),
@@ -30,7 +30,7 @@ const Notification = sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-      field: "is_read",
+      field: 'is_read',
     },
     type: {
       type: DataTypes.STRING(64),
@@ -39,7 +39,7 @@ const Notification = sequelize.define(
     actorUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "actor_user_id",
+      field: 'actor_user_id',
     },
     metadata: {
       type: DataTypes.JSONB,
@@ -47,7 +47,7 @@ const Notification = sequelize.define(
     },
   },
   {
-    tableName: "notifications",
+    tableName: 'notifications',
     underscored: true,
     timestamps: false,
   },

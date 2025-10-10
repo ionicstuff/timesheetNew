@@ -1,10 +1,10 @@
-version: "3.8"
+version: '3.8'
 
 services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - DB_HOST=db
@@ -17,16 +17,16 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "pg_isready",
-          "-h",
-          "db",
-          "-p",
-          "5432",
-          "-U",
-          "myapp_user",
-          "-d",
-          "myapp_production",
+          'CMD',
+          'pg_isready',
+          '-h',
+          'db',
+          '-p',
+          '5432',
+          '-U',
+          'myapp_user',
+          '-d',
+          'myapp_production',
         ]
       interval: 30s
       timeout: 10s
@@ -39,7 +39,7 @@ services:
       - POSTGRES_USER=myapp_user
       - POSTGRES_PASSWORD=Somnath1980
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
