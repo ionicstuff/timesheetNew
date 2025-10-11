@@ -20,7 +20,7 @@ import {
   MoreHorizontal,
   Eye,
 } from 'lucide-react';
-import { getInvoicePdfUrl } from '@/services/finance';
+import { getInvoicePdfUrl, downloadInvoicePdf } from '@/services/finance';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const map: Record<string, string> = {
@@ -181,15 +181,24 @@ const InvoiceList = () => {
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
-                <a
-                  href={getInvoicePdfUrl(inv.id)}
-                  target="_blank"
-                  rel="noreferrer"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Download PDF"
+                  onClick={async () => {
+                    try {
+                      await downloadInvoicePdf(inv.id);
+                    } catch (e: any) {
+                      toast({
+                        title: 'Download failed',
+                        description: e.message || 'Could not download PDF',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
                 >
-                  <Button variant="ghost" size="icon" title="Download PDF">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </a>
+                  <Download className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -202,7 +211,7 @@ const InvoiceList = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  title="Send"
+                  title={sending ? 'Sending…' : 'Send'}
                   onClick={() => doSend(inv.id)}
                   disabled={sending}
                 >

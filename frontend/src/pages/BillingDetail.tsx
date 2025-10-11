@@ -24,9 +24,23 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useMe } from '@/hooks/useMe';
 
 const BillingDetail = () => {
   const [invoiceStatus, setInvoiceStatus] = useState('sent');
+  const { data: me } = useMe();
+  const u = (me?.user || me) as any;
+  const roleName = String(
+    u?.role ||
+      u?.roleName ||
+      u?.role_master?.roleName ||
+      u?.roleMaster?.roleName ||
+      ''
+  ).toLowerCase();
+  const roleCode = String(
+    u?.roleCode || u?.role_master?.roleCode || u?.roleMaster?.roleCode || ''
+  ).toUpperCase();
+  const isFinance = roleName === 'finance' || ['FIN', 'FINANCE'].includes(roleCode);
 
   const invoice = {
     id: 'INV-001',
@@ -93,6 +107,26 @@ const BillingDetail = () => {
     // In a real app, you would update the invoice status in the database
     console.log(`Invoice status changed to: ${newStatus}`);
   };
+
+  if (!isFinance) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Access restricted</CardTitle>
+            <CardDescription>
+              Only Finance users can view and manage invoices.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              You do not have permission to access this section.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
