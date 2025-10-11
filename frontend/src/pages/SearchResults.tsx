@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, FileText, CheckCircle, LayoutGrid, Users } from 'lucide-react';
 import TaskCard from '@/components/tasks/TaskCard';
@@ -9,97 +9,38 @@ import DocumentCard from '@/components/documents/DocumentCard';
 import TeamMemberCard from '@/components/team/TeamMemberCard';
 import { Input } from '@/components/ui/input';
 import { useSearch } from '@/contexts/SearchContext';
+import { searchAll, type SearchResults } from '@/services/search';
 
 const SearchResults = () => {
   const { searchTerm, setSearchTerm } = useSearch();
+  const [results, setResults] = useState<SearchResults>({ tasks: [], projects: [], documents: [], members: [] });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const r = await searchAll(searchTerm || '');
+        if (active) setResults(r);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    run();
+    return () => {
+      active = false;
+    };
+  }, [searchTerm]);
 
   // Simulated source data (now includes Research folder and User Research doc)
-  const tasks = [
-    {
-      id: 1,
-      title: 'Design homepage',
-      project: 'Website Redesign',
-      dueDate: 'Today',
-      priority: 'High' as const,
-      completed: false,
-      assignedTo: 'Alex Johnson',
-    },
-    {
-      id: 2,
-      title: 'Create wireframes',
-      project: 'Website Redesign',
-      dueDate: 'In 3 days',
-      priority: 'High' as const,
-      completed: false,
-    },
-  ];
+  const tasks = results.tasks as any[];
 
-  const projects = [
-    {
-      id: 1,
-      name: 'Website Redesign',
-      description: 'Complete overhaul of company website',
-      progress: 65,
-      tasks: 12,
-      members: 5,
-      color: 'bg-blue-500',
-      membersList: ['Alex Johnson', 'Sam Smith', 'Taylor Brown'],
-      status: 'active',
-      dueDate: 'Dec 15, 2023',
-    },
-  ];
+  const projects = results.projects as any[];
 
-  const documents = [
-    {
-      id: 1,
-      name: 'Design Mockups',
-      type: 'pdf',
-      updatedAt: '2 days ago',
-      folderName: 'Design Assets',
-    },
-    {
-      id: 2,
-      name: 'Design Assets',
-      type: 'folder',
-      updatedAt: '1 week ago',
-      items: 8,
-      isFolder: true,
-    },
-    {
-      id: 3,
-      name: 'User Research',
-      type: 'doc',
-      updatedAt: '1 week ago',
-      folderName: 'Research',
-    },
-    {
-      id: 4,
-      name: 'Research',
-      type: 'folder',
-      updatedAt: '1 week ago',
-      items: 8,
-      isFolder: true,
-    },
-  ];
+  const documents = results.documents as any[];
 
-  const teamMembers = [
-    {
-      id: 1,
-      name: 'Alex Johnson',
-      role: 'Project Manager',
-      email: 'alex@example.com',
-      status: 'online' as const,
-      tasks: 12,
-    },
-    {
-      id: 2,
-      name: 'Sam Smith',
-      role: 'Designer',
-      email: 'sam@example.com',
-      status: 'online' as const,
-      tasks: 8,
-    },
-  ];
+  const teamMembers = results.members as any[];
 
   const term = (searchTerm || '').trim().toLowerCase();
 
@@ -170,6 +111,9 @@ const SearchResults = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {loading && (
+          <div className="absolute right-2 top-2.5 text-xs text-muted-foreground">Searching…</div>
+        )}
       </div>
 
       {tasksFiltered.length > 0 && (
