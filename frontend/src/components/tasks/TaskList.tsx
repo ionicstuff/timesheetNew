@@ -30,6 +30,9 @@ interface TaskListProps {
   tasks: Task[];
   onToggle?: (id: number) => void; // optional callback from parent
   variant?: 'card' | 'row';
+  selectable?: boolean;
+  selectedIds?: number[];
+  onSelectChange?: (id: number, checked: boolean) => void;
 }
 
 function PriorityBadge({ p }: { p: Task['priority'] }) {
@@ -45,15 +48,25 @@ function PriorityBadge({ p }: { p: Task['priority'] }) {
 const TaskRow = ({
   task,
   onToggle,
+  selectable,
+  selected,
+  onSelectChange,
 }: {
   task: Task;
   onToggle?: (id: number) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (id: number, checked: boolean) => void;
 }) => (
   <div className="grid grid-cols-12 gap-4 items-center p-4 hover:bg-muted/50">
     <div className="col-span-1 flex items-center">
       <Checkbox
-        checked={task.completed}
-        onCheckedChange={() => onToggle && onToggle(task.id)}
+        checked={selectable ? !!selected : task.completed}
+        onCheckedChange={(val) =>
+          selectable
+            ? onSelectChange && onSelectChange(task.id, !!val)
+            : onToggle && onToggle(task.id)
+        }
       />
     </div>
     <div className="col-span-5 truncate">
@@ -91,12 +104,19 @@ const TaskRow = ({
   </div>
 );
 
-const TaskList = ({ tasks, onToggle, variant = 'card' }: TaskListProps) => {
+const TaskList = ({ tasks, onToggle, variant = 'row', selectable = false, selectedIds = [], onSelectChange }: TaskListProps) => {
   if (variant === 'row') {
     return (
       <div className="divide-y">
         {tasks.map((t) => (
-          <TaskRow key={t.id} task={t} onToggle={onToggle} />
+          <TaskRow
+            key={t.id}
+            task={t}
+            onToggle={onToggle}
+            selectable={selectable}
+            selected={selectedIds.includes(t.id)}
+            onSelectChange={onSelectChange}
+          />
         ))}
       </div>
     );

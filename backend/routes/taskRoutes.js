@@ -9,6 +9,11 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Task routes
+router.post(
+  '/bulk/status',
+  authorizeRoles('Admin', 'Director', 'Account Manager', 'Project Manager', 'Team Lead'),
+  taskController.bulkUpdateStatus,
+);
 router.get(
   '/',
   authorizeRoles(

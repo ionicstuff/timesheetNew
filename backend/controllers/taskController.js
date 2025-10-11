@@ -1052,6 +1052,55 @@ const unlikeTaskComment = async (req, res) => {
   }
 };
 
+// Bulk update status
+const bulkUpdateStatus = async (req, res) => {
+  try {
+    const { ids, status } = req.body || {};
+    const allowed = ['pending', 'in_progress', 'paused', 'completed', 'cancelled'];
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'ids array is required' });
+    }
+    if (!allowed.includes(String(status))) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const { Op } = require('sequelize');
+    // Fetch existing tasks to capture previous status for activity log
+    const rows = await Task.findAll({ where: { id: { [Op.in]: ids } } });
+    if (!rows || rows.length === 0) return res.json({ updated: 0 });
+
+    await Task.update(
+      { status },
+      { where: { id: { [Op.in]: rows.map((t) => t.id) } } }
+    );
+
+    // Activity log (best-effort)
+    try {
+      const TaskActivity = require('../models/TaskActivity');
+      for (const t of rows) {
+        if (t.status !== status) {
+          await TaskActivity.create({
+            taskId: t.id,
+            actorId: req.user?.id || null,
+            type: 'status_changed',
+            detailsJson: { from: t.status, to: status, bulk: true },
+          });
+          await notificationSvc
+            .notifyTaskStatusChanged?.(t, t.status, req.user?.id || null)
+            .catch(() => {});
+        }
+      }
+    } catch (e) {
+      console.error('bulkUpdateStatus activity failed', e);
+    }
+
+    return res.json({ updated: rows.length, status });
+  } catch (e) {
+    console.error('bulkUpdateStatus error', e);
+    return res.status(500).json({ message: 'Failed to update tasks' });
+  }
+};
+
 // ----- Duplicate -----
 // ----- Duplicate -----
 const duplicateTask = async (req, res) => {
@@ -1113,4 +1162,5 @@ module.exports = {
   duplicateTask,
   likeTaskComment,
   unlikeTaskComment,
+  bulkUpdateStatus,
 };

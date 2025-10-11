@@ -9,6 +9,7 @@ import TaskFilter from '@/components/tasks/TaskFilter';
 import TaskPriorityChart from '@/components/tasks/TaskPriorityChart';
 import axios from 'axios';
 import { useToast } from '@/components/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Define the Task interface based on our backend model
 interface Task {
@@ -139,6 +140,34 @@ const Tasks = () => {
 
   const filteredTasks = tasks; // Temporarily show all fetched tasks
 
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<'pending' | 'in_progress' | 'paused' | 'completed' | 'cancelled' | ''>('');
+
+  const toggleSelect = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  };
+
+  const applyBulkStatus = async () => {
+    try {
+      if (!bulkStatus) throw new Error('Choose a status');
+      if (selectedIds.length === 0) throw new Error('Select at least one task');
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch('/api/tasks/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ids: selectedIds, status: bulkStatus }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.message || 'Bulk update failed');
+      toast({ title: 'Updated', description: `Updated ${j.updated || selectedIds.length} tasks` });
+      // Refresh list
+      setSelectedIds([]);
+      setFilters({ ...filters }); // trigger effect
+    } catch (e: any) {
+      toast({ title: 'Bulk update failed', description: e.message || 'Request failed', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -173,14 +202,33 @@ const Tasks = () => {
         <div className="lg:col-span-3 space-y-6">
           {' '}
           {/* Main content area */}
-          <TaskPriorityChart tasks={filteredTasks} />
+          <div className="flex items-center justify-between">
+            <TaskPriorityChart tasks={filteredTasks} />
+            <div className="flex items-center gap-2">
+              <Select value={bulkStatus} onValueChange={(v: any) => setBulkStatus(v)}>
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Bulk: Set status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={applyBulkStatus} disabled={!bulkStatus || selectedIds.length === 0}>
+                Apply ({selectedIds.length})
+              </Button>
+            </div>
+          </div>
           {/* Empty state */}
           {!loading && filteredTasks.length === 0 && (
             <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
               No tasks found. Try clearing filters or creating a new task.
             </div>
           )}
-          <TaskList tasks={filteredTasks} />
+          <TaskList tasks={filteredTasks} selectable selectedIds={selectedIds} onSelectChange={toggleSelect} variant="row" />
         </div>
       </div>
     </div>
