@@ -18,6 +18,13 @@ interface Task {
   project: string;
 }
 
+const STORAGE_KEYS = {
+  isTracking: 'tt_isTracking',
+  startEpoch: 'tt_startEpoch',
+  offsetMs: 'tt_offsetMs',
+  activeTask: 'tt_activeTask',
+} as const;
+
 const TimeTracker = () => {
   const [isTracking, setIsTracking] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -51,6 +58,52 @@ const TimeTracker = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Rehydrate from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedIsTracking = localStorage.getItem(STORAGE_KEYS.isTracking) === '1';
+      const storedStart = parseInt(localStorage.getItem(STORAGE_KEYS.startEpoch) || 'NaN', 10);
+      const storedOffset = parseInt(localStorage.getItem(STORAGE_KEYS.offsetMs) || '0', 10);
+      const storedTaskRaw = localStorage.getItem(STORAGE_KEYS.activeTask);
+      if (storedTaskRaw) {
+        try {
+          const parsed = JSON.parse(storedTaskRaw);
+          if (parsed && typeof parsed.id === 'number') {
+            setActiveTask(parsed);
+          }
+        } catch {}
+      }
+
+      if (Number.isFinite(storedStart)) {
+        startRef.current = storedStart;
+      }
+      if (Number.isFinite(storedOffset)) {
+        offsetRef.current = storedOffset;
+      }
+
+      if (storedIsTracking) {
+        setIsTracking(true);
+        const elapsedMs = (offsetRef.current || 0) + (Date.now() - (startRef.current || Date.now()));
+        setElapsedTime(Math.max(0, Math.floor(elapsedMs / 1000)));
+      } else {
+        // If not tracking, compute elapsed purely from offset
+        setElapsedTime(Math.max(0, Math.floor((offsetRef.current || 0) / 1000)));
+      }
+    } catch {}
+  }, []);
+
+  // Persist state on changes
+  const persist = () => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.isTracking, isTracking ? '1' : '0');
+      localStorage.setItem(STORAGE_KEYS.startEpoch, String(startRef.current ?? ''));
+      localStorage.setItem(STORAGE_KEYS.offsetMs, String(offsetRef.current ?? 0));
+      if (activeTask) {
+        localStorage.setItem(STORAGE_KEYS.activeTask, JSON.stringify(activeTask));
+      }
+    } catch {}
+  };
+
   // Handle timer logic (StrictMode-safe and resilient to re-renders)
   useEffect(() => {
     if (isTracking) {
@@ -62,7 +115,7 @@ const TimeTracker = () => {
       if (intervalRef.current == null) {
         intervalRef.current = window.setInterval(() => {
           const start = startRef.current ?? Date.now();
-          const elapsedMs = offsetRef.current + (Date.now() - start);
+          const elapsedMs = (offsetRef.current || 0) + (Date.now() - start);
           setElapsedTime(Math.floor(elapsedMs / 1000));
         }, 1000);
       }
@@ -74,6 +127,8 @@ const TimeTracker = () => {
       }
     }
 
+    persist();
+
     // Cleanup on unmount or dependency change
     return () => {
       if (intervalRef.current != null) {
@@ -82,6 +137,11 @@ const TimeTracker = () => {
       }
     };
   }, [isTracking]);
+
+  // Persist when activeTask changes
+  useEffect(() => {
+    persist();
+  }, [activeTask]);
 
   const toggleTracking = () => {
     setIsTracking((prev) => {
@@ -98,6 +158,8 @@ const TimeTracker = () => {
           startRef.current = null;
         }
       }
+      // Persist after toggling logic
+      setTimeout(persist, 0);
       return next;
     });
   };
@@ -112,12 +174,14 @@ const TimeTracker = () => {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    persist();
   };
 
   const selectTask = (task: Task) => {
     setActiveTask(task);
     setSearchOpen(false);
     setSearchTerm('');
+    persist();
   };
 
   const filteredTasks = tasks.filter(
