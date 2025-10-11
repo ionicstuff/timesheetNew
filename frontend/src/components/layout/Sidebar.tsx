@@ -102,8 +102,8 @@ const Sidebar = () => {
 
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid items-start px-2 text-sm font-medium">
-          <a
-            href="/dashboard"
+          <Link
+            to="/dashboard"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/dashboard')
@@ -113,9 +113,9 @@ const Sidebar = () => {
           >
             <Home className="h-4 w-4" />
             Dashboard
-          </a>
-          <a
-            href="/tasks"
+          </Link>
+          <Link
+            to="/tasks"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/tasks')
@@ -125,9 +125,9 @@ const Sidebar = () => {
           >
             <CheckCircle className="h-4 w-4" />
             Tasks
-          </a>
-          <a
-            href="/projects"
+          </Link>
+          <Link
+            to="/projects"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/projects')
@@ -137,9 +137,9 @@ const Sidebar = () => {
           >
             <LayoutGrid className="h-4 w-4" />
             Projects
-          </a>
-          <a
-            href="/clients"
+          </Link>
+          <Link
+            to="/clients"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/clients')
@@ -149,9 +149,9 @@ const Sidebar = () => {
           >
             <Building2 className="h-4 w-4" />
             My Clients
-          </a>
-          <a
-            href="/calendar"
+          </Link>
+          <Link
+            to="/calendar"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/calendar')
@@ -161,9 +161,9 @@ const Sidebar = () => {
           >
             <CalendarIcon className="h-4 w-4" />
             Calendar
-          </a>
-          <a
-            href="/documents"
+          </Link>
+          <Link
+            to="/documents"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/documents')
@@ -173,9 +173,9 @@ const Sidebar = () => {
           >
             <FileText className="h-4 w-4" />
             Documents
-          </a>
-          <a
-            href="/team"
+          </Link>
+          <Link
+            to="/team"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/team')
@@ -185,9 +185,9 @@ const Sidebar = () => {
           >
             <Users className="h-4 w-4" />
             Team
-          </a>
-          <a
-            href="/billings"
+          </Link>
+          <Link
+            to="/billings"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/billings')
@@ -197,7 +197,7 @@ const Sidebar = () => {
           >
             <DollarSign className="h-4 w-4" />
             Billings
-          </a>
+          </Link>
           <Link
             to="/notifications"
             className={cn(
@@ -311,8 +311,8 @@ const Sidebar = () => {
 
       <div className="p-4 border-t">
         <div className="flex items-center justify-between mb-4">
-          <a
-            href="/settings"
+          <Link
+            to="/settings"
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/settings')
@@ -322,7 +322,7 @@ const Sidebar = () => {
           >
             <SettingsIcon className="h-4 w-4" />
             Settings
-          </a>
+          </Link>
 
           <Button
             variant="ghost"

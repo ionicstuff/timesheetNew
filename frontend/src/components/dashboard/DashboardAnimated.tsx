@@ -27,6 +27,7 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import GoalTracker from '@/components/dashboard/GoalTracker';
 import { motion } from 'framer-motion';
 import { AnimatedCard } from '@/components/ui/animated-card';
+import CreateEventButton from '@/components/calendar/CreateEventButton';
 
 const Dashboard = () => {
   const tasks = [
@@ -190,7 +191,7 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground">
                 Your calendar is empty for the next 7 days
               </p>
-              <Button className="mt-4">Schedule Event</Button>
+              <CreateEventButton />
             </div>
           </div>
         </CardContent>

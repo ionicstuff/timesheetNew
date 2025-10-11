@@ -25,6 +25,8 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import GoalTracker from '@/components/dashboard/GoalTracker';
 import ClientCompletionQueue from '@/components/dashboard/ClientCompletionQueue';
+import CreateEventButton from '@/components/calendar/CreateEventButton';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -169,12 +171,12 @@ const Dashboard = () => {
                 <CardTitle>Upcoming Tasks</CardTitle>
                 <CardDescription>Your tasks due soon</CardDescription>
               </div>
-              <a
-                href="/tasks"
+              <Link
+                to="/tasks"
                 className="text-sm text-blue-600 hover:underline"
               >
                 View all
-              </a>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -231,7 +233,7 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground">
                 Your calendar is empty for the next 7 days
               </p>
-              <Button className="mt-4">Schedule Event</Button>
+              <CreateEventButton />
             </div>
           </div>
         </CardContent>
