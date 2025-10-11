@@ -47,7 +47,7 @@ const Sidebar = () => {
     if (!isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
-      document0.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
     }
   };
 
@@ -154,7 +154,7 @@ const Sidebar = () => {
           })}
 
           <motion.a
-            href="#"
+            href="/notifications"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -222,7 +222,7 @@ const Sidebar = () => {
                   projects.map((project, index) => (
                     <motion.a
                       key={project.id}
-                      href="#"
+                      href={`/projects/${project.id}`}
                       className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
@@ -268,7 +268,7 @@ const Sidebar = () => {
                   folders.map((folder, index) => (
                     <motion.a
                       key={folder.id}
-                      href="#"
+                      href={`/documents?folder=${encodeURIComponent(folder.name)}`}
                       className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}

@@ -26,7 +26,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import TimeTracker from './TimeTracker';
 import QuickTaskCreator from './QuickTaskCreator';
@@ -144,7 +144,7 @@ const Sidebar = () => {
               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
               isActive('/clients')
                 ? 'text-primary bg-primary/10'
-                : 'text-muted-0foreground hover:text-primary'
+                : 'text-muted-foreground hover:text-primary'
             )}
           >
             <Building2 className="h-4 w-4" />
@@ -198,13 +198,18 @@ const Sidebar = () => {
             <DollarSign className="h-4 w-4" />
             Billings
           </a>
-          <a
-            href="#"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+          <Link
+            to="/notifications"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
+              isActive('/notifications')
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-primary'
+            )}
           >
             <MessageSquare className="h-4 w-4" />
             Messages
-          </a>
+          </Link>
         </nav>
 
         <QuickTaskCreator />
@@ -253,16 +258,16 @@ const Sidebar = () => {
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 mt-2">
               {projects.map((project) => (
-                <a
+                <Link
                   key={project.id}
-                  href="#"
+                  to={`/projects/${project.id}`}
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div
                     className={`h-2 w-2 rounded-full ${project.color}`}
                   ></div>
                   {project.name}
-                </a>
+                </Link>
               ))}
             </CollapsibleContent>
           </Collapsible>
@@ -288,14 +293,14 @@ const Sidebar = () => {
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 mt-2">
               {folders.map((folder) => (
-                <a
+                <Link
                   key={folder.id}
-                  href="#"
+                  to={`/documents?folder=${encodeURIComponent(folder.name)}`}
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <Folder className="h-3 w-3" />
                   {folder.name}
-                </a>
+                </Link>
               ))}
             </CollapsibleContent>
           </Collapsible>
