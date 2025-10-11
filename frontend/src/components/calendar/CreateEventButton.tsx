@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import EventForm from '@/components/calendar/EventForm';
 import { useToast } from '@/hooks/use-toast';
+import { addEvent } from '@/services/events';
 
 const CreateEventButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +14,6 @@ const CreateEventButton = () => {
 
   const handleSubmit = async (data: any) => {
     console.log('Event data:', data);
-    // In a real app, you would save this to your database
     try {
       // Optional: sync linked task deadline to event endDate
       const taskId = Number(data?.linkTaskId || 0);
@@ -34,6 +34,17 @@ const CreateEventButton = () => {
           throw new Error(err.message || 'Failed to sync task deadline');
         }
       }
+      // Persist event locally for calendar view
+      addEvent({
+        title: data?.title || 'Untitled Event',
+        description: data?.description || '',
+        startDate: data?.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+        endDate: data?.endDate ? new Date(data.endDate).toISOString() : undefined,
+        startTime: data?.startTime || undefined,
+        endTime: data?.endTime || undefined,
+        recurrence: data?.recurrence || 'none',
+        linkTaskId: data?.linkTaskId ? Number(data.linkTaskId) : undefined,
+      });
       toast({
         title: 'Event created',
         description: 'Your event has been created successfully.',

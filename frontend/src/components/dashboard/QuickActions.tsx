@@ -22,6 +22,7 @@ import EventForm from '@/components/calendar/EventForm';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { addEvent } from '@/services/events';
 
 const QuickActions = () => {
   const [eventOpen, setEventOpen] = useState(false);
@@ -51,6 +52,17 @@ const QuickActions = () => {
           throw new Error(err.message || 'Failed to sync task deadline');
         }
       }
+      // Persist event locally
+      addEvent({
+        title: data?.title || 'Untitled Event',
+        description: data?.description || '',
+        startDate: data?.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+        endDate: data?.endDate ? new Date(data.endDate).toISOString() : undefined,
+        startTime: data?.startTime || undefined,
+        endTime: data?.endTime || undefined,
+        recurrence: data?.recurrence || 'none',
+        linkTaskId: data?.linkTaskId ? Number(data.linkTaskId) : undefined,
+      });
       toast({
         title: 'Event created',
         description: 'Your event has been created successfully.',
