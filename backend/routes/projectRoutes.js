@@ -29,6 +29,11 @@ router.post('/:id(\\d+)/archive', ctrl.archiveProject);
 // ---- Files ----
 router.post('/:id(\\d+)/files', ctrl.uploadProjectFiles);
 router.get('/:id(\\d+)/files', ctrl.getProjectFiles);
+router.get('/:id(\\d+)/files/:fileId(\\d+)/versions', ctrl.getFileVersions);
+router.post('/:id(\\d+)/files/:fileId(\\d+)/versions', ctrl.uploadFileVersion);
+router.post('/:id(\\d+)/files/:fileId(\\d+)/restore/:versionId(\\d+)', ctrl.restoreFileVersion);
+router.get('/:id(\\d+)/files/:fileId(\\d+)/permissions', ctrl.getFilePermissions);
+router.post('/:id(\\d+)/files/:fileId(\\d+)/permissions', ctrl.setFilePermission);
 
 // ---- Performance & State ----
 router.post('/:id(\\d+)/close', ctrl.closeProject);

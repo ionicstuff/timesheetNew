@@ -779,15 +779,73 @@ const ProjectDetail = () => {
                         </p>
                       </div>
                     </div>
-                    <Button asChild variant="ghost" size="sm">
-                      <a
-                        href={`/${file.file_path}`}
-                        target="_blank"
-                        rel="noreferrer"
+                    <div className="flex items-center gap-2">
+                      <Button asChild variant="ghost" size="sm">
+                        <a
+                          href={`/${file.file_path}`}
+                          target="_blank"
+rel="noreferrer"
+                        >
+                          Open
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token') || '';
+                            const res = await fetch(`/api/projects/${projectId}/files/${file.id}/versions`, {
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            const rows = res.ok ? await res.json() : [];
+                            const list = Array.isArray(rows) ? rows : [];
+                            const details = list
+                              .map((v: any) => `v${v.version_number}: ${v.original_name || v.filename} (${v.file_size ? Math.round(v.file_size/1024)+' KB' : ''})`)
+                              .join('\n');
+                            toast({ title: 'File Versions', description: details || 'No versions found' });
+                          } catch (e: any) {
+                            toast({ title: 'Failed to load versions', description: e.message || 'Error', variant: 'destructive' });
+                          }
+                        }}
+                        title="View version history"
                       >
-                        Open
-                      </a>
-                    </Button>
+                        History
+                      </Button>
+                      <label>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.zip,.jpg,.jpeg,.png"
+                          className="hidden"
+                          onChange={async (e) => {
+                            try {
+                              const fsel = e.target.files?.[0];
+                              if (!fsel) return;
+                              const token = localStorage.getItem('token') || '';
+                              const fd = new FormData();
+                              fd.append('file', fsel);
+                              const res = await fetch(`/api/projects/${projectId}/files/${file.id}/versions`, {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${token}` },
+                                body: fd,
+                              });
+                              if (!res.ok) {
+                                const j = await res.json().catch(() => ({}));
+                                throw new Error(j.message || 'Upload failed');
+                              }
+                              toast({ title: 'New version uploaded' });
+                            } catch (e: any) {
+                              toast({ title: 'Upload failed', description: e.message || 'Error', variant: 'destructive' });
+                            } finally {
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }}
+                        />
+                        <Button asChild variant="ghost" size="sm" title="Upload new version">
+                          <span>Replace</span>
+                        </Button>
+                      </label>
+                    </div>
                   </div>
                 ))}
               </div>

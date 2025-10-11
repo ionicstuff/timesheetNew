@@ -1110,6 +1110,196 @@ const archiveProject = async (req, res) => {
   }
 };
 
+// ----- Document Versions & Permissions -----
+const getFileVersions = async (req, res) => {
+  try {
+    const { id: projectId, fileId } = req.params;
+    // fetch base attachment
+    const [baseRows] = await sequelize.query(
+      'SELECT * FROM project_attachments WHERE id = $1 AND project_id = $2',
+      { bind: [fileId, projectId] },
+    );
+    if (!baseRows || baseRows.length === 0)
+      return res.status(404).json({ message: 'File not found' });
+
+    // gather versions
+    const [verRows] = await sequelize.query(
+      `SELECT dv.id as version_id, dv.version_number, pa.*
+       FROM document_versions dv
+       JOIN project_attachments pa ON dv.version_attachment_id = pa.id
+       WHERE dv.base_attachment_id = $1
+       ORDER BY dv.version_number DESC`,
+      { bind: [fileId] },
+    );
+
+    // base is version 1
+    const versions = [
+      { version_id: null, version_number: 1, ...baseRows[0] },
+      ...verRows,
+    ];
+    res.json(versions);
+  } catch (e) {
+    console.error('getFileVersions error', e);
+    res.status(500).json({ message: 'Failed to fetch versions' });
+  }
+};
+
+const uploadFileVersion = (req, res) => {
+  // single file upload
+  upload.single('file')(req, res, async (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    try {
+      const { id: projectId, fileId } = req.params;
+      const f = req.file;
+      if (!f) return res.status(400).json({ message: 'File is required' });
+
+      // ensure base exists
+      const [baseRows] = await sequelize.query(
+        'SELECT * FROM project_attachments WHERE id = $1 AND project_id = $2',
+        { bind: [fileId, projectId] },
+      );
+      if (!baseRows || baseRows.length === 0)
+        return res.status(404).json({ message: 'File not found' });
+
+      // save new attachment row
+      const filePath = path.join('uploads/projects', f.filename);
+      const [insertedFile] = await sequelize.query(
+        `INSERT INTO project_attachments (project_id, filename, original_name, file_type, file_size, file_path, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        {
+          bind: [
+            projectId,
+            f.filename,
+            f.originalname,
+            f.mimetype || 'reference',
+            f.size,
+            filePath,
+            req.user ? req.user.id : null,
+          ],
+        },
+      );
+      const newAttach = insertedFile[0];
+
+      // compute next version number
+      const [vmaxRows] = await sequelize.query(
+        'SELECT COALESCE(MAX(version_number),1) as vmax FROM document_versions WHERE base_attachment_id = $1',
+        { bind: [fileId] },
+      );
+      const next = Number(vmaxRows?.[0]?.vmax || 1) + 1;
+
+      await sequelize.query(
+        `INSERT INTO document_versions (base_attachment_id, version_attachment_id, version_number, created_by)
+         VALUES ($1, $2, $3, $4)`,
+        { bind: [fileId, newAttach.id, next, req.user?.id || null] },
+      );
+
+      res.status(201).json({ message: 'Version uploaded', attachment: newAttach, version: next });
+    } catch (e) {
+      console.error('uploadFileVersion error', e);
+      res.status(500).json({ message: 'Failed to upload version' });
+    }
+  });
+};
+
+const restoreFileVersion = async (req, res) => {
+  try {
+    const { id: projectId, fileId, versionId } = req.params;
+
+    // fetch version row with its attachment
+    const [rows] = await sequelize.query(
+      `SELECT dv.*, pa.* FROM document_versions dv
+       JOIN project_attachments pa ON pa.id = dv.version_attachment_id
+       WHERE dv.id = $1 AND dv.base_attachment_id = $2`,
+      { bind: [versionId, fileId] },
+    );
+    if (!rows || rows.length === 0)
+      return res.status(404).json({ message: 'Version not found' });
+    const ver = rows[0];
+
+    // create a new attachment row pointing to same physical file path (restore as latest)
+    const [insertedFile] = await sequelize.query(
+      `INSERT INTO project_attachments (project_id, filename, original_name, file_type, file_size, file_path, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      {
+        bind: [
+          projectId,
+          ver.filename,
+          ver.original_name,
+          ver.file_type,
+          ver.file_size,
+          ver.file_path,
+          req.user?.id || null,
+        ],
+      },
+    );
+    const newAttach = insertedFile[0];
+
+    const [vmaxRows] = await sequelize.query(
+      'SELECT COALESCE(MAX(version_number),1) as vmax FROM document_versions WHERE base_attachment_id = $1',
+      { bind: [fileId] },
+    );
+    const next = Number(vmaxRows?.[0]?.vmax || 1) + 1;
+
+    await sequelize.query(
+      `INSERT INTO document_versions (base_attachment_id, version_attachment_id, version_number, created_by)
+       VALUES ($1, $2, $3, $4)`,
+      { bind: [fileId, newAttach.id, next, req.user?.id || null] },
+    );
+
+    res.json({ message: 'Version restored as latest', attachment: newAttach, version: next });
+  } catch (e) {
+    console.error('restoreFileVersion error', e);
+    res.status(500).json({ message: 'Failed to restore version' });
+  }
+};
+
+const getFilePermissions = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const [rows] = await sequelize.query(
+      `SELECT dp.*, u.first_name, u.last_name, u.email
+       FROM document_permissions dp
+       JOIN users u ON u.id = dp.user_id
+       WHERE dp.attachment_id = $1
+       ORDER BY u.first_name, u.last_name`,
+      { bind: [fileId] },
+    );
+    res.json(rows);
+  } catch (e) {
+    console.error('getFilePermissions error', e);
+    res.status(500).json({ message: 'Failed to load permissions' });
+  }
+};
+
+const setFilePermission = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { userId, canView, canEdit } = req.body || {};
+    if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+    // upsert
+    const [existsRows] = await sequelize.query(
+      'SELECT id FROM document_permissions WHERE attachment_id = $1 AND user_id = $2',
+      { bind: [fileId, userId] },
+    );
+    if (existsRows && existsRows.length) {
+      await sequelize.query(
+        'UPDATE document_permissions SET can_view=$1, can_edit=$2, updated_at=NOW() WHERE id=$3',
+        { bind: [!!canView, !!canEdit, existsRows[0].id] },
+      );
+    } else {
+      await sequelize.query(
+        'INSERT INTO document_permissions (attachment_id, user_id, can_view, can_edit) VALUES ($1,$2,$3,$4)',
+        { bind: [fileId, userId, !!canView, !!canEdit] },
+      );
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error('setFilePermission error', e);
+    res.status(500).json({ message: 'Failed to set permissions' });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
@@ -1129,4 +1319,9 @@ module.exports = {
   getClientSpocs,
   duplicateProject,
   archiveProject,
+  getFileVersions,
+  uploadFileVersion,
+  restoreFileVersion,
+  getFilePermissions,
+  setFilePermission,
 };
