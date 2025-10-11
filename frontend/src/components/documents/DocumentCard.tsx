@@ -53,16 +53,15 @@ const DocumentCard = ({
     );
   };
 
+  const href = isFolder ? `/documents?folder=${encodeURIComponent(name)}` : `/documents/${id}`;
+
   return (
     <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {getFileIcon()}
           <div>
-            <Link
-              to={`/documents/${id}`}
-              className="font-medium hover:underline"
-            >
+            <Link to={href} className="font-medium hover:underline">
               {name}
             </Link>
             <p className="text-sm text-muted-foreground">

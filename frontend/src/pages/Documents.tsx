@@ -5,8 +5,13 @@ import { Search } from 'lucide-react';
 import DocumentCard from '@/components/documents/DocumentCard';
 import CreateDocumentButton from '@/components/documents/CreateDocumentButton';
 import DocumentFilter from '@/components/documents/DocumentFilter';
+import { useLocation } from 'react-router-dom';
 
 const Documents = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const activeFolder = params.get('folder') || '';
+
   const folders = [
     {
       id: 1,
@@ -31,12 +36,17 @@ const Documents = () => {
     },
   ];
 
-  const documents = [
-    { id: 1, name: 'Project Requirements', type: 'doc', updatedAt: 'Today' },
-    { id: 2, name: 'Meeting Notes', type: 'txt', updatedAt: 'Yesterday' },
-    { id: 3, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago' },
-    { id: 4, name: 'User Research', type: 'doc', updatedAt: '1 week ago' },
+  // Include folderName so we can filter when a folder is selected
+  const documentsAll = [
+    { id: 1, name: 'Project Requirements', type: 'doc', updatedAt: 'Today', folderName: 'Client Docs' },
+    { id: 2, name: 'Meeting Notes', type: 'txt', updatedAt: 'Yesterday', folderName: 'Client Docs' },
+    { id: 3, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago', folderName: 'Design Assets' },
+    { id: 4, name: 'User Research', type: 'doc', updatedAt: '1 week ago', folderName: 'Research' },
   ];
+
+  const documents = activeFolder
+    ? documentsAll.filter((d) => (d.folderName || '').toLowerCase() === activeFolder.toLowerCase())
+    : documentsAll;
 
   return (
     <div className="space-y-6">

@@ -2,13 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Search,
-  FileText,
-  CheckCircle,
-  LayoutGrid,
-  Users,
-} from 'lucide-react';
+import { Search, FileText, CheckCircle, LayoutGrid, Users } from 'lucide-react';
 import TaskCard from '@/components/tasks/TaskCard';
 import ProjectCard from '@/components/projects/ProjectCard';
 import DocumentCard from '@/components/documents/DocumentCard';
@@ -56,16 +50,16 @@ const SearchResults = () => {
   ];
 
   const documents = [
-    { id: 1, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago' },
+    { id: 1, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago', folderName: 'Design Assets' },
     {
       id: 2,
-      name: 'Design Assets Folder',
+      name: 'Design Assets',
       type: 'folder',
       updatedAt: '1 week ago',
       items: 8,
       isFolder: true,
     },
-    { id: 3, name: 'User Research', type: 'doc', updatedAt: '1 week ago' },
+    { id: 3, name: 'User Research', type: 'doc', updatedAt: '1 week ago', folderName: 'Research' },
     {
       id: 4,
       name: 'Research',
@@ -121,7 +115,11 @@ const SearchResults = () => {
 
   const documentsFiltered = useMemo(
     () =>
-      documents.filter((d) => !term || d.name.toLowerCase().includes(term)),
+      documents.filter((d: any) => {
+        const nameMatch = (d.name || '').toLowerCase().includes(term);
+        const folderMatch = (d.folderName || '').toLowerCase().includes(term);
+        return !term || nameMatch || folderMatch;
+      }),
     [term]
   );
 
@@ -269,14 +267,14 @@ const SearchResults = () => {
       )}
 
       {totalCount === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-1">No results found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search terms or filters
-            </p>
-          </div>
-        )}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Search className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-1">No results found</h3>
+          <p className="text-muted-foreground">
+            Try adjusting your search terms or filters
+          </p>
+        </div>
+      )}
     </div>
   );
 };
