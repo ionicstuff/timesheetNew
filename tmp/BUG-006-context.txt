@@ -1,0 +1,18 @@
+# Bug Context
+- id: BUG-006
+- title: 
+- description: Send Message button not functional
+- priority: Medium
+- severity: Medium
+- status: Open
+- module: Dashboard/Quick Actions
+- file_hint: 
+- steps_to_repro: Click Send Message button in Quick Actions
+- expected: Opens messaging interface
+- actual: Just highlights button, no action
+- owner: 
+- tags: 
+- environment: 
+- commit: 
+
+## Candidate Files (top)

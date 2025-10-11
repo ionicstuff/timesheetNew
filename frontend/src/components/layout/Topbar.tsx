@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Settings, LogOut } from 'lucide-react';
+import { Settings, LogOut, Play } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +18,13 @@ import NotificationBadge from './NotificationBadge';
 import QuickCreate from './QuickCreate';
 import TimesheetClockButton from '@/components/timesheet/TimesheetClockButton';
 import { useTimesheet } from '../../contexts/TimesheetContext';
+import { useTimer } from '@/contexts/TimerContext';
 
 const Topbar = () => {
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const { status: clockStatus } = useTimesheet();
+  const { isTracking: timerRunning, activeTask: activeTimerTask, elapsedSeconds: timerElapsed } = useTimer();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -46,6 +48,23 @@ const Topbar = () => {
 
       <div className="flex items-center gap-2">
         <TimesheetClockButton />
+        {timerRunning && activeTimerTask?.id && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mx-1"
+            onClick={() => navigate(`/tasks/${activeTimerTask.id}`)}
+            title={`Tracking: ${activeTimerTask.title || 'Task'} (${Math.floor(timerElapsed / 60)}m)`}
+          >
+            <Play className="h-4 w-4 mr-1 text-green-600" />
+            <span className="truncate max-w-[140px]">
+              {activeTimerTask.title || `Task #${activeTimerTask.id}`}
+            </span>
+            <span className="ml-2 text-xs text-muted-foreground">
+              {`${String(Math.floor(timerElapsed / 3600)).padStart(2,'0')}:${String(Math.floor((timerElapsed % 3600)/60)).padStart(2,'0')}`}
+            </span>
+          </Button>
+        )}
         <NotificationBadge />
 
         <DropdownMenu>

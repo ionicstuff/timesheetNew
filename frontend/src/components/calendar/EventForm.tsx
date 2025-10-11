@@ -28,6 +28,8 @@ interface EventFormProps {
   initialData?: any;
 }
 
+type Recurrence = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
 const EventForm = ({ onSubmit, onCancel, initialData }: EventFormProps) => {
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(
@@ -41,6 +43,12 @@ const EventForm = ({ onSubmit, onCancel, initialData }: EventFormProps) => {
   );
   const [startTime, setStartTime] = useState(initialData?.startTime || '09:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '10:00');
+  const [recurrence, setRecurrence] = useState<Recurrence>(
+    initialData?.recurrence || 'none'
+  );
+  const [linkTaskId, setLinkTaskId] = useState<string>(
+    initialData?.linkTaskId ? String(initialData.linkTaskId) : ''
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +59,8 @@ const EventForm = ({ onSubmit, onCancel, initialData }: EventFormProps) => {
       endDate,
       startTime,
       endTime,
+      recurrence,
+      linkTaskId: linkTaskId?.trim() ? Number(linkTaskId) : undefined,
     });
   };
 
@@ -163,6 +173,37 @@ const EventForm = ({ onSubmit, onCancel, initialData }: EventFormProps) => {
               className="pl-8"
             />
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="recurrence">Recurrence</Label>
+          <Select
+            value={recurrence}
+            onValueChange={(v: Recurrence) => setRecurrence(v)}
+          >
+            <SelectTrigger id="recurrence">
+              <SelectValue placeholder="Select recurrence" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="biweekly">Bi-weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="linkTaskId">Link Task ID (optional)</Label>
+          <Input
+            id="linkTaskId"
+            type="number"
+            placeholder="e.g. 123"
+            value={linkTaskId}
+            onChange={(e) => setLinkTaskId(e.target.value)}
+          />
         </div>
       </div>
 

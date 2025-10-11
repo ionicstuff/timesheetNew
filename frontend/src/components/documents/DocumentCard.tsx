@@ -53,7 +53,9 @@ const DocumentCard = ({
     );
   };
 
-  const href = isFolder ? `/documents?folder=${encodeURIComponent(name)}` : `/documents/${id}`;
+  const href = isFolder
+    ? `/documents?folder=${encodeURIComponent(name)}`
+    : `/documents/${id}`;
 
   return (
     <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer">

@@ -20,10 +20,19 @@ interface Task {
   project: string;
 }
 
-
 const TimeTracker = () => {
   const { toast } = useToast();
-  const { isTracking, elapsedSeconds, activeTask, selectTask, start, pause, stop } = useTimer();
+  const {
+    isTracking,
+    elapsedSeconds,
+    totalLoggedSeconds,
+    activeTask,
+    selectTask,
+    start,
+    pause,
+    resume,
+    stop,
+  } = useTimer();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -44,17 +53,25 @@ const TimeTracker = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-
   const toggleTracking = async () => {
     try {
       if (isTracking) {
         await pause();
       } else {
         if (!activeTask?.id) throw new Error('Select a task to start tracking');
-        await start(activeTask.id);
+        const isPaused = !!activeTask?.id && elapsedSeconds > 0;
+        if (isPaused) {
+          await resume();
+        } else {
+          await start(activeTask.id);
+        }
       }
     } catch (e: any) {
-      toast({ title: 'Timer error', description: e?.message || 'Failed to toggle timer', variant: 'destructive' });
+      toast({
+        title: 'Timer error',
+        description: e?.message || 'Failed to toggle timer',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -63,7 +80,11 @@ const TimeTracker = () => {
       if (!activeTask?.id) throw new Error('No active task to stop');
       await stop();
     } catch (e: any) {
-      toast({ title: 'Timer error', description: e?.message || 'Failed to stop timer', variant: 'destructive' });
+      toast({
+        title: 'Timer error',
+        description: e?.message || 'Failed to stop timer',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -153,8 +174,11 @@ const TimeTracker = () => {
               </PopoverContent>
             </Popover>
 
-            <div className="mt-3 text-2xl font-mono text-center">
+          <div className="mt-3 text-2xl font-mono text-center">
               {formatTime(elapsedSeconds)}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground text-center">
+              Logged total: {formatTime(totalLoggedSeconds)}
             </div>
 
             <div className="flex gap-2 mt-3">
@@ -172,7 +196,7 @@ const TimeTracker = () => {
                 ) : (
                   <>
                     <Play className="h-4 w-4 mr-2" />
-                    Start
+                    {elapsedSeconds > 0 ? 'Resume' : 'Start'}
                   </>
                 )}
               </Button>

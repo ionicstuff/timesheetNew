@@ -106,6 +106,18 @@ const InviteMemberButton = () => {
       .filter(([, v]) => v)
       .map(([k]) => Number(k));
     if (!ids.length) return;
+
+    // Duplicate-protection: ensure we don't add users already on team
+    const alreadyOnTeam = ids.filter((id) => teamIds.includes(id));
+    if (alreadyOnTeam.length > 0) {
+      toast({
+        title: 'Duplicate invite blocked',
+        description: `User(s) already on your team: ${alreadyOnTeam.join(', ')}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const results = await Promise.all(
         ids.map(async (uid) => {

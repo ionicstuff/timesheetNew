@@ -140,7 +140,12 @@ exports.runDeadlineReminders = async (req, res) => {
         await createNotification({
           userId: r.user_id,
           type: NotificationTypes.TASK_DUE_SOON,
-          ctx: { taskId: r.task_id, taskName: r.task_name, dueAt: r.due_at, projectId: r.project_id },
+          ctx: {
+            taskId: r.task_id,
+            taskName: r.task_name,
+            dueAt: r.due_at,
+            projectId: r.project_id,
+          },
         });
         created++;
         // Email reminder
@@ -165,7 +170,12 @@ exports.runDeadlineReminders = async (req, res) => {
         await createNotification({
           userId: r.user_id,
           type: NotificationTypes.TASK_OVERDUE,
-          ctx: { taskId: r.task_id, taskName: r.task_name, dueAt: r.due_at, projectId: r.project_id },
+          ctx: {
+            taskId: r.task_id,
+            taskName: r.task_name,
+            dueAt: r.due_at,
+            projectId: r.project_id,
+          },
         });
         created++;
         if (r.email) {
@@ -183,7 +193,12 @@ exports.runDeadlineReminders = async (req, res) => {
       }
     }
 
-    res.json({ success: true, created, dueSoon: (dueSoon || []).length, overdue: (overdue || []).length });
+    res.json({
+      success: true,
+      created,
+      dueSoon: (dueSoon || []).length,
+      overdue: (overdue || []).length,
+    });
   } catch (error) {
     console.error('runDeadlineReminders error:', error);
     res.status(500).json({ message: 'Failed to run deadline reminders', error: error.message });

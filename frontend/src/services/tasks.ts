@@ -45,3 +45,17 @@ export async function stopTaskTimer(taskId: number, note?: string) {
     body: JSON.stringify({ note: note || null }),
   });
 }
+
+export async function getTaskLogs(taskId: number) {
+  const token = localStorage.getItem('token') || '';
+  const res = await fetch(`/api/tasks/${taskId}/logs`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to fetch task logs');
+  }
+  return res.json();
+}

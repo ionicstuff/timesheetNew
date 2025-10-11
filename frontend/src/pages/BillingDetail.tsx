@@ -40,7 +40,8 @@ const BillingDetail = () => {
   const roleCode = String(
     u?.roleCode || u?.role_master?.roleCode || u?.roleMaster?.roleCode || ''
   ).toUpperCase();
-  const isFinance = roleName === 'finance' || ['FIN', 'FINANCE'].includes(roleCode);
+  const isFinance =
+    roleName === 'finance' || ['FIN', 'FINANCE'].includes(roleCode);
 
   const invoice = {
     id: 'INV-001',

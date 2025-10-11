@@ -1,3 +1,35 @@
 BUG-001|||Navigation/Sidebar
 BUG-002|||Time Tracking
 BUG-003|||Dashboard
+BUG-005|||Dashboard/Quick Actions
+BUG-006|||Dashboard/Quick Actions
+BUG-007|||Billings
+BUG-008|||Billings
+BUG-012|||Global Search
+BUG-013|||Projects
+BUG-015|||Calendar
+BUG-016|||Calendar/Tasks
+BUG-018|||Team
+BUG-019|||Billings
+BUG-021|||Projects
+BUG-022|||Projects/Comments
+BUG-023|||Calendar/Event Reminders
+BUG-025|||Documents/Versioning
+BUG-026|||Team/Role Permissions
+BUG-030|||Projects/Status Updates
+BUG-036|||Team
+BUG-041|||Projects/Feedback
+BUG-046|||Documents/Asset Sharing
+BUG-047|||Projects/Deadlines
+BUG-050|||Calendar/Projects
+BUG-051|||Dashboard/Welcome
+BUG-069|||Billing
+BUG-074|||Projects/Client Feedback
+BUG-076|||Projects
+BUG-080|||Clients
+BUG-086|||Projects/Proofing
+BUG-087|||Tasks
+BUG-089|||Tasks
+BUG-091|||Calendar
+BUG-096|||Tasks
+BUG-099|||Projects/Tasks

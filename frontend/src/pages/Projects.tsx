@@ -220,7 +220,10 @@ const Projects = () => {
       }
       const json = await res.json().catch(() => ({}));
       const newId = json?.project?.id || 'new';
-      toast({ title: 'Duplicated', description: `Project duplicated as #${newId}.` });
+      toast({
+        title: 'Duplicated',
+        description: `Project duplicated as #${newId}.`,
+      });
       setReloadTick((x) => x + 1);
     } catch (e: any) {
       toast({
@@ -402,7 +405,9 @@ const Projects = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>Share</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => duplicateProject(project.id)}>
+                        <DropdownMenuItem
+                          onClick={() => duplicateProject(project.id)}
+                        >
                           Duplicate
                         </DropdownMenuItem>
                         <DropdownMenuItem

@@ -1,0 +1,204 @@
+# Bug Context
+- id: BUG-003
+- title: 
+- description: Timer doesn't increment after starting
+- priority: Medium
+- severity: High
+- status: Open
+- module: Dashboard
+- file_hint: 
+- steps_to_repro: Start timer from Dashboard
+- expected: Timer counts up in seconds
+- actual: Timer stays at 00:00:00
+- owner: 
+- tags: 
+- environment: 
+- commit: 
+
+## Candidate Files (top)
+
+### backend\test-admin-api.js
+   44:     console.log('First role:', rolesResponse.data[0]);
+   45:     console.log('');
+   46: 
+   47:     // Step 4: Test dashboard stats
+   48:     console.log('4. Testing /api/admin/dashboard/stats endpoint...');
+   49:     const statsResponse = await axios.get(`${API_URL}/admin/dashboard/stats`, {
+   50:       headers: {
+
+### backend\admin\controllers\adminController.js
+    6: const sequelize = require('../../config/database');
+    7: 
+    8: // ====================
+    9: // DASHBOARD STATS
+   10: // ====================
+   11: const getDashboardStats = async (req, res) => {
+   12:   try {
+
+### backend\admin\controllers\adminController_updated.js
+    6: const sequelize = require('../../config/database');
+    7: 
+    8: // ====================
+    9: // DASHBOARD STATS
+   10: // ====================
+   11: const getDashboardStats = async (req, res) => {
+   12:   try {
+
+### backend\admin\routes\admin.js
+    7: // Use adminAuthMiddleware to protect admin routes
+    8: router.use(adminAuthMiddleware);
+    9: 
+   10: // Dashboard stats
+   11: router.get('/dashboard/stats', adminController.getDashboardStats);
+   12: 
+   13: // Role management routes
+
+### backend\controllers\userController.js
+  910:   }
+  911: };
+  912: 
+  913: // Get user statistics and dashboard data
+  914: const getUserStats = async (req, res) => {
+  915:   try {
+  916:     const userId = req.user?.id || req.user?.userId;
+
+### backend\docs\DATABASE_STRUCTURE.md
+  162: 
+  163: ### Module-Based Permissions
+  164: 
+  165: - **Dashboard**: View access based on role
+  166: - **Time Tracking**: Clock in/out, timesheet management
+  167: - **User Management**: Create, read, update, delete users
+  168: - **Project Management**: Project CRUD operations
+
+### backend\docs\USER_API.md
+   82: 
+   83: **GET** `/api/users/stats`
+   84: 
+   85: Get user statistics and dashboard data.
+   86: 
+   87: **Access:** Admin, HR, Manager
+   88: 
+
+### backend\postman\Timesheet.postman_collection.json
+  761:       "name": "Admin",
+  762:       "item": [
+  763:         {
+  764:           "name": "Dashboard Stats",
+  765:           "request": {
+  766:             "method": "GET",
+  767:             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+
+### backend\routes\userRoutes.js
+   62: });
+   63: 
+   64: // @route   GET /api/users/stats
+   65: // @desc    Get user statistics and dashboard data
+   66: // @access  Private (HR, Admin, Manager)
+   67: router.get('/stats', authorizeRoles('admin', 'hr', 'manager'), getUserStats);
+   68: 
+
+### backend\seeders\002-seed-module-masters.js
+    9:         {
+   10:           id: 1,
+   11:           module_code: 'DASH',
+   12:           module_name: 'Dashboard',
+   13:           description: 'Main dashboard with overview and statistics',
+   14:           route: '/dashboard',
+   15:           icon: 'dashboard',
+
+### frontend\src\App.tsx
+    6: import { SearchProvider } from './contexts/SearchContext';
+    7: import { TimesheetProvider } from './contexts/TimesheetContext';
+    8: import Index from './pages/Index';
+    9: import Dashboard from './pages/Dashboard';
+   10: import Tasks from './pages/Tasks';
+   11: import Projects from './pages/Projects';
+   12: import Calendar from './pages/Calendar';
+
+### frontend\src\components\dashboard\DashboardAnimated.tsx
+   17:   Plus,
+   18: } from 'lucide-react';
+   19: import { Progress } from '@/components/ui/progress';
+   20: import StatsCard from '@/components/dashboard/StatsCardAnimated';
+   21: import TaskList from '@/components/tasks/TaskList';
+   22: import CreateTaskButton from '@/components/tasks/CreateTaskButton';
+   23: import TaskSchedulerWidget from '@/components/dashboard/TaskSchedulerWidget';
+
+### frontend\src\components\layout\Sidebar.tsx
+  103:       <div className="flex-1 overflow-auto py-2">
+  104:         <nav className="grid items-start px-2 text-sm font-medium">
+  105:           <a
+  106:             href="/dashboard"
+  107:             className={cn(
+  108:               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
+  109:               isActive('/dashboard')
+
+### frontend\src\components\layout\SidebarAnimated.tsx
+  108:       <div className="flex-1 overflow-auto py-2">
+  109:         <nav className="grid items-start px-2 text-sm font-medium">
+  110:           {[
+  111:             { path: '/dashboard', icon: Home, label: 'Dashboard' },
+  112:             { path: '/tasks', icon: CheckCircle, label: 'Tasks' },
+  113:             { path: '/projects', icon: LayoutGrid, label: 'Projects' },
+  114:             { path: '/clients', icon: Building2, label: 'My Clients' },
+
+### frontend\src\pages\Dashboard.tsx
+   16:   AlertCircle,
+   17:   TrendingUp,
+   18: } from 'lucide-react';
+   19: import StatsCard from '@/components/dashboard/StatsCard';
+   20: import TaskList from '@/components/tasks/TaskList';
+   21: import CreateTaskButton from '@/components/tasks/CreateTaskButton';
+   22: import TaskSchedulerWidget from '@/components/dashboard/TaskSchedulerWidget';
+
+### frontend\src\pages\Index.tsx
+    5:   const navigate = useNavigate();
+    6: 
+    7:   useEffect(() => {
+    8:     navigate('/dashboard');
+    9:   }, [navigate]);
+   10: 
+   11:   return null;
+
+### frontend\src\pages\Login.tsx
+   40:       const { token, user } = await response.json();
+   41:       localStorage.setItem('token', token);
+   42:       localStorage.setItem('user', JSON.stringify(user));
+   43:       navigate('/dashboard');
+   44:     } catch (err: any) {
+   45:       setError(err.message);
+   46:     }
+
+### frontend\admin\components\AdminDashboard.tsx
+    1: import React, { useState, useEffect } from 'react';
+    2: import { useNavigate } from 'react-router-dom';
+    3: import { adminAuthService } from '../services/admin-auth.service';
+    4: import { getDashboardStats } from '../services/admin-api.service';
+    5: import UserManagement from './UserManagement';
+    6: import RoleManagement from './RoleManagement';
+    7: import ClientManagement from './ClientManagement';
+
+### frontend\admin\components\AdminLogin.tsx
+   34: 
+   35:     try {
+   36:       await adminAuthService.login(formData.email, formData.password);
+   37:       navigate('/admin/dashboard');
+   38:     } catch (err: any) {
+   39:       setError(
+   40:         err.response?.data?.message || 'Login failed. Please try again.'
+
+### frontend\admin\services\admin-api.service.ts
+   25:   }
+   26: );
+   27: 
+   28: // Dashboard
+   29: export const getDashboardStats = async () => {
+   30:   const response = await adminApi.get('/dashboard/stats');
+   31:   return response.data;
+
+### frontend\admin\styles\AdminDashboard.css
+    1: .admin-dashboard {
+    2:   display: flex;
+    3:   min-height: 100vh;
+    4:   background: #f8f9fa;

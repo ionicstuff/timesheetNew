@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Paperclip, Send, Smile, ThumbsUp, Edit, Check, X } from 'lucide-react';
+import {
+  MessageSquare,
+  Paperclip,
+  Send,
+  Smile,
+  ThumbsUp,
+  Edit,
+  Check,
+  X,
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -149,12 +158,18 @@ const TaskComments = ({ taskId }: Props) => {
     }
 
     if (res.ok) {
-      setComments((prev) => prev.map((c) => (c.id === editingId ? { ...c, content } : c)));
+      setComments((prev) =>
+        prev.map((c) => (c.id === editingId ? { ...c, content } : c))
+      );
       setEditingId(null);
       setEditContent('');
     } else {
       const err = await res.json().catch(() => ({}));
-      toast({ title: 'Update failed', description: err.message || 'Could not update comment', variant: 'destructive' });
+      toast({
+        title: 'Update failed',
+        description: err.message || 'Could not update comment',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -233,17 +248,19 @@ const TaskComments = ({ taskId }: Props) => {
                 <Button variant="ghost" size="sm" className="text-xs">
                   Reply
                 </Button>
-                {comment.authorId && comment.authorId === currentUserId && editingId !== comment.id && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => startEdit(comment)}
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                )}
+                {comment.authorId &&
+                  comment.authorId === currentUserId &&
+                  editingId !== comment.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => startEdit(comment)}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                  )}
               </div>
             </div>
           </div>

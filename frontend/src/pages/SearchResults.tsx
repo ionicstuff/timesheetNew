@@ -50,7 +50,13 @@ const SearchResults = () => {
   ];
 
   const documents = [
-    { id: 1, name: 'Design Mockups', type: 'pdf', updatedAt: '2 days ago', folderName: 'Design Assets' },
+    {
+      id: 1,
+      name: 'Design Mockups',
+      type: 'pdf',
+      updatedAt: '2 days ago',
+      folderName: 'Design Assets',
+    },
     {
       id: 2,
       name: 'Design Assets',
@@ -59,7 +65,13 @@ const SearchResults = () => {
       items: 8,
       isFolder: true,
     },
-    { id: 3, name: 'User Research', type: 'doc', updatedAt: '1 week ago', folderName: 'Research' },
+    {
+      id: 3,
+      name: 'User Research',
+      type: 'doc',
+      updatedAt: '1 week ago',
+      folderName: 'Research',
+    },
     {
       id: 4,
       name: 'Research',

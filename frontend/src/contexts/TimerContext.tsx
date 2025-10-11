@@ -1,5 +1,18 @@
-import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { startTaskTimer, pauseTaskTimer, resumeTaskTimer, stopTaskTimer } from '@/services/tasks';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from 'react';
+import {
+  startTaskTimer,
+  pauseTaskTimer,
+  resumeTaskTimer,
+  stopTaskTimer,
+  getTaskLogs,
+} from '@/services/tasks';
 
 export interface TimerTaskRef {
   id: number;
@@ -10,6 +23,7 @@ export interface TimerTaskRef {
 interface TimerContextValue {
   isTracking: boolean;
   elapsedSeconds: number;
+  totalLoggedSeconds: number;
   activeTask: TimerTaskRef | null;
   selectTask: (task: TimerTaskRef | null) => void;
   start: (taskId?: number, note?: string) => Promise<void>;
@@ -31,6 +45,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [activeTask, setActiveTask] = useState<TimerTaskRef | null>(null);
+  const [totalLoggedSeconds, setTotalLoggedSeconds] = useState(0);
 
   const intervalRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
@@ -39,9 +54,16 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   // Rehydrate from localStorage on mount
   useEffect(() => {
     try {
-      const storedIsTracking = localStorage.getItem(STORAGE_KEYS.isTracking) === '1';
-      const storedStart = parseInt(localStorage.getItem(STORAGE_KEYS.startEpoch) || 'NaN', 10);
-      const storedOffset = parseInt(localStorage.getItem(STORAGE_KEYS.offsetMs) || '0', 10);
+      const storedIsTracking =
+        localStorage.getItem(STORAGE_KEYS.isTracking) === '1';
+      const storedStart = parseInt(
+        localStorage.getItem(STORAGE_KEYS.startEpoch) || 'NaN',
+        10
+      );
+      const storedOffset = parseInt(
+        localStorage.getItem(STORAGE_KEYS.offsetMs) || '0',
+        10
+      );
       const storedTaskRaw = localStorage.getItem(STORAGE_KEYS.activeTask);
       if (storedTaskRaw) {
         try {
@@ -57,10 +79,14 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
 
       if (storedIsTracking) {
         setIsTracking(true);
-        const elapsedMs = (offsetRef.current || 0) + (Date.now() - (startRef.current || Date.now()));
+        const elapsedMs =
+          (offsetRef.current || 0) +
+          (Date.now() - (startRef.current || Date.now()));
         setElapsedSeconds(Math.max(0, Math.floor(elapsedMs / 1000)));
       } else {
-        setElapsedSeconds(Math.max(0, Math.floor((offsetRef.current || 0) / 1000)));
+        setElapsedSeconds(
+          Math.max(0, Math.floor((offsetRef.current || 0) / 1000))
+        );
       }
     } catch {}
   }, []);
@@ -68,9 +94,19 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const persist = () => {
     try {
       localStorage.setItem(STORAGE_KEYS.isTracking, isTracking ? '1' : '0');
-      localStorage.setItem(STORAGE_KEYS.startEpoch, String(startRef.current ?? ''));
-      localStorage.setItem(STORAGE_KEYS.offsetMs, String(offsetRef.current ?? 0));
-      if (activeTask) localStorage.setItem(STORAGE_KEYS.activeTask, JSON.stringify(activeTask));
+      localStorage.setItem(
+        STORAGE_KEYS.startEpoch,
+        String(startRef.current ?? '')
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.offsetMs,
+        String(offsetRef.current ?? 0)
+      );
+      if (activeTask)
+        localStorage.setItem(
+          STORAGE_KEYS.activeTask,
+          JSON.stringify(activeTask)
+        );
     } catch {}
   };
 
@@ -102,11 +138,24 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     persist();
+    void refreshLogs();
   }, [activeTask]);
 
   const selectTask = (task: TimerTaskRef | null) => {
     setActiveTask(task);
     setTimeout(persist, 0);
+  };
+
+  const refreshLogs = async (taskId?: number) => {
+    try {
+      const id = taskId ?? activeTask?.id;
+      if (!id) return;
+      const logs = await getTaskLogs(id);
+      const secs = Array.isArray(logs)
+        ? logs.reduce((s: number, l: any) => s + Number(l?.durationSeconds || 0), 0)
+        : 0;
+      setTotalLoggedSeconds(secs);
+    } catch {}
   };
 
   const start = async (taskId?: number, note?: string) => {
@@ -122,6 +171,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     if (startRef.current == null) startRef.current = Date.now();
     setIsTracking(true);
     setTimeout(persist, 0);
+    setTimeout(() => refreshLogs(id), 0);
   };
 
   const pause = async (note?: string) => {
@@ -138,6 +188,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     }
     setIsTracking(false);
     setTimeout(persist, 0);
+    setTimeout(() => refreshLogs(id), 0);
   };
 
   const resume = async (note?: string) => {
@@ -151,6 +202,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     if (startRef.current == null) startRef.current = Date.now();
     setIsTracking(true);
     setTimeout(persist, 0);
+    setTimeout(() => refreshLogs(id), 0);
   };
 
   const stop = async (note?: string) => {
@@ -167,11 +219,22 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     startRef.current = null;
     offsetRef.current = 0;
     setTimeout(persist, 0);
+    setTimeout(() => refreshLogs(id), 0);
   };
 
   return (
     <TimerContext.Provider
-      value={{ isTracking, elapsedSeconds, activeTask, selectTask, start, pause, resume, stop }}
+      value={{
+        isTracking,
+        elapsedSeconds,
+        totalLoggedSeconds,
+        activeTask,
+        selectTask,
+        start,
+        pause,
+        resume,
+        stop,
+      }}
     >
       {children}
     </TimerContext.Provider>

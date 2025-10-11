@@ -1,0 +1,63 @@
+# Bug Context
+- id: BUG-008
+- title: 
+- description: Permission error message shown at bottom only, UI still visible
+- priority: Medium
+- severity: Medium
+- status: Open
+- module: Billings
+- file_hint: 
+- steps_to_repro: Access Billings page without Finance role
+- expected: Hide invoice UI or show error at top
+- actual: UI charts visible, error at bottom
+- owner: 
+- tags: 
+- environment: 
+- commit: 
+
+## Candidate Files (top)
+
+### frontend\src\App.tsx
+   22: import Reports from './pages/Reports';
+   23: import Clients from './pages/Clients';
+   24: import ClientDetail from './pages/ClientDetail';
+   25: import Billings from './pages/Billings';
+   26: import BillingDetail from './pages/BillingDetail';
+   27: import NotFound from './pages/NotFound';
+   28: import Login from './pages/Login';
+
+### frontend\src\components\billings\InvoiceList.tsx
+  146:               <div className="col-span-2">
+  147:                 <button
+  148:                   className="text-left text-blue-600 hover:underline"
+  149:                   onClick={() => navigate(`/billings/${inv.id}`)}
+  150:                   title="View invoice"
+  151:                 >
+  152:                   {inv.invoiceNumber || `INV-${inv.id}`}
+
+### frontend\src\components\layout\Sidebar.tsx
+  187:             Team
+  188:           </a>
+  189:           <a
+  190:             href="/billings"
+  191:             className={cn(
+  192:               'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
+  193:               isActive('/billings')
+
+### frontend\src\components\layout\SidebarAnimated.tsx
+  115:             { path: '/calendar', icon: CalendarIcon, label: 'Calendar' },
+  116:             { path: '/documents', icon: FileText, label: 'Documents' },
+  117:             { path: '/team', icon: Users, label: 'Team' },
+  118:             { path: '/billings', icon: DollarSign, label: 'Billings' },
+  119:           ].map((item) => {
+  120:             const Icon = item.icon;
+  121:             const active = isActive(item.path);
+
+### frontend\src\pages\Billings.tsx
+    9:   CardHeader,
+   10:   CardTitle,
+   11: } from '@/components/ui/card';
+   12: import InvoiceStatusChart from '@/components/billings/InvoiceStatusChart';
+   13: import RevenueChart from '@/components/billings/RevenueChart';
+   14: import ReadyToInvoice from '@/components/billings/ReadyToInvoice';
+   15: import InvoiceList from '@/components/billings/InvoiceList';

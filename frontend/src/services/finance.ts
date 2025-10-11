@@ -147,6 +147,26 @@ export function getInvoicePdfUrl(id: number) {
   return `/api/finance/invoices/${id}/pdf`;
 }
 
+export async function downloadInvoicePdf(id: number) {
+  const token = localStorage.getItem('token') || '';
+  const res = await fetch(getInvoicePdfUrl(id), {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to download PDF');
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `invoice-${id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // Optional: a helper to invalidate related queries
 export function invalidateFinanceQueries(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ['invoices'] });
