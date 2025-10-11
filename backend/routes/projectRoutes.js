@@ -24,6 +24,7 @@ router.put('/:id(\\d+)', ctrl.updateProject);
 router.delete('/:id(\\d+)', ctrl.deleteProject);
 router.patch('/:id(\\d+)/details', ctrl.updateProjectDetails);
 router.post('/:id(\\d+)/duplicate', ctrl.duplicateProject);
+router.post('/:id(\\d+)/archive', ctrl.archiveProject);
 
 // ---- Files ----
 router.post('/:id(\\d+)/files', ctrl.uploadProjectFiles);

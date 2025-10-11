@@ -1075,6 +1075,41 @@ const duplicateProject = async (req, res) => {
   }
 };
 
+// Archive a project (mark is_active=false) allowed when project.status is 'completed'
+const archiveProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const project = await Project.findByPk(id);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // Ensure the actor is the assigned PM or the client's AM (mirrors closeProject)
+    const client = project.clientId ? await Client.findByPk(project.clientId) : null;
+    const isAssignedPM = project.projectManagerId && project.projectManagerId === req.user.id;
+    const isAssignedAM = client?.accountManagerId && client.accountManagerId === req.user.id;
+    if (!isAssignedPM && !isAssignedAM) {
+      return res.status(403).json({
+        message: 'Only the assigned Project Manager or Account Manager can archive this project',
+      });
+    }
+
+    if (String(project.status) !== 'completed') {
+      return res.status(400).json({ message: 'Only completed projects can be archived' });
+    }
+
+    if (project.isActive === false) {
+      return res.json({ message: 'Project already archived' });
+    }
+
+    project.isActive = false;
+    await project.save();
+
+    return res.json({ message: 'Project archived', project: { id: project.id, isActive: project.isActive } });
+  } catch (error) {
+    console.error('Error archiving project:', error);
+    return res.status(500).json({ message: 'Failed to archive project', error: error.message });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
@@ -1093,4 +1128,5 @@ module.exports = {
   getClients,
   getClientSpocs,
   duplicateProject,
+  archiveProject,
 };

@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import CreateProjectButton from '@/components/projects/CreateProjectButton';
+import DuplicateProjectButton from '@/components/projects/DuplicateProjectButton';
 import ProjectFilter from '@/components/projects/ProjectFilter';
 import ProjectCard from '@/components/projects/ProjectCard';
 import { useToast } from '@/hooks/use-toast';
@@ -189,7 +190,7 @@ const Projects = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ status: 'archived' }),
+          body: JSON.stringify({ isActive: false }),
         });
       }
       if (!res.ok) {
@@ -243,7 +244,10 @@ const Projects = () => {
             Manage your projects and track progress
           </p>
         </div>
-        <CreateProjectButton onCreated={() => setReloadTick((x) => x + 1)} />
+        <div className="flex gap-2">
+          <CreateProjectButton onCreated={() => setReloadTick((x) => x + 1)} />
+          <DuplicateProjectButton onDuplicated={() => setReloadTick((x) => x + 1)} />
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
