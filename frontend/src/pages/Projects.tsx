@@ -91,7 +91,7 @@ const Projects = () => {
       tasks: p.tasksCount,
       members: p.membersCount,
       color: colorClass,
-      status: p.status ?? 'active',
+      status: (p.status || 'active').toLowerCase(),
       dueDate: p.endDate ? new Date(p.endDate).toLocaleDateString() : '—',
     };
   };
@@ -185,7 +185,7 @@ const Projects = () => {
       });
       if (!res.ok) {
         res = await fetch(`/api/projects/${id}`, {
-          method: 'PATCH',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -232,6 +232,48 @@ const Projects = () => {
         description: e.message || 'Request failed',
         variant: 'destructive',
       });
+    }
+  };
+
+  const generateNext = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/projects/${id}/generate-next`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to generate next occurrence');
+      }
+      const json = await res.json().catch(() => ({}));
+      const newId = json?.project?.id || 'new';
+      toast({ title: 'Next generated', description: `Created project #${newId}.` });
+      setReloadTick((x) => x + 1);
+    } catch (e: any) {
+      toast({ title: 'Generate failed', description: e.message || 'Request failed', variant: 'destructive' });
+    }
+  };
+
+  const closeProject = async (id: number, reason?: string) => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`/api/projects/${id}/close`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: reason || undefined }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(j?.message || 'Failed to close project');
+      }
+      toast({ title: 'Project closed', description: `Project #${id} marked as completed.` });
+      setReloadTick((x) => x + 1);
+    } catch (e: any) {
+      toast({ title: 'Close failed', description: e.message || 'Request failed', variant: 'destructive' });
     }
   };
 
@@ -309,6 +351,8 @@ const Projects = () => {
               membersList={project.membersList}
               onArchive={archiveProject}
               onDuplicate={duplicateProject}
+              onGenerateNext={generateNext}
+              onClose={(id) => closeProject(id)}
             />
           ))}
         </div>
@@ -413,6 +457,12 @@ const Projects = () => {
                           onClick={() => duplicateProject(project.id)}
                         >
                           Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => generateNext(project.id)}>
+                          Generate Next
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => closeProject(project.id)}>
+                          Close Project
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>

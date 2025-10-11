@@ -81,6 +81,20 @@ const ProjectForm = ({
     initialData?.isActive === false ? 'false' : 'true'
   );
 
+  // Recurrence UI state
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState<boolean>(
+    !!initialData?.recurrenceActive
+  );
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'daily' | 'weekly' | 'monthly' | ''>(
+    (initialData?.recurrenceFrequency as any) || ''
+  );
+  const [recurrenceInterval, setRecurrenceInterval] = useState<string>(
+    initialData?.recurrenceInterval ? String(initialData.recurrenceInterval) : '1'
+  );
+  const [recurrenceUntil, setRecurrenceUntil] = useState<Date | undefined>(
+    initialData?.recurrenceUntil
+  );
+
   // Dropdown data
   const [clients, setClients] = useState<Array<{ id: number; name: string }>>(
     []
@@ -196,6 +210,10 @@ const ProjectForm = ({
       managerId,
       estimatedTime,
       isActive: isActive === 'true',
+      recurrenceActive: recurrenceEnabled,
+      recurrenceFrequency: recurrenceEnabled ? recurrenceFrequency || undefined : undefined,
+      recurrenceInterval: recurrenceEnabled ? Number(recurrenceInterval || '1') : undefined,
+      recurrenceUntil: recurrenceEnabled ? toDateOnly(recurrenceUntil) : undefined,
     });
   };
 
@@ -318,6 +336,80 @@ const ProjectForm = ({
               />
             </PopoverContent>
           </Popover>
+        </div>
+      </div>
+
+      {/* Recurrence */}
+      <div className="space-y-2">
+        <Label>Recurrence</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label>Repeat</Label>
+            <Select
+              value={recurrenceEnabled ? (recurrenceFrequency || 'weekly') : ''}
+              onValueChange={(v) => {
+                if (!v) {
+                  setRecurrenceEnabled(false);
+                  setRecurrenceFrequency('');
+                } else {
+                  setRecurrenceEnabled(true);
+                  setRecurrenceFrequency(v as any);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Does not repeat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Does not repeat</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Interval</Label>
+            <Input
+              type="number"
+              min={1}
+              value={recurrenceInterval}
+              onChange={(e) => setRecurrenceInterval(e.target.value)}
+              disabled={!recurrenceEnabled}
+            />
+          </div>
+
+          <div>
+            <Label>Repeat Until (optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !recurrenceUntil && 'text-muted-foreground'
+                  )}
+                  disabled={!recurrenceEnabled}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {recurrenceUntil ? (
+                    format(recurrenceUntil, 'PPP')
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={recurrenceUntil}
+                  onSelect={setRecurrenceUntil}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 

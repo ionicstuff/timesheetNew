@@ -32,6 +32,10 @@ const CreateProjectButton = ({ onCreated }: CreateProjectButtonProps) => {
           ? Number(data.estimatedTime)
           : undefined,
         isActive: typeof data.isActive === 'boolean' ? data.isActive : true,
+        recurrenceActive: data.recurrenceActive || false,
+        recurrenceFrequency: data.recurrenceFrequency || undefined,
+        recurrenceInterval: data.recurrenceInterval || undefined,
+        recurrenceUntil: data.recurrenceUntil || undefined,
       };
 
       const res = await fetch(`/api/projects`, {

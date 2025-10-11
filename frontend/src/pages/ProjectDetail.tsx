@@ -333,6 +333,30 @@ const ProjectDetail = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Task
           </Button>
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              try {
+                if (!projectId || Number.isNaN(projectId)) return;
+                const token = localStorage.getItem('token') || '';
+                const res = await fetch(`/api/projects/${projectId}/close`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({}),
+                });
+                const j = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(j?.message || 'Failed to close project');
+                await reloadProject();
+                toast({ title: 'Project closed', description: 'This project was marked as completed.' });
+              } catch (e: any) {
+                toast({ title: 'Close failed', description: e.message || 'Request failed', variant: 'destructive' });
+              }
+            }}
+            title="Mark project as completed (requires all tasks completed and no timers running)"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Close Project
+          </Button>
         </div>
       </div>
 

@@ -26,6 +26,8 @@ interface ProjectCardProps {
   membersList?: string[];
   onArchive?: (id: number) => void;
   onDuplicate?: (id: number) => void;
+  onGenerateNext?: (id: number) => void;
+  onClose?: (id: number) => void;
 }
 
 const ProjectCard = ({
@@ -73,6 +75,12 @@ const ProjectCard = ({
             <DropdownMenuItem>Share</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
               Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onGenerateNext?.(id)}>
+              Generate Next
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onClose?.(id)}>
+              Close Project
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
