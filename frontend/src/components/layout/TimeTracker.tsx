@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Square, Clock, Search, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useTimer } from '@/contexts/TimerContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: number;
@@ -18,28 +20,12 @@ interface Task {
   project: string;
 }
 
-const STORAGE_KEYS = {
-  isTracking: 'tt_isTracking',
-  startEpoch: 'tt_startEpoch',
-  offsetMs: 'tt_offsetMs',
-  activeTask: 'tt_activeTask',
-} as const;
 
 const TimeTracker = () => {
-  const [isTracking, setIsTracking] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [activeTask, setActiveTask] = useState<Task | null>({
-    id: 1,
-    title: 'Design homepage',
-    project: 'Website Redesign',
-  });
+  const { toast } = useToast();
+  const { isTracking, elapsedSeconds, activeTask, selectTask, start, pause, stop } = useTimer();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Interval and time bookkeeping (StrictMode-safe)
-  const intervalRef = useRef<number | null>(null);
-  const startRef = useRef<number | null>(null);
-  const offsetRef = useRef(0);
 
   // Mock tasks data
   const tasks: Task[] = [
@@ -58,130 +44,33 @@ const TimeTracker = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Rehydrate from localStorage on mount
-  useEffect(() => {
+
+  const toggleTracking = async () => {
     try {
-      const storedIsTracking = localStorage.getItem(STORAGE_KEYS.isTracking) === '1';
-      const storedStart = parseInt(localStorage.getItem(STORAGE_KEYS.startEpoch) || 'NaN', 10);
-      const storedOffset = parseInt(localStorage.getItem(STORAGE_KEYS.offsetMs) || '0', 10);
-      const storedTaskRaw = localStorage.getItem(STORAGE_KEYS.activeTask);
-      if (storedTaskRaw) {
-        try {
-          const parsed = JSON.parse(storedTaskRaw);
-          if (parsed && typeof parsed.id === 'number') {
-            setActiveTask(parsed);
-          }
-        } catch {}
-      }
-
-      if (Number.isFinite(storedStart)) {
-        startRef.current = storedStart;
-      }
-      if (Number.isFinite(storedOffset)) {
-        offsetRef.current = storedOffset;
-      }
-
-      if (storedIsTracking) {
-        setIsTracking(true);
-        const elapsedMs = (offsetRef.current || 0) + (Date.now() - (startRef.current || Date.now()));
-        setElapsedTime(Math.max(0, Math.floor(elapsedMs / 1000)));
+      if (isTracking) {
+        await pause();
       } else {
-        // If not tracking, compute elapsed purely from offset
-        setElapsedTime(Math.max(0, Math.floor((offsetRef.current || 0) / 1000)));
+        if (!activeTask?.id) throw new Error('Select a task to start tracking');
+        await start(activeTask.id);
       }
-    } catch {}
-  }, []);
+    } catch (e: any) {
+      toast({ title: 'Timer error', description: e?.message || 'Failed to toggle timer', variant: 'destructive' });
+    }
+  };
 
-  // Persist state on changes
-  const persist = () => {
+  const stopTracking = async () => {
     try {
-      localStorage.setItem(STORAGE_KEYS.isTracking, isTracking ? '1' : '0');
-      localStorage.setItem(STORAGE_KEYS.startEpoch, String(startRef.current ?? ''));
-      localStorage.setItem(STORAGE_KEYS.offsetMs, String(offsetRef.current ?? 0));
-      if (activeTask) {
-        localStorage.setItem(STORAGE_KEYS.activeTask, JSON.stringify(activeTask));
-      }
-    } catch {}
-  };
-
-  // Handle timer logic (StrictMode-safe and resilient to re-renders)
-  useEffect(() => {
-    if (isTracking) {
-      // Initialize start time on first start or after resume
-      if (startRef.current == null) {
-        startRef.current = Date.now();
-      }
-      // Create interval once
-      if (intervalRef.current == null) {
-        intervalRef.current = window.setInterval(() => {
-          const start = startRef.current ?? Date.now();
-          const elapsedMs = (offsetRef.current || 0) + (Date.now() - start);
-          setElapsedTime(Math.floor(elapsedMs / 1000));
-        }, 1000);
-      }
-    } else {
-      // When not tracking, ensure interval is cleared
-      if (intervalRef.current != null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (!activeTask?.id) throw new Error('No active task to stop');
+      await stop();
+    } catch (e: any) {
+      toast({ title: 'Timer error', description: e?.message || 'Failed to stop timer', variant: 'destructive' });
     }
-
-    persist();
-
-    // Cleanup on unmount or dependency change
-    return () => {
-      if (intervalRef.current != null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isTracking]);
-
-  // Persist when activeTask changes
-  useEffect(() => {
-    persist();
-  }, [activeTask]);
-
-  const toggleTracking = () => {
-    setIsTracking((prev) => {
-      const next = !prev;
-      if (next) {
-        // Starting/resuming
-        if (startRef.current == null) {
-          startRef.current = Date.now();
-        }
-      } else {
-        // Pausing: accumulate elapsed offset
-        if (startRef.current != null) {
-          offsetRef.current += Date.now() - startRef.current;
-          startRef.current = null;
-        }
-      }
-      // Persist after toggling logic
-      setTimeout(persist, 0);
-      return next;
-    });
   };
 
-  const stopTracking = () => {
-    setIsTracking(false);
-    setElapsedTime(0);
-    // Reset bookkeeping
-    startRef.current = null;
-    offsetRef.current = 0;
-    if (intervalRef.current != null) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    persist();
-  };
-
-  const selectTask = (task: Task) => {
-    setActiveTask(task);
+  const onSelectTask = (task: Task) => {
+    selectTask(task);
     setSearchOpen(false);
     setSearchTerm('');
-    persist();
   };
 
   const filteredTasks = tasks.filter(
@@ -242,7 +131,7 @@ const TimeTracker = () => {
                         key={task.id}
                         variant="ghost"
                         className="w-full justify-start h-auto py-2 px-3"
-                        onClick={() => selectTask(task)}
+                        onClick={() => onSelectTask(task)}
                       >
                         <div className="text-left">
                           <p className="font-medium text-sm truncate">
@@ -265,7 +154,7 @@ const TimeTracker = () => {
             </Popover>
 
             <div className="mt-3 text-2xl font-mono text-center">
-              {formatTime(elapsedTime)}
+              {formatTime(elapsedSeconds)}
             </div>
 
             <div className="flex gap-2 mt-3">
@@ -329,7 +218,7 @@ const TimeTracker = () => {
                       key={task.id}
                       variant="ghost"
                       className="w-full justify-start h-auto py-2 px-3"
-                      onClick={() => selectTask(task)}
+                      onClick={() => onSelectTask(task)}
                     >
                       <div className="text-left">
                         <p className="font-medium text-sm truncate">

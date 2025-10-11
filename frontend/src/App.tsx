@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SearchProvider } from './contexts/SearchContext';
 import { TimesheetProvider } from './contexts/TimesheetContext';
+import { TimerProvider } from './contexts/TimerContext';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
@@ -39,7 +40,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <TimesheetProvider>
-          <BrowserRouter>
+          <TimerProvider>
+            <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -200,7 +202,8 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </TimerProvider>
         </TimesheetProvider>
       </TooltipProvider>
     </SearchProvider>
