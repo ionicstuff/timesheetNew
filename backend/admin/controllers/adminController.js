@@ -393,6 +393,54 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
+    const { strategy, newAssigneeId } = (req.body && Object.keys(req.body).length ? req.body : req.query) || {};
+
+    // Reassignment strategy for this user's tasks before deletion
+    // Allowed strategies:
+    // - reassign_to_user (requires newAssigneeId)
+    // - reassign_to_manager (uses user_hierarchies)
+    // - unassign (set assigned_to = NULL)
+    const allowed = ['reassign_to_user', 'reassign_to_manager', 'unassign', undefined, null, ''];
+    if (!allowed.includes(strategy)) {
+      return res.status(400).json({ message: 'Invalid strategy' });
+    }
+
+    // Determine target assignee if required
+    let targetUserId = null;
+    if (strategy === 'reassign_to_user') {
+      if (!newAssigneeId) return res.status(400).json({ message: 'newAssigneeId is required' });
+      targetUserId = parseInt(newAssigneeId, 10);
+    } else if (strategy === 'reassign_to_manager') {
+      // Look up current active manager from user_hierarchies
+      const [mgrRows] = await sequelize.query(
+        `SELECT parent_user_id FROM user_hierarchies WHERE user_id = $1 AND is_active = true ORDER BY effective_from DESC LIMIT 1`,
+        { bind: [id] },
+      );
+      if (!mgrRows || mgrRows.length === 0) {
+        return res.status(400).json({ message: 'No active manager found for this user' });
+      }
+      targetUserId = mgrRows[0].parent_user_id;
+    }
+
+    // Reassign tasks if applicable
+    if (strategy) {
+      if (strategy === 'unassign') {
+        await sequelize.query(`UPDATE tasks SET assigned_to = NULL WHERE assigned_to = $1`, {
+          bind: [id],
+        });
+      } else if (targetUserId) {
+        // Ensure target user exists and is active
+        const [uRows] = await sequelize.query('SELECT id FROM users WHERE id=$1 AND is_active=true', {
+          bind: [targetUserId],
+        });
+        if (!uRows || uRows.length === 0) {
+          return res.status(400).json({ message: 'Target user not found or inactive' });
+        }
+        await sequelize.query(`UPDATE tasks SET assigned_to = $1 WHERE assigned_to = $2`, {
+          bind: [targetUserId, id],
+        });
+      }
+    }
 
     await sequelize.query('DELETE FROM users WHERE id = $1', {
       bind: [id],
@@ -570,25 +618,34 @@ const updateClient = async (req, res) => {
 const deleteClient = async (req, res) => {
   try {
     const { id } = req.params;
+    const { transferTo } = (req.body && Object.keys(req.body).length ? req.body : req.query) || {};
 
-    // Check if client has projects
-    const [projects] = await sequelize.query(
-      'SELECT COUNT(*) as count FROM projects WHERE client_id = $1',
-      {
-        bind: [id],
-      },
+    // Check project count
+    const [[{ count }]] = await sequelize.query(
+      'SELECT COUNT(*)::int as count FROM projects WHERE client_id = $1',
+      { bind: [id] },
     );
 
-    if (parseInt(projects[0].count) > 0) {
-      return res.status(400).json({
-        message: `Cannot delete client. ${projects[0].count} projects are associated with this client.`,
-      });
+    if (count > 0) {
+      if (transferTo) {
+        // Validate target client
+        const [[{ exists }]] = await sequelize.query(
+          'SELECT 1 as exists FROM clients WHERE id = $1 LIMIT 1',
+          { bind: [transferTo] },
+        );
+        if (!exists) return res.status(400).json({ message: 'Target client not found' });
+        // Transfer projects
+        await sequelize.query('UPDATE projects SET client_id = $1 WHERE client_id = $2', {
+          bind: [transferTo, id],
+        });
+      } else {
+        return res.status(400).json({
+          message: `Cannot delete client. ${count} projects are associated with this client. Provide transferTo to move projects.`,
+        });
+      }
     }
 
-    await sequelize.query('DELETE FROM clients WHERE id = $1', {
-      bind: [id],
-    });
-
+    await sequelize.query('DELETE FROM clients WHERE id = $1', { bind: [id] });
     res.json({ message: 'Client deleted successfully' });
   } catch (error) {
     console.error('Error deleting client:', error);

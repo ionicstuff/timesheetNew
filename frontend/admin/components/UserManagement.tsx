@@ -254,12 +254,28 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm('Delete this user? You can reassign their tasks first.')) {
       try {
-        await deleteUser(id);
+        // Ask for reassignment strategy
+        const strategyInput = window.prompt(
+          "Task reassignment: enter 'manager', 'unassign', or a numeric user ID to reassign to",
+          'manager'
+        );
+        let payload: any = {};
+        if (strategyInput) {
+          if (strategyInput.toLowerCase() === 'manager') {
+            payload = { strategy: 'reassign_to_manager' };
+          } else if (strategyInput.toLowerCase() === 'unassign') {
+            payload = { strategy: 'unassign' };
+          } else if (!isNaN(parseInt(strategyInput))) {
+            payload = { strategy: 'reassign_to_user', newAssigneeId: parseInt(strategyInput) };
+          }
+        }
+        await deleteUser(id, payload);
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
+        alert((error as any)?.message || 'Failed to delete user');
       }
     }
   };

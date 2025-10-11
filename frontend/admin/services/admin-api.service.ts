@@ -89,8 +89,8 @@ export const updateUser = async (id: string, userData: any) => {
   return response.data;
 };
 
-export const deleteUser = async (id: string) => {
-  const response = await adminApi.delete(`/users/${id}`);
+export const deleteUser = async (id: string, payload?: any) => {
+  const response = await adminApi.delete(`/users/${id}`, { data: payload ?? {} });
   return response.data;
 };
 
@@ -121,8 +121,8 @@ export const updateClient = async (id: string, clientData: any) => {
   return response.data;
 };
 
-export const deleteClient = async (id: string) => {
-  const response = await adminApi.delete(`/clients/${id}`);
+export const deleteClient = async (id: string, payload?: any) => {
+  const response = await adminApi.delete(`/clients/${id}`,{ data: payload ?? {} });
   return response.data;
 };
 

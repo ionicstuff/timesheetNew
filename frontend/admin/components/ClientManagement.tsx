@@ -82,12 +82,27 @@ const ClientManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this client?')) {
+    if (window.confirm('Delete this client? If it has projects, you can transfer them.')) {
       try {
-        await deleteClient(id);
-        fetchClients();
+        try {
+          await deleteClient(id);
+          fetchClients();
+          return;
+        } catch (err: any) {
+          const msg = String(err?.response?.data?.message || err?.message || '');
+          if (msg.includes('Cannot delete client')) {
+            const transferTo = window.prompt('Enter target client ID to transfer projects before delete:');
+            if (transferTo && !isNaN(parseInt(transferTo))) {
+              await deleteClient(id, { transferTo: parseInt(transferTo) });
+              fetchClients();
+              return;
+            }
+          }
+          throw err;
+        }
       } catch (error) {
         console.error('Error deleting client:', error);
+        alert((error as any)?.response?.data?.message || (error as any)?.message || 'Failed to delete client');
       }
     }
   };
